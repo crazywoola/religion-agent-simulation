@@ -16,6 +16,7 @@ const logListEl = document.getElementById('logList');
 const mapHudStatsEl = document.getElementById('mapHudStats');
 const mapLegendEl = document.getElementById('mapLegend');
 const canvas = document.getElementById('sceneCanvas');
+const stageWrapEl = document.querySelector('.stage-wrap');
 
 const appTitleEl = document.getElementById('appTitle');
 const appHintEl = document.getElementById('appHint');
@@ -119,16 +120,59 @@ scene.fog = new THREE.Fog('#b9ced7', 28, 78);
 
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(1, 1, false);
 
 const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 500);
-camera.position.set(0, 34, 37);
+camera.position.set(0, 30, 42);
 
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
 controls.minDistance = 22;
 controls.maxDistance = 95;
-controls.target.set(2, 4, 0);
+controls.target.set(2, 1.6, 0);
+controls.update();
+
+const MAP_VIEW_BOUNDS = {
+  width: 86,
+  depth: 54,
+  target: new THREE.Vector3(2, 1.6, 0),
+  tiltDeg: 36,
+  margin: 1.16
+};
+let cameraFitted = false;
+let lastAspect = null;
+
+function fitCameraToMap(force = false) {
+  const width = Math.max(1, stageWrapEl?.clientWidth || canvas.clientWidth || 1);
+  const height = Math.max(1, stageWrapEl?.clientHeight || canvas.clientHeight || 1);
+  const aspect = width / height;
+  const majorAspectChange = lastAspect === null || Math.abs(aspect - lastAspect) > 0.26;
+  if (!force && cameraFitted && !majorAspectChange) {
+    lastAspect = aspect;
+    return;
+  }
+
+  const vFov = THREE.MathUtils.degToRad(camera.fov);
+  const hFov = 2 * Math.atan(Math.tan(vFov / 2) * aspect);
+  const fitDepthDistance = (MAP_VIEW_BOUNDS.depth * 0.62) / Math.tan(vFov / 2);
+  const fitWidthDistance = (MAP_VIEW_BOUNDS.width * 0.52) / Math.tan(hFov / 2);
+  const distance = Math.max(fitDepthDistance, fitWidthDistance) * MAP_VIEW_BOUNDS.margin;
+  const tilt = THREE.MathUtils.degToRad(MAP_VIEW_BOUNDS.tiltDeg);
+
+  controls.target.copy(MAP_VIEW_BOUNDS.target);
+  camera.position.set(
+    MAP_VIEW_BOUNDS.target.x,
+    MAP_VIEW_BOUNDS.target.y + Math.sin(tilt) * distance,
+    MAP_VIEW_BOUNDS.target.z + Math.cos(tilt) * distance
+  );
+  controls.minDistance = distance * 0.45;
+  controls.maxDistance = distance * 2.2;
+  controls.update();
+
+  cameraFitted = true;
+  lastAspect = aspect;
+}
 
 scene.add(new THREE.AmbientLight('#ffffff', 0.8));
 
@@ -807,14 +851,21 @@ function renderAll(state) {
 }
 
 function resizeRenderer() {
-  const width = canvas.clientWidth;
-  const height = canvas.clientHeight;
+  const rect = stageWrapEl?.getBoundingClientRect();
+  const width = Math.max(1, Math.floor(rect?.width || canvas.clientWidth || 1));
+  const height = Math.max(1, Math.floor(rect?.height || canvas.clientHeight || 1));
   renderer.setSize(width, height, false);
   camera.aspect = width / height;
   camera.updateProjectionMatrix();
+  fitCameraToMap(false);
 }
 
 window.addEventListener('resize', resizeRenderer);
+if (typeof ResizeObserver !== 'undefined' && stageWrapEl) {
+  const ro = new ResizeObserver(() => resizeRenderer());
+  ro.observe(stageWrapEl);
+}
+fitCameraToMap(true);
 resizeRenderer();
 
 function animate() {

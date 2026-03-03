@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
+import os from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import {
@@ -11,8 +12,30 @@ import { GLOBAL_SOCIAL_BASELINE, WORLD_REGIONS } from './data/world-context.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PORT = Number(process.env.PORT || 3000);
+const HOST = process.env.HOST || '0.0.0.0';
 const SUPPORTED_LOCALES = ['en', 'zh-CN', 'ja'];
 const DEFAULT_LOCALE = 'en';
+
+function resolveListenHostUrl(host) {
+  if (!host || host === '0.0.0.0' || host === '::') {
+    return `http://localhost:${PORT}`;
+  }
+  return `http://${host}:${PORT}`;
+}
+
+function getLanUrls(port) {
+  const interfaces = os.networkInterfaces();
+  const urls = [];
+  for (const list of Object.values(interfaces)) {
+    for (const info of list || []) {
+      if (info.internal || info.family !== 'IPv4') {
+        continue;
+      }
+      urls.push(`http://${info.address}:${port}`);
+    }
+  }
+  return urls;
+}
 
 function normalizeLocale(input) {
   if (!input || typeof input !== 'string') {
@@ -1693,6 +1716,12 @@ app.get('/api/simulation/state', (_req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+app.listen(PORT, HOST, () => {
+  console.log(`Server running at ${resolveListenHostUrl(HOST)}`);
+  if (HOST === '0.0.0.0' || HOST === '::') {
+    const lanUrls = getLanUrls(PORT);
+    if (lanUrls.length) {
+      console.log(`Local network access:\n- ${lanUrls.join('\n- ')}`);
+    }
+  }
 });

@@ -48,8 +48,9 @@ body {
   display: grid;
   grid-template-columns: 340px minmax(540px, 1fr) 380px;
   gap: 16px;
-  min-height: 100vh;
+  height: 100vh;
   padding: 16px;
+  overflow: hidden;
 }
 
 .panel,
@@ -427,7 +428,9 @@ select:focus {
   .layout {
     grid-template-columns: 1fr;
     grid-template-rows: auto minmax(520px, 60vh) auto;
+    height: auto;
     min-height: 100vh;
+    overflow: visible;
   }
 
   .stage-wrap {
