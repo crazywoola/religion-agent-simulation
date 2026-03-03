@@ -33,6 +33,34 @@ const regionSectionTitleEl = document.getElementById('regionSectionTitle');
 const transferSectionTitleEl = document.getElementById('transferSectionTitle');
 const logSectionTitleEl = document.getElementById('logSectionTitle');
 
+// New UI elements
+const signalSlidersEl = document.getElementById('signalSliders');
+const signalSectionTitleEl = document.getElementById('signalSectionTitle');
+const signalResetBtnEl = document.getElementById('signalResetBtn');
+const historyChartEl = document.getElementById('historyChart');
+const raceChartEl = document.getElementById('raceChart');
+const eventFeedEl = document.getElementById('eventFeed');
+const eventSectionTitleEl = document.getElementById('eventSectionTitle');
+const historySectionTitleEl = document.getElementById('historySectionTitle');
+const raceChartTitleEl = document.getElementById('raceChartTitle');
+const screenshotBtnEl = document.getElementById('screenshotBtn');
+// Modal elements
+const modalEl = document.getElementById('religionModal');
+const modalCloseEl = document.getElementById('modalClose');
+const modalTitleEl = document.getElementById('modalTitle');
+const modalFollowersEl = document.getElementById('modalFollowers');
+const modalDeltaEl = document.getElementById('modalDelta');
+const modalExitBarrierEl = document.getElementById('modalExitBarrier');
+const modalTraitsLabelEl = document.getElementById('modalTraitsLabel');
+const modalStrategyLabelEl = document.getElementById('modalStrategyLabel');
+const modalGovernanceLabelEl = document.getElementById('modalGovernanceLabel');
+const modalGovernanceEl = document.getElementById('modalGovernance');
+const modalDoctrineEl = document.getElementById('modalDoctrine');
+const modalClassicsEl = document.getElementById('modalClassics');
+const modalStrategyBarsEl = document.getElementById('modalStrategyBars');
+const modalRadarCanvas = document.getElementById('modalRadarCanvas');
+const modalHistoryCanvas = document.getElementById('modalHistoryCanvas');
+
 const savedLocale =
   typeof localStorage !== 'undefined' ? localStorage.getItem('app_locale') : null;
 const savedScenario =
@@ -46,6 +74,9 @@ let antClock = 0;
 let currentLocale = i18n.locale;
 let regionNodeLocale = i18n.locale;
 let activeLogFilter = 'all';
+let speedMultiplier = 1;
+let signalSliderDebounce = null;
+let currentModalReligionId = null;
 
 const RELIGION_EMOJI = {
   buddhism: '☸️',
@@ -70,9 +101,6 @@ function formatPercent(value, digits = 1) {
   return `${(Number(value) * 100).toFixed(digits)}%`;
 }
 
-function listJoin(items) {
-  return i18n.locale === 'en' ? items.join(', ') : items.join('、');
-}
 
 function religionLabel(religion) {
   return i18n.religionName(religion.id, religion.name);
@@ -118,6 +146,14 @@ function applyStaticI18n() {
   regionSectionTitleEl.textContent = i18n.t('section.regions');
   transferSectionTitleEl.textContent = i18n.t('section.transfers');
   logSectionTitleEl.textContent = i18n.t('section.logs');
+  if (historySectionTitleEl) historySectionTitleEl.textContent = i18n.t('section.history');
+  if (raceChartTitleEl) raceChartTitleEl.textContent = i18n.t('insight.dominantReligion').replace('Global ', '').replace('全局', '') || 'Ranking';
+  if (eventSectionTitleEl) eventSectionTitleEl.textContent = i18n.t('section.events');
+  if (signalSectionTitleEl) {
+    signalSectionTitleEl.querySelector('span').textContent = i18n.t('section.signals');
+  }
+  if (signalResetBtnEl) signalResetBtnEl.textContent = i18n.t('controls.signalReset');
+  if (screenshotBtnEl) screenshotBtnEl.title = i18n.t('controls.screenshot');
 
   for (const option of languageSelect.options) {
     option.textContent = getLocaleLabel(option.value);
@@ -131,6 +167,359 @@ function applyStaticI18n() {
   for (const option of logFilterSelect.options) {
     option.textContent = i18n.t(`logFilter.${option.value}`);
   }
+}
+
+// ─── History Trend Chart ──────────────────────────────────────────
+function renderHistoryChart(state) {
+  if (!historyChartEl || !state?.religions?.length) return;
+  const wrap = historyChartEl.parentElement;
+  const W = wrap.clientWidth || 300;
+  const H = 120;
+  historyChartEl.width = W;
+  historyChartEl.height = H;
+  const ctx = historyChartEl.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+
+  // Gather all history arrays (last 40 rounds)
+  const maxLen = 40;
+  const histories = state.religions.map((r) => (r.history || []).slice(-maxLen));
+  const allVals = histories.flat();
+  const minV = Math.min(...allVals) * 0.96;
+  const maxV = Math.max(...allVals) * 1.04;
+  const rangeV = maxV - minV || 1;
+
+  const pad = { l: 6, r: 6, t: 8, b: 8 };
+  const plotW = W - pad.l - pad.r;
+  const plotH = H - pad.t - pad.b;
+
+  // Draw a subtle grid
+  ctx.strokeStyle = 'rgba(46,54,95,0.08)';
+  ctx.lineWidth = 1;
+  for (let g = 0; g <= 4; g++) {
+    const y = pad.t + (plotH * g) / 4;
+    ctx.beginPath();
+    ctx.moveTo(pad.l, y);
+    ctx.lineTo(pad.l + plotW, y);
+    ctx.stroke();
+  }
+
+  // Draw each religion's line
+  for (let ri = 0; ri < state.religions.length; ri++) {
+    const religion = state.religions[ri];
+    const hist = histories[ri];
+    if (!hist.length) continue;
+    ctx.beginPath();
+    ctx.strokeStyle = religion.color;
+    ctx.lineWidth = religion.isSecular ? 2.5 : 1.5;
+    ctx.globalAlpha = 0.82;
+    hist.forEach((val, idx) => {
+      const x = pad.l + (idx / Math.max(hist.length - 1, 1)) * plotW;
+      const y = pad.t + plotH - ((val - minV) / rangeV) * plotH;
+      if (idx === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+    // Draw endpoint dot
+    const lastVal = hist[hist.length - 1];
+    const ex = pad.l + plotW;
+    const ey = pad.t + plotH - ((lastVal - minV) / rangeV) * plotH;
+    ctx.beginPath();
+    ctx.arc(ex, ey, 3, 0, Math.PI * 2);
+    ctx.fillStyle = religion.color;
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+// ─── Racing Bar Chart ─────────────────────────────────────────────
+function renderRaceChart(state) {
+  if (!raceChartEl || !state?.religions?.length) return;
+  const sorted = [...state.religions].sort((a, b) => b.followers - a.followers);
+  const maxF = sorted[0]?.followers || 1;
+  raceChartEl.innerHTML = sorted
+    .map((r) => {
+      const pct = Math.round((r.followers / maxF) * 100);
+      const deltaClass = r.delta >= 0 ? 'delta-up' : 'delta-down';
+      return `<div class="race-row">
+        <div class="race-name" title="${religionLabel(r)}">${religionEmoji(r)} ${religionLabel(r)}</div>
+        <div class="race-bar-track">
+          <div class="race-bar-fill" style="width:${pct}%;background:${r.color}"></div>
+        </div>
+        <div class="race-val ${deltaClass}">${i18n.number(r.followers)}</div>
+      </div>`;
+    })
+    .join('');
+}
+
+// ─── Event Feed (Breaking News) ───────────────────────────────────
+const EVENT_COLORS = {
+  religious_scandal: '#d14561',
+  digital_revival: '#3d9bd4',
+  political_persecution: '#8b3a3a',
+  migration_wave: '#2a9d8f',
+  economic_crisis: '#c4880a',
+  youth_awakening: '#6a5acd',
+  polarization_spike: '#e76f51',
+  pluralism_wave: '#239b5f',
+  climate_anxiety: '#607d8b',
+  institutional_reform: '#4a86b8'
+};
+
+function renderEventFeed(state) {
+  if (!eventFeedEl) return;
+  const history = state.eventHistory || [];
+  const active = state.activeEvents || [];
+
+  if (!history.length && !active.length) {
+    eventFeedEl.innerHTML = `<div class="muted" style="font-size:0.8rem;padding:6px">—</div>`;
+    return;
+  }
+
+  const activeStartRounds = new Set(active.map((a) => `${a.id}_${a.startRound}`));
+
+  const recentHistory = [...history].reverse().slice(0, 8);
+  eventFeedEl.innerHTML = recentHistory
+    .map((ev) => {
+      const isActive = activeStartRounds.has(`${ev.id}_${ev.round}`);
+      const color = EVENT_COLORS[ev.id] || '#607d8b';
+      const label = i18n.t(`event.${ev.id}`);
+      const shockText = Object.entries(ev.shock || {})
+        .slice(0, 2)
+        .map(([k, v]) => `${i18n.t(`signal.${k}`)} ${v > 0 ? '+' : ''}${(v * 100).toFixed(0)}%`)
+        .join(' · ');
+      return `<article class="event-item ${isActive ? 'is-active' : ''}" style="--event-color:${color}">
+        <div class="event-header">
+          <span class="event-badge" style="background:${color}">${isActive ? '🔴' : '◉'}</span>
+          <strong>${label}</strong>
+          <span class="event-round muted">R${ev.round}</span>
+        </div>
+        <div class="event-shock muted">${shockText}</div>
+      </article>`;
+    })
+    .join('');
+}
+
+// ─── Signal Sliders ───────────────────────────────────────────────
+const SIGNAL_KEYS = [
+  'digitalization','economicStress','migration','institutionalTrust',
+  'identityPolitics','youthPressure','meaningSearch','socialFragmentation',
+  'secularization','legalPluralism','mediaPolarization','stateRegulation'
+];
+
+function renderSignalSliders(state) {
+  if (!signalSlidersEl || !state?.socialSignals) return;
+  const signals = state.socialSignals;
+
+  signalSlidersEl.innerHTML = SIGNAL_KEYS.map((key) => {
+    const val = Number(signals[key] || 0.5);
+    const pct = Math.round(val * 100);
+    return `<div class="signal-row">
+      <div class="signal-row-top">
+        <span class="signal-label">${i18n.t(`signal.${key}`)}</span>
+        <span class="signal-val">${pct}%</span>
+      </div>
+      <input class="signal-slider" type="range" min="10" max="98" step="1"
+        data-key="${key}" value="${Math.round(val * 100)}" />
+    </div>`;
+  }).join('');
+
+  // Attach listeners
+  for (const input of signalSlidersEl.querySelectorAll('.signal-slider')) {
+    input.addEventListener('input', () => {
+      // Update display immediately
+      const row = input.closest('.signal-row');
+      if (row) row.querySelector('.signal-val').textContent = `${input.value}%`;
+
+      clearTimeout(signalSliderDebounce);
+      signalSliderDebounce = setTimeout(() => {
+        const overrides = {};
+        for (const s of signalSlidersEl.querySelectorAll('.signal-slider')) {
+          overrides[s.dataset.key] = Number(s.value) / 100;
+        }
+        postJson('/api/simulation/signals', { overrides }).catch(() => {});
+      }, 300);
+    });
+  }
+}
+
+// ─── Religion Detail Modal ────────────────────────────────────────
+const TRAIT_KEYS = ['communityService','digitalMission','ritualDepth','intellectualDialog','youthAppeal','identityBond','institutionCapacity'];
+const TRAIT_LABELS_SHORT = ['Comm','Digit','Ritual','Intel','Youth','Ident','Inst'];
+
+function drawRadarChart(canvasEl, values, color) {
+  const W = canvasEl.width;
+  const H = canvasEl.height;
+  const cx = W / 2;
+  const cy = H / 2;
+  const R = Math.min(cx, cy) - 22;
+  const N = values.length;
+  const ctx = canvasEl.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+
+  const angle0 = -Math.PI / 2;
+  function pt(i, r) {
+    const a = angle0 + (i / N) * Math.PI * 2;
+    return [cx + Math.cos(a) * r, cy + Math.sin(a) * r];
+  }
+
+  // Grid circles
+  for (let g = 1; g <= 4; g++) {
+    ctx.beginPath();
+    for (let i = 0; i <= N; i++) {
+      const [x, y] = pt(i % N, (R * g) / 4);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = 'rgba(46,54,95,0.12)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+  // Spokes
+  for (let i = 0; i < N; i++) {
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    const [x, y] = pt(i, R);
+    ctx.lineTo(x, y);
+    ctx.strokeStyle = 'rgba(46,54,95,0.14)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+  // Value polygon
+  ctx.beginPath();
+  values.forEach((v, i) => {
+    const [x, y] = pt(i, R * v);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.closePath();
+  ctx.fillStyle = color + '44';
+  ctx.fill();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  // Labels
+  ctx.fillStyle = '#2e365f';
+  ctx.font = `600 9.5px "Nunito", sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const labels = i18n.locale === 'zh-CN'
+    ? ['社群','数字','仪式','对话','青年','身份','组织']
+    : i18n.locale === 'ja'
+    ? ['奉仕','デジ','儀礼','対話','若者','身分','組織']
+    : TRAIT_LABELS_SHORT;
+  for (let i = 0; i < N; i++) {
+    const [x, y] = pt(i, R + 14);
+    ctx.fillText(labels[i], x, y);
+  }
+}
+
+function drawMiniLineChart(canvasEl, history, color) {
+  const W = canvasEl.width;
+  const H = canvasEl.height;
+  const ctx = canvasEl.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+  if (!history?.length) return;
+  const hist = history.slice(-50);
+  const minV = Math.min(...hist) * 0.97;
+  const maxV = Math.max(...hist) * 1.03;
+  const range = maxV - minV || 1;
+  const pad = { l: 4, r: 4, t: 6, b: 6 };
+  const pw = W - pad.l - pad.r;
+  const ph = H - pad.t - pad.b;
+
+  ctx.beginPath();
+  hist.forEach((v, i) => {
+    const x = pad.l + (i / Math.max(hist.length - 1, 1)) * pw;
+    const y = pad.t + ph - ((v - minV) / range) * ph;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Fill under
+  const lastX = pad.l + pw;
+  const baseY = pad.t + ph;
+  ctx.lineTo(lastX, baseY);
+  ctx.lineTo(pad.l, baseY);
+  ctx.closePath();
+  ctx.fillStyle = color + '28';
+  ctx.fill();
+}
+
+function openReligionModal(religion) {
+  if (!modalEl) return;
+  currentModalReligionId = religion.id;
+
+  modalTitleEl.textContent = `${religionEmoji(religion)} ${religionLabel(religion)}`;
+  modalFollowersEl.textContent = i18n.number(religion.followers);
+  const deltaClass = religion.delta >= 0 ? 'delta-up' : 'delta-down';
+  modalDeltaEl.className = `modal-stat-delta ${deltaClass}`;
+  modalDeltaEl.textContent = formatSigned(religion.delta);
+
+  // Exit barrier bar
+  const barrier = Math.round((religion.exitBarrier || 0) * 100);
+  modalExitBarrierEl.innerHTML = `
+    <div class="modal-exit-label">${i18n.t('modal.exitBarrier')} <strong>${barrier}%</strong></div>
+    <div class="modal-exit-bar-track">
+      <div class="modal-exit-bar-fill" style="width:${barrier}%;background:${religion.color}"></div>
+    </div>`;
+
+  // Labels
+  modalTraitsLabelEl.textContent = i18n.t('modal.traits');
+  modalStrategyLabelEl.textContent = i18n.t('modal.strategy');
+  modalGovernanceLabelEl.textContent = i18n.t('modal.governance');
+
+  // Radar
+  const traitVals = TRAIT_KEYS.map((k) => clampValue(Number(religion.traits?.[k] || 0.5), 0, 1));
+  drawRadarChart(modalRadarCanvas, traitVals, religion.color);
+
+  // Strategy bars
+  const channels = religion.strategy?.channels || {};
+  const sortedCh = Object.entries(channels).sort((a, b) => b[1] - a[1]);
+  modalStrategyBarsEl.innerHTML = sortedCh.map(([ch, val]) => {
+    const pct = Math.round(val * 100);
+    return `<div class="strat-row">
+      <span class="strat-label">${i18n.t(`signal.${ch === 'digital' ? 'digitalization' : ch === 'service' ? 'economicStress' : ch}`) || ch}</span>
+      <div class="strat-bar-track"><div class="strat-bar-fill" style="width:${Math.min(pct * 4, 100)}%;background:${religion.color}"></div></div>
+      <span class="strat-pct">${pct}%</span>
+    </div>`;
+  }).join('');
+
+  // Governance grid
+  const gov = religion.governance || {};
+  modalGovernanceEl.innerHTML = Object.entries(gov).map(([k, v]) => {
+    const pct = Math.round(Number(v) * 100);
+    const label = { orthodoxy: '正统', antiProselytization: '反传教', tribunalCapacity: '法庭', dueProcess: '程序正义' }[k] || k;
+    return `<div class="gov-item">
+      <div class="gov-label">${label}</div>
+      <div class="gov-val" style="color:${religion.color}">${pct}%</div>
+    </div>`;
+  }).join('');
+
+  // Doctrine & classics
+  modalDoctrineEl.textContent = religion.doctrineLong || religion.doctrine || '';
+  modalClassicsEl.textContent = Array.isArray(religion.classics) ? religion.classics.join(' · ') : '';
+
+  // Mini history chart
+  drawMiniLineChart(modalHistoryCanvas, religion.history || [], religion.color);
+
+  modalEl.hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+
+function closeReligionModal() {
+  if (modalEl) modalEl.hidden = true;
+  document.body.style.overflow = '';
+  currentModalReligionId = null;
+}
+
+// ─── Screenshot ───────────────────────────────────────────────────
+function takeScreenshot() {
+  const dataUrl = renderer.domElement.toDataURL('image/png');
+  const a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = `religion-sim-round-${liveState?.round || 0}.png`;
+  a.click();
 }
 
 function setLocale(locale, rerender = true) {
@@ -655,24 +1044,36 @@ function renderCards(state) {
   religionCardsEl.innerHTML = state.religions
     .map((religion) => {
       const deltaClass = religion.delta >= 0 ? 'delta-up' : 'delta-down';
-      const classicsText = Array.isArray(religion.classics)
-        ? listJoin(religion.classics)
-        : i18n.t('common.none');
+      const barrierPct = Math.round((religion.exitBarrier || 0) * 100);
       return `
-        <article class="religion-card" style="--tone:${religion.color}">
+        <article class="religion-card" style="--tone:${religion.color}" data-id="${religion.id}" tabindex="0" role="button">
           <div class="row-title">
             <span>${religionDisplay(religion)}</span>
             <span>${i18n.number(religion.followers)} <span class="${deltaClass}">(${formatSigned(religion.delta)})</span></span>
           </div>
           <div class="sub"><strong>${i18n.t('card.inOut')}：</strong>${religion.transferIn} / ${religion.transferOut}</div>
-          <div class="sub"><strong>${i18n.t('card.doctrine')}：</strong>${religion.doctrine}</div>
-          <div class="sub"><strong>${i18n.t('card.doctrineLong')}：</strong>${religion.doctrineLong || religion.doctrine}</div>
-          <div class="sub"><strong>${i18n.t('card.classics')}：</strong>${classicsText}</div>
+          <div class="card-barrier-bar" title="${i18n.t('modal.exitBarrier')} ${barrierPct}%">
+            <div class="card-barrier-fill" style="width:${barrierPct}%;background:${religion.color}88"></div>
+          </div>
           <div class="sub"><strong>${i18n.t('card.action')}：</strong>${religion.lastAction}</div>
         </article>
       `;
     })
     .join('');
+
+  // Attach click → modal
+  for (const card of religionCardsEl.querySelectorAll('.religion-card')) {
+    card.addEventListener('click', () => {
+      const r = state.religions.find((x) => x.id === card.dataset.id);
+      if (r) openReligionModal(r);
+    });
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        const r = state.religions.find((x) => x.id === card.dataset.id);
+        if (r) openReligionModal(r);
+      }
+    });
+  }
 }
 
 function renderRegionBoard(state) {
@@ -929,6 +1330,18 @@ function renderAll(state) {
   renderMapHud(state);
   updateMap(state);
   updateAntLinks(state);
+
+  // New panels
+  renderHistoryChart(state);
+  renderRaceChart(state);
+  renderEventFeed(state);
+  renderSignalSliders(state);
+
+  // If modal is open, refresh it with updated data
+  if (currentModalReligionId && !modalEl.hidden) {
+    const r = state.religions.find((x) => x.id === currentModalReligionId);
+    if (r) openReligionModal(r);
+  }
 }
 
 function resizeRenderer() {
@@ -1048,7 +1461,8 @@ function stopLoop() {
 
 function startLoop() {
   stopLoop();
-  const delay = Number(tickInput.value) || 5000;
+  const baseDelay = Number(tickInput.value) || 5000;
+  const delay = Math.max(400, Math.round(baseDelay / speedMultiplier));
 
   tickTimer = setInterval(async () => {
     try {
@@ -1104,6 +1518,43 @@ logFilterSelect.addEventListener('change', (event) => {
     renderLogs(liveState);
   }
 });
+
+// ── Speed buttons ──────────────────────────────────────────────────
+for (const btn of document.querySelectorAll('.speed-btn')) {
+  btn.addEventListener('click', () => {
+    speedMultiplier = Number(btn.dataset.speed) || 1;
+    document.querySelectorAll('.speed-btn').forEach((b) => b.classList.remove('active'));
+    btn.classList.add('active');
+    if (tickTimer) {
+      // Restart loop with new speed
+      startLoop();
+    }
+  });
+}
+
+// ── Modal close ────────────────────────────────────────────────────
+if (modalCloseEl) modalCloseEl.addEventListener('click', closeReligionModal);
+if (modalEl) {
+  modalEl.addEventListener('click', (e) => {
+    if (e.target === modalEl) closeReligionModal();
+  });
+}
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && modalEl && !modalEl.hidden) closeReligionModal();
+});
+
+// ── Screenshot ─────────────────────────────────────────────────────
+if (screenshotBtnEl) screenshotBtnEl.addEventListener('click', takeScreenshot);
+
+// ── Signal reset ───────────────────────────────────────────────────
+if (signalResetBtnEl) {
+  signalResetBtnEl.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!liveState) return;
+    // Force re-render sliders with current state values
+    renderSignalSliders(liveState);
+  });
+}
 
 if (savedScenario && [...scenarioSelect.options].some((option) => option.value === savedScenario)) {
   scenarioSelect.value = savedScenario;
