@@ -16,6 +16,7 @@
   </head>
   <body>
     <div class="layout">
+      <!-- ===== LEFT PANEL ===== -->
       <aside class="panel left">
         <h1 id="appTitle">Religion Agent Simulation</h1>
         <p class="hint" id="appHint">
@@ -24,8 +25,15 @@
         </p>
 
         <div class="controls">
-          <button id="startBtn">Start Simulation</button>
-          <button id="stopBtn" disabled>Pause</button>
+          <div class="btn-row">
+            <button id="startBtn">Start Simulation</button>
+            <button id="stopBtn" disabled>Pause</button>
+            <div class="speed-group">
+              <button class="speed-btn active" data-speed="1">1×</button>
+              <button class="speed-btn" data-speed="3">3×</button>
+              <button class="speed-btn" data-speed="10">10×</button>
+            </div>
+          </div>
           <label>
             <span id="languageLabel">Language</span>
             <select id="languageSelect">
@@ -55,21 +63,48 @@
 
         <div class="status" id="status">Status: Not started</div>
 
+        <!-- Signal Control Panel -->
+        <details class="signal-panel" id="signalPanel">
+          <summary id="signalSectionTitle">
+            <span>Signal Control</span>
+            <button class="signal-reset-btn" id="signalResetBtn" type="button">Reset</button>
+          </summary>
+          <div id="signalSliders" class="signal-sliders"></div>
+        </details>
+
+        <!-- Follower Trend Chart -->
+        <h2 id="historySectionTitle">Follower Trend</h2>
+        <div class="history-chart-wrap">
+          <canvas id="historyChart" class="history-chart"></canvas>
+        </div>
+
+        <!-- Racing Bar Chart -->
+        <h2 id="raceChartTitle">Ranking</h2>
+        <div id="raceChart" class="race-chart"></div>
+
         <h2 id="religionSectionTitle">Religion Profiles</h2>
         <div id="religionCards" class="religion-cards"></div>
       </aside>
 
+      <!-- ===== CENTER STAGE ===== -->
       <main class="stage-wrap">
         <canvas id="sceneCanvas"></canvas>
         <div class="map-hud">
           <div id="mapHudStats" class="map-hud-stats"></div>
           <div id="mapLegend" class="map-legend"></div>
         </div>
+        <!-- Screenshot button -->
+        <button id="screenshotBtn" class="screenshot-btn" title="Screenshot">📷</button>
       </main>
 
+      <!-- ===== RIGHT PANEL ===== -->
       <aside class="panel right">
         <h2 id="insightSectionTitle">Map Insights</h2>
         <div id="insightBoard" class="insight-board"></div>
+
+        <!-- Breaking Events Feed -->
+        <h2 id="eventSectionTitle">Breaking Events</h2>
+        <div id="eventFeed" class="event-feed"></div>
 
         <h2 id="regionSectionTitle">Regional Landscape</h2>
         <div id="regionBoard" class="region-board"></div>
@@ -88,6 +123,39 @@
         </label>
         <div id="logList" class="log-list"></div>
       </aside>
+    </div>
+
+    <!-- ===== RELIGION DETAIL MODAL ===== -->
+    <div id="religionModal" class="modal-overlay" hidden>
+      <div class="modal-box">
+        <div class="modal-header">
+          <span id="modalTitle" class="modal-title"></span>
+          <button id="modalClose" class="modal-close-btn">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="modal-left">
+            <div class="modal-stat-row">
+              <span id="modalFollowers" class="modal-stat-big"></span>
+              <span id="modalDelta" class="modal-stat-delta"></span>
+            </div>
+            <div id="modalExitBarrier" class="modal-exit-bar-wrap"></div>
+            <h3 id="modalTraitsLabel">Trait Radar</h3>
+            <canvas id="modalRadarCanvas" class="modal-radar" width="240" height="240"></canvas>
+            <h3 id="modalStrategyLabel">Strategy Channels</h3>
+            <div id="modalStrategyBars" class="modal-strategy-bars"></div>
+          </div>
+          <div class="modal-right">
+            <h3 id="modalGovernanceLabel">Governance</h3>
+            <div id="modalGovernance" class="modal-governance-grid"></div>
+            <h3>Doctrine</h3>
+            <p id="modalDoctrine" class="modal-doctrine"></p>
+            <h3>Classics</h3>
+            <p id="modalClassics" class="modal-classics"></p>
+            <h3 id="modalHistoryLabel">History</h3>
+            <canvas id="modalHistoryCanvas" class="modal-history" width="280" height="100"></canvas>
+          </div>
+        </div>
+      </div>
     </div>
 
     <script type="module" src="/main.js"></script>
