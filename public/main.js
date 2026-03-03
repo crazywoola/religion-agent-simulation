@@ -524,11 +524,32 @@ function closeReligionModal() {
 
 // ─── Screenshot ───────────────────────────────────────────────────
 function takeScreenshot() {
-  const dataUrl = renderer.domElement.toDataURL('image/png');
-  const a = document.createElement('a');
-  a.href = dataUrl;
-  a.download = `religion-sim-round-${liveState?.round || 0}.png`;
-  a.click();
+  // Force one render so the exported frame matches what user currently sees.
+  controls.update();
+  renderer.render(scene, camera);
+
+  const round = liveState?.round || 0;
+  const filename = `religion-sim-round-${round}.png`;
+  renderer.domElement.toBlob(
+    (blob) => {
+      if (!blob) {
+        const dataUrl = renderer.domElement.toDataURL('image/png');
+        const fallback = document.createElement('a');
+        fallback.href = dataUrl;
+        fallback.download = filename;
+        fallback.click();
+        return;
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    },
+    'image/png',
+    1
+  );
 }
 
 function setLocale(locale, rerender = true) {
@@ -560,7 +581,7 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color('#b9ced7');
 scene.fog = new THREE.Fog('#b9ced7', 28, 78);
 
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(1, 1, false);
 
