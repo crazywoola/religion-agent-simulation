@@ -20,6 +20,9 @@ English | [简体中文](./README.zh-CN.md) | [日本語](./README.ja.md)
 ## Welcome
 This project simulates how multiple religion agents influence each other over time while preserving a constant total population. The backend combines rule-based constraints with AI-generated structured transfer links, and the frontend visualizes conversion flows as animated ant-path lines on a 3D world map.
 
+## Full Game Screenshot
+![Full game screenshot](./assets/full-game-screenshot.png)
+
 ## Key Features
 - Multi-agent simulation for 8 religions (including Shinto).
 - Constant-total followers invariant (`sum followers` stays fixed each round).
