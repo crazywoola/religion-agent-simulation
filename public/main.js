@@ -1,10 +1,12 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { SUPPORTED_LOCALES, createI18n, getLocaleLabel, getPreferredLocale, normalizeLocale } from './i18n.js';
 
 const startBtn = document.getElementById('startBtn');
 const stopBtn = document.getElementById('stopBtn');
 const tickInput = document.getElementById('tickInput');
 const openaiToggle = document.getElementById('openaiToggle');
+const languageSelect = document.getElementById('languageSelect');
 const statusEl = document.getElementById('status');
 const religionCardsEl = document.getElementById('religionCards');
 const regionBoardEl = document.getElementById('regionBoard');
@@ -12,13 +14,94 @@ const transferBoardEl = document.getElementById('transferBoard');
 const logListEl = document.getElementById('logList');
 const canvas = document.getElementById('sceneCanvas');
 
+const appTitleEl = document.getElementById('appTitle');
+const appHintEl = document.getElementById('appHint');
+const languageLabelEl = document.getElementById('languageLabel');
+const tickLabelEl = document.getElementById('tickLabel');
+const openaiLabelEl = document.getElementById('openaiLabel');
+const religionSectionTitleEl = document.getElementById('religionSectionTitle');
+const regionSectionTitleEl = document.getElementById('regionSectionTitle');
+const transferSectionTitleEl = document.getElementById('transferSectionTitle');
+const logSectionTitleEl = document.getElementById('logSectionTitle');
+
+const savedLocale =
+  typeof localStorage !== 'undefined' ? localStorage.getItem('app_locale') : null;
+const i18n = createI18n(savedLocale || getPreferredLocale());
+
 let tickTimer = null;
 let liveState = null;
 let religionOrder = [];
 let antClock = 0;
+let currentLocale = i18n.locale;
+let regionNodeLocale = i18n.locale;
 
 function clampValue(value, min, max) {
   return Math.min(max, Math.max(min, value));
+}
+
+function formatSigned(value) {
+  return value >= 0 ? `+${value}` : `${value}`;
+}
+
+function listJoin(items) {
+  return i18n.locale === 'en' ? items.join(', ') : items.join('、');
+}
+
+function religionLabel(religion) {
+  return i18n.religionName(religion.id, religion.name);
+}
+
+function regionLabel(region) {
+  return i18n.regionName(region.id, region.name);
+}
+
+function applyStaticI18n() {
+  document.documentElement.lang = i18n.locale;
+  document.title = i18n.t('app.title');
+
+  appTitleEl.textContent = i18n.t('app.header');
+  appHintEl.textContent = i18n.t('app.hint');
+
+  startBtn.textContent = i18n.t('controls.start');
+  stopBtn.textContent = i18n.t('controls.stop');
+  languageLabelEl.textContent = i18n.t('controls.language');
+  tickLabelEl.textContent = i18n.t('controls.polling');
+  openaiLabelEl.textContent = i18n.t('controls.useOpenAI');
+
+  religionSectionTitleEl.textContent = i18n.t('section.religions');
+  regionSectionTitleEl.textContent = i18n.t('section.regions');
+  transferSectionTitleEl.textContent = i18n.t('section.transfers');
+  logSectionTitleEl.textContent = i18n.t('section.logs');
+
+  for (const option of languageSelect.options) {
+    option.textContent = getLocaleLabel(option.value);
+  }
+  languageSelect.value = i18n.locale;
+}
+
+function setLocale(locale, rerender = true) {
+  const next = normalizeLocale(locale);
+  if (!SUPPORTED_LOCALES.includes(next)) {
+    return;
+  }
+
+  i18n.setLocale(next);
+  currentLocale = next;
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem('app_locale', next);
+  }
+
+  applyStaticI18n();
+
+  if (!rerender) {
+    return;
+  }
+
+  if (liveState) {
+    renderAll(liveState);
+    return;
+  }
+  statusEl.textContent = i18n.t('status.notStarted');
 }
 
 const scene = new THREE.Scene();
@@ -209,7 +292,7 @@ function createRegionNode(region, religions) {
   dominant.position.y = 0.5;
   group.add(dominant);
 
-  const label = createTextSprite(region.name);
+  const label = createTextSprite(regionLabel(region));
   label.position.set(0, 2.9, 0);
   group.add(label);
 
@@ -272,8 +355,13 @@ function clearRegionNodes() {
 
 function ensureRegionNodes(state) {
   const key = state.religions.map((r) => r.id).join('|');
-  if (religionOrder.join('|') !== key || regionNodes.size !== state.regions.length) {
+  if (
+    religionOrder.join('|') !== key ||
+    regionNodes.size !== state.regions.length ||
+    regionNodeLocale !== currentLocale
+  ) {
     religionOrder = state.religions.map((r) => r.id);
+    regionNodeLocale = currentLocale;
     clearRegionNodes();
     state.regions.forEach((region) => createRegionNode(region, state.religions));
   }
@@ -424,19 +512,20 @@ function renderCards(state) {
   religionCardsEl.innerHTML = state.religions
     .map((religion) => {
       const deltaClass = religion.delta >= 0 ? 'delta-up' : 'delta-down';
-      const deltaSign = religion.delta >= 0 ? '+' : '';
-      const classicsText = Array.isArray(religion.classics) ? religion.classics.join('、') : '暂无';
+      const classicsText = Array.isArray(religion.classics)
+        ? listJoin(religion.classics)
+        : i18n.t('common.none');
       return `
         <article class="religion-card" style="--tone:${religion.color}">
           <div class="row-title">
-            <span>${religion.name}</span>
-            <span>${religion.followers.toLocaleString()} <span class="${deltaClass}">(${deltaSign}${religion.delta})</span></span>
+            <span>${religionLabel(religion)}</span>
+            <span>${i18n.number(religion.followers)} <span class="${deltaClass}">(${formatSigned(religion.delta)})</span></span>
           </div>
-          <div class="sub"><strong>同化流入/流出：</strong>${religion.transferIn} / ${religion.transferOut}</div>
-          <div class="sub"><strong>教义：</strong>${religion.doctrine}</div>
-          <div class="sub"><strong>长描述：</strong>${religion.doctrineLong || religion.doctrine}</div>
-          <div class="sub"><strong>经典著作：</strong>${classicsText}</div>
-          <div class="sub"><strong>本轮行为：</strong>${religion.lastAction}</div>
+          <div class="sub"><strong>${i18n.t('card.inOut')}：</strong>${religion.transferIn} / ${religion.transferOut}</div>
+          <div class="sub"><strong>${i18n.t('card.doctrine')}：</strong>${religion.doctrine}</div>
+          <div class="sub"><strong>${i18n.t('card.doctrineLong')}：</strong>${religion.doctrineLong || religion.doctrine}</div>
+          <div class="sub"><strong>${i18n.t('card.classics')}：</strong>${classicsText}</div>
+          <div class="sub"><strong>${i18n.t('card.action')}：</strong>${religion.lastAction}</div>
         </article>
       `;
     })
@@ -444,18 +533,24 @@ function renderCards(state) {
 }
 
 function renderRegionBoard(state) {
+  const religionById = new Map(state.religions.map((religion) => [religion.id, religion]));
+
   regionBoardEl.innerHTML = state.regions
     .map((region) => {
       const top = region.distribution[0];
+      const topReligion = religionById.get(top.id);
       const percent = Math.round(top.share * 1000) / 10;
       const intensity = Math.round(region.competitionIndex * 100);
       return `
         <article class="region-item">
           <div class="region-head">
-            <span>${region.name}</span>
-            <span>${top.name} ${percent}%</span>
+            <span>${regionLabel(region)}</span>
+            <span>${religionLabel(topReligion || { id: top.id, name: top.name })} ${percent}%</span>
           </div>
-          <div class="sub muted">区域规模：${region.totalFollowers.toLocaleString()}，竞争强度：${intensity}%</div>
+          <div class="sub muted">${i18n.t('region.summary', {
+            total: i18n.number(region.totalFollowers),
+            intensity
+          })}</div>
           <div class="region-bar"><div class="region-bar-fill" style="width:${Math.min(100, intensity)}%"></div></div>
         </article>
       `;
@@ -465,48 +560,71 @@ function renderRegionBoard(state) {
 
 function renderTransferBoard(state) {
   if (!state.topTransfers.length) {
-    transferBoardEl.innerHTML = '<div class="muted">暂无转移链路</div>';
+    transferBoardEl.innerHTML = `<div class="muted">${i18n.t('transfer.empty')}</div>`;
     return;
   }
 
+  const religionById = new Map(state.religions.map((religion) => [religion.id, religion]));
+
   transferBoardEl.innerHTML = state.topTransfers
     .slice(0, 12)
-    .map(
-      (item) => `
+    .map((item) => {
+      const fromReligion = religionById.get(item.fromId);
+      const toReligion = religionById.get(item.toId);
+      const sourceLabel = i18n.t(item.source === 'ai' ? 'transfer.ai' : 'transfer.rule');
+      return `
       <article class="transfer-item">
-        <div><strong>${item.from}</strong> -> <strong>${item.to}</strong>：${item.amount} 人</div>
-        <div class="muted">[${item.source === 'ai' ? 'AI' : '规则'}] ${item.reason}</div>
+        <div><strong>${religionLabel(fromReligion || { id: item.fromId, name: item.from })}</strong> -> <strong>${religionLabel(toReligion || { id: item.toId, name: item.to })}</strong>：${i18n.number(item.amount)}</div>
+        <div class="muted">[${sourceLabel}] ${item.reason}</div>
       </article>
-    `
-    )
+    `;
+    })
     .join('');
 }
 
 function renderLogs(state) {
+  const religionById = new Map(state.religions.map((religion) => [religion.id, religion]));
   const recent = state.logs.slice(-24).reverse();
+
   logListEl.innerHTML = recent
-    .map(
-      (log) => `
+    .map((log) => {
+      const religion = log.religionId ? religionById.get(log.religionId) : null;
+      const title = i18n.t('log.header', {
+        round: log.round,
+        time: i18n.time(log.time),
+        name: religion ? religionLabel(religion) : log.name
+      });
+      const delta = formatSigned(log.delta);
+      const net = i18n.t('log.net', {
+        delta,
+        inflow: log.transferIn,
+        outflow: log.transferOut
+      });
+      return `
       <article class="log-item">
-        <div class="log-meta">第 ${log.round} 轮 · ${new Date(log.time).toLocaleTimeString()} · ${log.name}</div>
+        <div class="log-meta">${title}</div>
         <div>${log.action}</div>
-        <div class="log-meta">净变化：${log.delta >= 0 ? '+' : ''}${log.delta}（流入 ${log.transferIn} / 流出 ${log.transferOut}）</div>
+        <div class="log-meta">${net}</div>
       </article>
-    `
-    )
+    `;
+    })
     .join('');
 }
 
 function renderAll(state) {
   liveState = state;
-  const invariant = state.invariantOk ? '恒定' : '异常';
-  const engine =
-    state.transferEngine === 'ai'
-      ? 'AI'
-      : state.transferEngine === 'hybrid'
-        ? '混合'
-        : '规则';
-  statusEl.textContent = `状态：运行中（第 ${state.round} 轮） | 总信徒 ${state.totalFollowers} / ${state.targetTotalFollowers} (${invariant}) | 转化引擎: ${engine} | OpenAI: ${state.useOpenAI ? '开启' : '关闭'}`;
+  const invariant = i18n.t(state.invariantOk ? 'status.invariantFixed' : 'status.invariantAbnormal');
+  const engine = i18n.t(`engine.${state.transferEngine || 'rule'}`);
+  const openai = i18n.t(state.useOpenAI ? 'common.on' : 'common.off');
+  statusEl.textContent = i18n.t('status.running', {
+    round: state.round,
+    total: i18n.number(state.totalFollowers),
+    target: i18n.number(state.targetTotalFollowers),
+    invariant,
+    engine,
+    openai
+  });
+
   renderCards(state);
   renderRegionBoard(state);
   renderTransferBoard(state);
@@ -581,13 +699,16 @@ async function postJson(url, body = {}) {
 
 async function startSimulation() {
   const snapshot = await postJson('/api/simulation/start', {
-    useOpenAI: openaiToggle.checked
+    useOpenAI: openaiToggle.checked,
+    locale: i18n.locale
   });
   renderAll(snapshot);
 }
 
 async function tickSimulation() {
-  const snapshot = await postJson('/api/simulation/tick');
+  const snapshot = await postJson('/api/simulation/tick', {
+    locale: i18n.locale
+  });
   renderAll(snapshot);
 }
 
@@ -606,7 +727,7 @@ function startLoop() {
     try {
       await tickSimulation();
     } catch (err) {
-      statusEl.textContent = `状态：错误 - ${err.message}`;
+      statusEl.textContent = i18n.t('status.error', { message: err.message });
       stopLoop();
       stopBtn.disabled = true;
       startBtn.disabled = false;
@@ -617,13 +738,13 @@ function startLoop() {
 startBtn.addEventListener('click', async () => {
   startBtn.disabled = true;
   stopBtn.disabled = false;
-  statusEl.textContent = '状态：初始化中...';
+  statusEl.textContent = i18n.t('status.initializing');
 
   try {
     await startSimulation();
     startLoop();
   } catch (err) {
-    statusEl.textContent = `状态：启动失败 - ${err.message}`;
+    statusEl.textContent = i18n.t('status.startFailed', { message: err.message });
     startBtn.disabled = false;
     stopBtn.disabled = true;
   }
@@ -634,10 +755,15 @@ stopBtn.addEventListener('click', () => {
   stopBtn.disabled = true;
   startBtn.disabled = false;
   if (liveState) {
-    statusEl.textContent = `状态：已暂停（停在第 ${liveState.round} 轮）`;
+    statusEl.textContent = i18n.t('status.pausedRound', { round: liveState.round });
   } else {
-    statusEl.textContent = '状态：已暂停';
+    statusEl.textContent = i18n.t('status.paused');
   }
 });
 
-statusEl.textContent = '状态：未开始';
+languageSelect.addEventListener('change', (event) => {
+  setLocale(event.target.value, true);
+});
+
+setLocale(i18n.locale, false);
+statusEl.textContent = i18n.t('status.notStarted');

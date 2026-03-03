@@ -14,6 +14,7 @@
 ## 核心能力
 - 覆盖 8 个宗教（含日本神道教）。
 - 总人数恒定约束（每轮只发生宗教间迁移）。
+- 内置 i18n（`en`、`zh-CN`、`ja`），支持运行时切换语言。
 - 混合转化引擎：
   - 规则引擎生成基准链路。
   - OpenAI Agent 输出结构化转化数量。
@@ -46,8 +47,8 @@ npm run dev
 - `PORT`
 
 ## API
-- `POST /api/simulation/start` body: `{ "useOpenAI": true | false }`
-- `POST /api/simulation/tick`
+- `POST /api/simulation/start` body: `{ "useOpenAI": true | false, "locale": "en|zh-CN|ja" }`
+- `POST /api/simulation/tick` body: `{ "locale": "en|zh-CN|ja" }`
 - `GET /api/simulation/state`
 - `GET /api/health`
 

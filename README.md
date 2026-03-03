@@ -23,6 +23,7 @@ This project simulates how multiple religion agents influence each other over ti
 ## Key Features
 - Multi-agent simulation for 8 religions (including Shinto).
 - Constant-total followers invariant (`sum followers` stays fixed each round).
+- Built-in i18n UI (`en`, `zh-CN`, `ja`) with runtime language switch.
 - Hybrid transfer engine:
   - Rule engine computes baseline transfers.
   - OpenAI transfer agent outputs `structureOutput.links` with structured quantities.
@@ -78,8 +79,9 @@ See `.env.example`:
 
 ## API
 - `POST /api/simulation/start`
-  - body: `{ "useOpenAI": true | false }`
+  - body: `{ "useOpenAI": true | false, "locale": "en|zh-CN|ja" }`
 - `POST /api/simulation/tick`
+  - body: `{ "locale": "en|zh-CN|ja" }`
 - `GET /api/simulation/state`
 - `GET /api/health`
 

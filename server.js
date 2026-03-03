@@ -11,6 +11,35 @@ import { GLOBAL_SOCIAL_BASELINE, WORLD_REGIONS } from './data/world-context.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PORT = Number(process.env.PORT || 3000);
+const SUPPORTED_LOCALES = ['en', 'zh-CN', 'ja'];
+const DEFAULT_LOCALE = 'en';
+
+function normalizeLocale(input) {
+  if (!input || typeof input !== 'string') {
+    return DEFAULT_LOCALE;
+  }
+  if (SUPPORTED_LOCALES.includes(input)) {
+    return input;
+  }
+  const low = input.toLowerCase();
+  if (low.startsWith('zh')) {
+    return 'zh-CN';
+  }
+  if (low.startsWith('ja')) {
+    return 'ja';
+  }
+  return 'en';
+}
+
+function localeName(locale) {
+  if (locale === 'zh-CN') {
+    return 'Simplified Chinese';
+  }
+  if (locale === 'ja') {
+    return 'Japanese';
+  }
+  return 'English';
+}
 
 function randomIn(min, max) {
   return min + (max - min) * Math.random();
@@ -109,17 +138,82 @@ function parseJsonPayload(rawContent) {
   return null;
 }
 
-function localActionText(agent, transfer) {
-  const movement = transfer.net >= 0 ? '净流入' : '净流出';
+function localActionText(agent, transfer, locale = DEFAULT_LOCALE) {
+  const lang = normalizeLocale(locale);
+
+  if (lang === 'zh-CN') {
+    const movement = transfer.net >= 0 ? '净流入' : '净流出';
+    const moves = [
+      '发起公开讲座与社群问答',
+      '强化基层社群互助和探访',
+      '围绕核心教义开展线上传播',
+      '通过公益项目提升可见度',
+      '针对青年群体进行价值沟通'
+    ];
+    const pick = moves[Math.floor(Math.random() * moves.length)];
+    return `${pick}，本轮${movement}${Math.abs(transfer.net)}人。`;
+  }
+
+  if (lang === 'ja') {
+    const movement = transfer.net >= 0 ? '純流入' : '純流出';
+    const moves = [
+      '公開講座とコミュニティQ&Aを実施',
+      '地域相互扶助と訪問活動を強化',
+      '教義コアを中心にオンライン発信を展開',
+      '公益プロジェクトで可視性を向上',
+      '若年層向けに価値対話を実施'
+    ];
+    const pick = moves[Math.floor(Math.random() * moves.length)];
+    return `${pick}。このラウンドの${movement}は${Math.abs(transfer.net)}人。`;
+  }
+
+  const movement = transfer.net >= 0 ? 'net inflow' : 'net outflow';
   const moves = [
-    '发起公开讲座与社群问答',
-    '强化基层社群互助和探访',
-    '围绕核心教义开展线上传播',
-    '通过公益项目提升可见度',
-    '针对青年群体进行价值沟通'
+    'Hosted public talks and community Q&A sessions',
+    'Strengthened local mutual-aid and outreach visits',
+    'Launched online campaigns around core doctrines',
+    'Improved visibility through public service initiatives',
+    'Focused value-dialogue activities for youth groups'
   ];
   const pick = moves[Math.floor(Math.random() * moves.length)];
-  return `${pick}，本轮${movement}${Math.abs(transfer.net)}人。`;
+  return `${pick}. ${movement}: ${Math.abs(transfer.net)} followers this round.`;
+}
+
+function localizedReasonLabel(reasonKey, locale = DEFAULT_LOCALE) {
+  const lang = normalizeLocale(locale);
+  const labels = {
+    digital_spread: {
+      en: 'Digital outreach expansion',
+      'zh-CN': '数字化传播扩散',
+      ja: 'デジタル発信の拡張'
+    },
+    community_service: {
+      en: 'Community service attraction',
+      'zh-CN': '社群服务吸引',
+      ja: '地域奉仕による吸引'
+    },
+    identity_shift: {
+      en: 'Identity realignment',
+      'zh-CN': '身份认同重组',
+      ja: 'アイデンティティ再編'
+    },
+    meaning_search: {
+      en: 'Growing search for meaning',
+      'zh-CN': '意义感寻求增强',
+      ja: '意味追求の高まり'
+    },
+    youth_resonance: {
+      en: 'Youth issue resonance',
+      'zh-CN': '青年议题共鸣',
+      ja: '若年層課題との共鳴'
+    },
+    institutional_pull: {
+      en: 'Institutional network pull',
+      'zh-CN': '制度型组织吸纳',
+      ja: '制度ネットワークの吸引'
+    }
+  };
+  return labels[reasonKey]?.[lang] || labels[reasonKey]?.en || reasonKey;
 }
 
 function allocateByScore(total, scoredItems) {
@@ -350,12 +444,13 @@ class OpenAIClient {
     }
   }
 
-  async generateRoundActions(round, agents, socialSignals, topTransfers) {
+  async generateRoundActions(round, agents, socialSignals, topTransfers, locale = DEFAULT_LOCALE) {
     if (!this.enabled) {
       return null;
     }
 
-    const prompt = `第 ${round} 轮“宗教同化转移”模拟。请为每个宗教生成一句传教行为日志。\n输出严格 JSON 数组，不要 markdown。\n\n格式：\n[\n  {"name":"宗教名","action":"20~40 字中文"}\n]\n\n社会变量：${JSON.stringify(socialSignals)}\n关键转移：${JSON.stringify(topTransfers.slice(0, 6))}\n宗教数据：${JSON.stringify(
+    const lang = normalizeLocale(locale);
+    const prompt = `Round ${round} in religion assimilation simulation.\nReturn strict JSON array only (no markdown).\n\nSchema:\n[\n  {"name":"religion name","action":"one short sentence"}\n]\n\nRequirements:\n1) Use exactly these religion names: ${agents.map((a) => a.name).join(', ')}\n2) Write action text in ${localeName(lang)}\n3) Keep neutral and respectful tone\n\nsocialSignals=${JSON.stringify(socialSignals)}\nkeyTransfers=${JSON.stringify(topTransfers.slice(0, 6))}\nreligionState=${JSON.stringify(
       agents.map((a) => ({
         name: a.name,
         followers: a.followers,
@@ -372,7 +467,8 @@ class OpenAIClient {
         [
           {
             role: 'system',
-            content: '你是模拟日志生成器。保持中立和尊重，只输出合法 JSON。'
+            content:
+              'You are a simulation log generator. Return valid JSON only, no prose, no markdown.'
           },
           { role: 'user', content: prompt }
         ],
@@ -397,11 +493,18 @@ class OpenAIClient {
     }
   }
 
-  async generateTransferStructure(round, agents, socialSignals, baselineTransfers) {
+  async generateTransferStructure(
+    round,
+    agents,
+    socialSignals,
+    baselineTransfers,
+    locale = DEFAULT_LOCALE
+  ) {
     if (!this.enabled || !this.transferAgentEnabled) {
       return null;
     }
 
+    const lang = normalizeLocale(locale);
     const religionNames = agents.map((a) => a.name).join(', ');
     const agentState = agents.map((a) => ({
       name: a.name,
@@ -433,6 +536,7 @@ Rules:
 3) amount must be positive integer, recommended 20-420
 4) Return 10-18 links
 5) Use social signals and baseline links as priors
+6) reason must be in ${localeName(lang)}
 
 socialSignals=${JSON.stringify(socialSignals)}
 baselineLinks=${JSON.stringify(baselineTransfers.slice(0, 12))}
@@ -549,38 +653,38 @@ class ReligionSimulation {
     return outreachPower * susceptibility * bridge * momentum * randomIn(0.86, 1.16);
   }
 
-  transferReason(source, target, socialSignals) {
+  transferReason(source, target, socialSignals, locale = DEFAULT_LOCALE) {
     const reasons = [
       {
-        label: '数字化传播扩散',
+        key: 'digital_spread',
         value: source.traits.digitalMission * socialSignals.digitalization
       },
       {
-        label: '社群服务吸引',
+        key: 'community_service',
         value: source.traits.communityService * socialSignals.economicStress
       },
       {
-        label: '身份认同重组',
+        key: 'identity_shift',
         value: source.traits.identityBond * socialSignals.identityPolitics
       },
       {
-        label: '意义感寻求增强',
+        key: 'meaning_search',
         value: source.traits.ritualDepth * socialSignals.meaningSearch
       },
       {
-        label: '青年议题共鸣',
+        key: 'youth_resonance',
         value: source.traits.youthAppeal * socialSignals.youthPressure
       },
       {
-        label: '制度型组织吸纳',
+        key: 'institutional_pull',
         value: source.traits.institutionCapacity * socialSignals.institutionalTrust
       }
     ].sort((a, b) => b.value - a.value);
 
-    return `${target.name} -> ${source.name}：${reasons[0].label}`;
+    return localizedReasonLabel(reasons[0].key, locale);
   }
 
-  computeTransferPlan(agents, socialSignals) {
+  computeTransferPlan(agents, socialSignals, locale = DEFAULT_LOCALE) {
     const deltas = new Map(agents.map((agent) => [agent.id, 0]));
     const events = [];
 
@@ -635,7 +739,7 @@ class ReligionSimulation {
           toId: item.source.id,
           toName: item.source.name,
           amount,
-          reason: this.transferReason(item.source, target, socialSignals)
+          reason: this.transferReason(item.source, target, socialSignals, locale)
         });
       }
     }
@@ -667,7 +771,13 @@ class ReligionSimulation {
     return budgets;
   }
 
-  computeTransferPlanFromStructure(agents, socialSignals, aiLinks, fallbackEvents) {
+  computeTransferPlanFromStructure(
+    agents,
+    socialSignals,
+    aiLinks,
+    fallbackEvents,
+    locale = DEFAULT_LOCALE
+  ) {
     const budgets = this.buildOutBudgets(agents, socialSignals);
     const agentById = new Map(agents.map((a) => [a.id, a]));
     const nameToAgent = new Map(agents.map((a) => [a.name, a]));
@@ -705,7 +815,7 @@ class ReligionSimulation {
           toId: toAgent.id,
           toName: toAgent.name,
           amount,
-          reason: reason || `${fromAgent.name} -> ${toAgent.name}：结构化同化`,
+          reason: reason || localizedReasonLabel('digital_spread', locale),
           source: sourceTag
         });
       }
@@ -958,8 +1068,21 @@ class ReligionSimulation {
     };
   }
 
-  async start({ useOpenAI = true } = {}) {
+  async start({ useOpenAI = true, locale = DEFAULT_LOCALE } = {}) {
     this.openaiClient.setEnabled(useOpenAI);
+    const resolvedLocale = normalizeLocale(locale);
+    const initPrefix =
+      resolvedLocale === 'zh-CN'
+        ? '初始化：'
+        : resolvedLocale === 'ja'
+          ? '初期化：'
+          : 'Initialized: ';
+    const initialActionTemplate =
+      resolvedLocale === 'zh-CN'
+        ? '{name}建立传播策略，并围绕核心教义组织社群。'
+        : resolvedLocale === 'ja'
+          ? '{name}は布教戦略を策定し、教義の核に沿ってコミュニティ活動を開始した。'
+          : '{name} established a mission strategy aligned with its core doctrines.';
 
     const seeds = this.buildSeedAgents();
     const generated = await this.openaiClient.generateProfiles(seeds);
@@ -973,7 +1096,7 @@ class ReligionSimulation {
       topFrom: null,
       topTo: null,
       history: [INITIAL_FOLLOWERS_PER_RELIGION],
-      lastAction: `${item.name}建立传播策略，并围绕核心教义组织社群。`
+      lastAction: initialActionTemplate.replace('{name}', item.name)
     }));
 
     const startedAt = new Date().toISOString();
@@ -986,6 +1109,7 @@ class ReligionSimulation {
       round: 0,
       startedAt,
       updatedAt: startedAt,
+      locale: resolvedLocale,
       socialSignals,
       agents,
       regions,
@@ -995,8 +1119,9 @@ class ReligionSimulation {
       logs: agents.map((agent) => ({
         round: 0,
         time: startedAt,
+        religionId: agent.id,
         name: agent.name,
-        action: `初始化：${agent.style}`,
+        action: `${initPrefix}${agent.style}`,
         delta: 0,
         transferIn: 0,
         transferOut: 0,
@@ -1014,23 +1139,29 @@ class ReligionSimulation {
     return this.state;
   }
 
-  async tick() {
+  async tick({ locale } = {}) {
     const state = this.ensureState();
     state.round += 1;
+    if (locale) {
+      state.locale = normalizeLocale(locale);
+    }
+    const activeLocale = normalizeLocale(state.locale || DEFAULT_LOCALE);
     state.socialSignals = this.driftSocialSignals(state.socialSignals);
 
-    const rulePlan = this.computeTransferPlan(state.agents, state.socialSignals);
+    const rulePlan = this.computeTransferPlan(state.agents, state.socialSignals, activeLocale);
     const aiLinks = await this.openaiClient.generateTransferStructure(
       state.round,
       state.agents,
       state.socialSignals,
-      rulePlan.events
+      rulePlan.events,
+      activeLocale
     );
     const { deltas, events, engine } = this.computeTransferPlanFromStructure(
       state.agents,
       state.socialSignals,
       aiLinks,
-      rulePlan.events
+      rulePlan.events,
+      activeLocale
     );
     state.transferEngine = engine;
 
@@ -1061,16 +1192,19 @@ class ReligionSimulation {
       state.round,
       state.agents,
       state.socialSignals,
-      state.topTransfers
+      state.topTransfers,
+      activeLocale
     );
 
     const now = new Date().toISOString();
     for (const agent of state.agents) {
-      const action = actionMap?.get(agent.name) || localActionText(agent, { net: agent.delta });
+      const action =
+        actionMap?.get(agent.name) || localActionText(agent, { net: agent.delta }, activeLocale);
       agent.lastAction = action;
       state.logs.push({
         round: state.round,
         time: now,
+        religionId: agent.id,
         name: agent.name,
         action,
         delta: agent.delta,
@@ -1103,6 +1237,7 @@ class ReligionSimulation {
       round: state.round,
       startedAt: state.startedAt,
       updatedAt: state.updatedAt,
+      locale: state.locale || DEFAULT_LOCALE,
       useOpenAI: this.openaiClient.enabled,
       totalFollowers,
       invariantOk: totalFollowers === this.totalFollowers,
@@ -1155,16 +1290,18 @@ app.get('/api/health', (_req, res) => {
 app.post('/api/simulation/start', async (req, res) => {
   try {
     const useOpenAI = req.body?.useOpenAI !== false;
-    const snapshot = await simulation.start({ useOpenAI });
+    const locale = normalizeLocale(req.body?.locale || DEFAULT_LOCALE);
+    const snapshot = await simulation.start({ useOpenAI, locale });
     res.json(snapshot);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-app.post('/api/simulation/tick', async (_req, res) => {
+app.post('/api/simulation/tick', async (req, res) => {
   try {
-    const snapshot = await simulation.tick();
+    const locale = normalizeLocale(req.body?.locale || DEFAULT_LOCALE);
+    const snapshot = await simulation.tick({ locale });
     res.json(snapshot);
   } catch (err) {
     res.status(400).json({ message: err.message });

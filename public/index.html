@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OpenAI 多宗教 Agent 模拟器</title>
+    <title>OpenAI Multi-Religion Agent Simulator</title>
     <link rel="stylesheet" href="/style.css" />
     <script type="importmap">
       {
@@ -17,27 +17,36 @@
   <body>
     <div class="layout">
       <aside class="panel left">
-        <h1>宗教 Agent 模拟</h1>
-        <p class="hint">
-          每个宗教初始 10000 信徒。系统仅模拟宗教间同化/流失，<strong>总信徒恒定不变</strong>。
+        <h1 id="appTitle">Religion Agent Simulation</h1>
+        <p class="hint" id="appHint">
+          Each religion starts with 10,000 followers. The system simulates only assimilation/loss
+          across religions, while the total population remains constant.
         </p>
 
         <div class="controls">
-          <button id="startBtn">开始模拟</button>
-          <button id="stopBtn" disabled>暂停</button>
+          <button id="startBtn">Start Simulation</button>
+          <button id="stopBtn" disabled>Pause</button>
           <label>
-            轮询间隔(ms)
+            <span id="languageLabel">Language</span>
+            <select id="languageSelect">
+              <option value="en">English</option>
+              <option value="zh-CN">简体中文</option>
+              <option value="ja">日本語</option>
+            </select>
+          </label>
+          <label>
+            <span id="tickLabel">Tick Interval (ms)</span>
             <input id="tickInput" type="number" value="2000" min="800" max="10000" step="200" />
           </label>
           <label class="switch">
             <input id="openaiToggle" type="checkbox" checked />
-            <span>使用 OpenAI API 生成教义/传教日志</span>
+            <span id="openaiLabel">Use OpenAI API for doctrine/action generation</span>
           </label>
         </div>
 
-        <div class="status" id="status">状态：未开始</div>
+        <div class="status" id="status">Status: Not started</div>
 
-        <h2>宗教信息</h2>
+        <h2 id="religionSectionTitle">Religion Profiles</h2>
         <div id="religionCards" class="religion-cards"></div>
       </aside>
 
@@ -46,13 +55,13 @@
       </main>
 
       <aside class="panel right">
-        <h2>区域格局</h2>
+        <h2 id="regionSectionTitle">Regional Landscape</h2>
         <div id="regionBoard" class="region-board"></div>
 
-        <h2>关键同化链路</h2>
+        <h2 id="transferSectionTitle">Key Assimilation Links</h2>
         <div id="transferBoard" class="transfer-board"></div>
 
-        <h2>传教日志</h2>
+        <h2 id="logSectionTitle">Mission Logs</h2>
         <div id="logList" class="log-list"></div>
       </aside>
     </div>
