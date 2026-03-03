@@ -138,8 +138,25 @@ function parseJsonPayload(rawContent) {
   return null;
 }
 
+function localizedStrategyChannel(channel, locale = DEFAULT_LOCALE) {
+  const lang = normalizeLocale(locale);
+  const labels = {
+    digital: { en: 'digital', 'zh-CN': '数字传播', ja: 'デジタル発信' },
+    service: { en: 'community service', 'zh-CN': '社群服务', ja: '地域奉仕' },
+    ritual: { en: 'ritual practice', 'zh-CN': '仪式实践', ja: '儀礼実践' },
+    intellectual: { en: 'public dialogue', 'zh-CN': '公共对话', ja: '公共対話' },
+    youth: { en: 'youth engagement', 'zh-CN': '青年触达', ja: '若年層接点' },
+    identity: { en: 'identity bonding', 'zh-CN': '身份凝聚', ja: 'アイデンティティ結束' },
+    institution: { en: 'institutional network', 'zh-CN': '组织网络', ja: '制度ネットワーク' }
+  };
+  return labels[channel]?.[lang] || labels[channel]?.en || channel;
+}
+
 function localActionText(agent, transfer, locale = DEFAULT_LOCALE) {
   const lang = normalizeLocale(locale);
+  const focus = Array.isArray(agent.strategyFocus)
+    ? agent.strategyFocus.slice(0, 2).map((item) => localizedStrategyChannel(item, lang))
+    : [];
 
   if (lang === 'zh-CN') {
     const movement = transfer.net >= 0 ? '净流入' : '净流出';
@@ -151,7 +168,8 @@ function localActionText(agent, transfer, locale = DEFAULT_LOCALE) {
       '针对青年群体进行价值沟通'
     ];
     const pick = moves[Math.floor(Math.random() * moves.length)];
-    return `${pick}，本轮${movement}${Math.abs(transfer.net)}人。`;
+    const focusText = focus.length ? `，策略重点：${focus.join('、')}` : '';
+    return `${pick}${focusText}，本轮${movement}${Math.abs(transfer.net)}人。`;
   }
 
   if (lang === 'ja') {
@@ -164,7 +182,8 @@ function localActionText(agent, transfer, locale = DEFAULT_LOCALE) {
       '若年層向けに価値対話を実施'
     ];
     const pick = moves[Math.floor(Math.random() * moves.length)];
-    return `${pick}。このラウンドの${movement}は${Math.abs(transfer.net)}人。`;
+    const focusText = focus.length ? `。重点戦略: ${focus.join('・')}` : '';
+    return `${pick}${focusText}。このラウンドの${movement}は${Math.abs(transfer.net)}人。`;
   }
 
   const movement = transfer.net >= 0 ? 'net inflow' : 'net outflow';
@@ -176,7 +195,8 @@ function localActionText(agent, transfer, locale = DEFAULT_LOCALE) {
     'Focused value-dialogue activities for youth groups'
   ];
   const pick = moves[Math.floor(Math.random() * moves.length)];
-  return `${pick}. ${movement}: ${Math.abs(transfer.net)} followers this round.`;
+  const focusText = focus.length ? ` Focus: ${focus.join(' / ')}.` : '';
+  return `${pick}.${focusText} ${movement}: ${Math.abs(transfer.net)} followers this round.`;
 }
 
 function localizedReasonLabel(reasonKey, locale = DEFAULT_LOCALE) {
@@ -287,6 +307,61 @@ function normalizeInteger(value, fallback = 0) {
     return fallback;
   }
   return Math.max(0, Math.floor(n));
+}
+
+const STRATEGY_CHANNELS = [
+  'digital',
+  'service',
+  'ritual',
+  'intellectual',
+  'youth',
+  'identity',
+  'institution'
+];
+
+const CHANNEL_SIGNAL_KEYS = {
+  digital: 'digitalization',
+  service: 'economicStress',
+  ritual: 'meaningSearch',
+  intellectual: 'socialFragmentation',
+  youth: 'youthPressure',
+  identity: 'identityPolitics',
+  institution: 'institutionalTrust'
+};
+
+const CHANNEL_TRAIT_KEYS = {
+  digital: 'digitalMission',
+  service: 'communityService',
+  ritual: 'ritualDepth',
+  intellectual: 'intellectualDialog',
+  youth: 'youthAppeal',
+  identity: 'identityBond',
+  institution: 'institutionCapacity'
+};
+
+function normalizeChannelWeights(rawWeights = {}, minWeight = 0.035) {
+  const weights = {};
+  let total = 0;
+
+  for (const channel of STRATEGY_CHANNELS) {
+    const value = clamp(Number(rawWeights[channel] ?? 0), 0, 2.5);
+    const bounded = Math.max(minWeight, value);
+    weights[channel] = bounded;
+    total += bounded;
+  }
+
+  if (total <= 0) {
+    const uniform = 1 / STRATEGY_CHANNELS.length;
+    for (const channel of STRATEGY_CHANNELS) {
+      weights[channel] = uniform;
+    }
+    return weights;
+  }
+
+  for (const channel of STRATEGY_CHANNELS) {
+    weights[channel] = weights[channel] / total;
+  }
+  return weights;
 }
 
 class OpenAIClient {
@@ -458,7 +533,15 @@ class OpenAIClient {
         transferIn: a.transferIn,
         transferOut: a.transferOut,
         doctrine: a.doctrine,
-        style: a.style
+        style: a.style,
+        strategyFocus: a.strategyFocus || [],
+        strategy: a.strategy
+          ? {
+              tempo: a.strategy.tempo,
+              fatigue: a.strategy.fatigue,
+              defensiveFocus: a.strategy.defensiveFocus
+            }
+          : null
       }))
     )}`;
 
@@ -512,7 +595,16 @@ class OpenAIClient {
       openness: a.metrics.openness,
       retention: a.metrics.retention,
       zeal: a.metrics.zeal,
-      persuasion: a.metrics.persuasion
+      persuasion: a.metrics.persuasion,
+      strategyFocus: a.strategyFocus || [],
+      strategy: a.strategy
+        ? {
+            tempo: a.strategy.tempo,
+            fatigue: a.strategy.fatigue,
+            momentum: a.strategy.momentum,
+            defensiveFocus: a.strategy.defensiveFocus
+          }
+        : null
     }));
     const prompt = `Return strict JSON only. No markdown.
 
@@ -537,6 +629,7 @@ Rules:
 4) Return 10-18 links
 5) Use social signals and baseline links as priors
 6) reason must be in ${localeName(lang)}
+7) Keep flows realistic: avoid one-sided extreme concentration, and keep link amounts consistent with retention/openness/strategy signals
 
 socialSignals=${JSON.stringify(socialSignals)}
 baselineLinks=${JSON.stringify(baselineTransfers.slice(0, 12))}
@@ -615,69 +708,366 @@ class ReligionSimulation {
     return next;
   }
 
-  sourcePullScore(source, target, socialSignals) {
+  getSignalPressureValue(socialSignals, channel) {
+    const key = CHANNEL_SIGNAL_KEYS[channel];
+    const raw = clamp(Number(socialSignals?.[key] || 0.55), 0.05, 0.98);
+    if (channel === 'intellectual') {
+      return clamp(1 - raw, 0.05, 0.95);
+    }
+    return raw;
+  }
+
+  getChannelTrait(agent, channel) {
+    const key = CHANNEL_TRAIT_KEYS[channel];
+    return clamp(Number(agent?.traits?.[key] || 0.55), 0.05, 0.98);
+  }
+
+  buildInitialStrategy(agent) {
+    const rawChannels = {};
+    for (const channel of STRATEGY_CHANNELS) {
+      const trait = this.getChannelTrait(agent, channel);
+      const zealBoost = agent.metrics.zeal * 0.16;
+      const persuasionBoost = agent.metrics.persuasion * 0.13;
+      const opennessBoost =
+        channel === 'digital' || channel === 'youth' ? agent.metrics.openness * 0.12 : 0;
+      const retentionBoost =
+        channel === 'identity' || channel === 'institution' ? agent.metrics.retention * 0.08 : 0;
+      rawChannels[channel] = trait * (0.68 + zealBoost + persuasionBoost) + opennessBoost + retentionBoost;
+    }
+
+    return {
+      channels: normalizeChannelWeights(rawChannels),
+      tempo: clamp(
+        0.4 + agent.metrics.zeal * 0.32 + agent.metrics.persuasion * 0.2,
+        0.16,
+        0.97
+      ),
+      adaptation: clamp(
+        0.22 + agent.metrics.openness * 0.4 + (1 - agent.metrics.retention) * 0.22,
+        0.1,
+        0.84
+      ),
+      defensiveFocus: clamp(
+        0.2 + agent.metrics.retention * 0.44 + agent.traits.identityBond * 0.24,
+        0.1,
+        0.95
+      ),
+      fatigue: clamp((1 - agent.metrics.retention) * 0.22, 0.03, 0.34),
+      momentum: clamp(
+        0.24 +
+          agent.metrics.persuasion * 0.33 +
+          agent.traits.communityService * 0.2 +
+          agent.traits.digitalMission * 0.12,
+        0.12,
+        0.88
+      ),
+      credibility: clamp(
+        0.18 +
+          agent.traits.institutionCapacity * 0.4 +
+          agent.traits.communityService * 0.29 +
+          agent.metrics.retention * 0.17,
+        0.12,
+        0.96
+      )
+    };
+  }
+
+  strategyFocusSummary(strategy) {
+    if (!strategy?.channels) {
+      return [];
+    }
+    return Object.entries(strategy.channels)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([name]) => name);
+  }
+
+  adaptAgentStrategies(agents, socialSignals) {
+    for (const agent of agents) {
+      const strategy = agent.strategy || this.buildInitialStrategy(agent);
+      const outcomeRate = clamp(
+        (agent.followers > 0 ? agent.delta / agent.followers : 0) || 0,
+        -0.06,
+        0.06
+      );
+      const stress = Math.max(0, -outcomeRate);
+      const success = Math.max(0, outcomeRate);
+
+      const targetChannels = {};
+      for (const channel of STRATEGY_CHANNELS) {
+        const trait = this.getChannelTrait(agent, channel);
+        const pressure = this.getSignalPressureValue(socialSignals, channel);
+        const pressurePriority = pressure * (0.45 + trait * 0.55);
+        const defensiveBias =
+          channel === 'identity' || channel === 'institution' ? 1 + stress * 1.4 : 1;
+        const growthBias = channel === 'digital' || channel === 'youth' ? 1 + success * 0.9 : 1;
+        targetChannels[channel] = pressurePriority * defensiveBias * growthBias;
+      }
+
+      const normalizedTarget = normalizeChannelWeights(targetChannels);
+      const learningRate = clamp(
+        strategy.adaptation * (0.36 + stress * 1.6 + success * 0.85),
+        0.025,
+        0.24
+      );
+      const blended = {};
+      for (const channel of STRATEGY_CHANNELS) {
+        blended[channel] =
+          (strategy.channels[channel] || 0) * (1 - learningRate) +
+          normalizedTarget[channel] * learningRate;
+      }
+      strategy.channels = normalizeChannelWeights(blended);
+
+      const outreachLoad = clamp((agent.transferOut || 0) / Math.max(1, agent.followers), 0, 0.15);
+      strategy.fatigue = clamp(
+        strategy.fatigue + outreachLoad * 0.42 - success * 1.9 + stress * 0.25 - 0.012,
+        0.02,
+        0.64
+      );
+      strategy.momentum = clamp(
+        strategy.momentum + success * 1.45 - stress * 0.85 - strategy.fatigue * 0.06 + 0.014,
+        0.08,
+        0.98
+      );
+      strategy.defensiveFocus = clamp(
+        strategy.defensiveFocus + stress * 0.18 - success * 0.1,
+        0.07,
+        0.96
+      );
+      strategy.credibility = clamp(
+        strategy.credibility +
+          success * 0.5 -
+          stress * 0.33 +
+          (agent.traits.communityService * 0.02 + agent.traits.institutionCapacity * 0.02),
+        0.1,
+        0.99
+      );
+      strategy.tempo = clamp(
+        strategy.tempo +
+          (strategy.momentum - strategy.fatigue) * 0.055 +
+          success * 0.12 -
+          stress * 0.07,
+        0.14,
+        0.99
+      );
+
+      agent.strategy = strategy;
+    }
+  }
+
+  channelOutreachStrength(agent, socialSignals) {
+    const strategy = agent.strategy || this.buildInitialStrategy(agent);
+    let total = 0;
+    for (const channel of STRATEGY_CHANNELS) {
+      const pressure = this.getSignalPressureValue(socialSignals, channel);
+      const trait = this.getChannelTrait(agent, channel);
+      const channelWeight = Number(strategy.channels[channel] || 0);
+      total += channelWeight * trait * (0.36 + pressure * 0.64);
+    }
+    return clamp(total, 0.08, 1.3);
+  }
+
+  doctrineDistance(source, target) {
     const src = source.traits;
     const tgt = target.traits;
-    const signal = socialSignals;
+    const distance =
+      Math.abs(src.identityBond - tgt.identityBond) * 0.3 +
+      Math.abs(src.ritualDepth - tgt.ritualDepth) * 0.25 +
+      Math.abs(src.intellectualDialog - tgt.intellectualDialog) * 0.18 +
+      Math.abs(src.communityService - tgt.communityService) * 0.16 +
+      Math.abs(src.digitalMission - tgt.digitalMission) * 0.11;
+    return clamp(distance, 0, 1);
+  }
 
-    const outreachPower =
-      source.metrics.zeal * 0.23 +
-      source.metrics.persuasion * 0.23 +
-      src.communityService * (0.05 + signal.economicStress * 0.11) +
-      src.digitalMission * (0.05 + signal.digitalization * 0.13) +
-      src.ritualDepth * (0.04 + signal.meaningSearch * 0.1) +
-      src.intellectualDialog * (0.04 + (1 - signal.socialFragmentation) * 0.08) +
-      src.youthAppeal * (0.04 + signal.youthPressure * 0.1) +
-      src.institutionCapacity * (0.04 + signal.institutionalTrust * 0.1) +
-      src.identityBond * (0.03 + signal.identityPolitics * 0.08);
+  regionalOverlap(source, target) {
+    let overlap = 0;
+    let span = 0;
+    for (const region of WORLD_REGIONS) {
+      const regionId = region.id;
+      const src = clamp(Number(source.regionalAffinity?.[regionId] || 0.3), 0.01, 1);
+      const tgt = clamp(Number(target.regionalAffinity?.[regionId] || 0.3), 0.01, 1);
+      overlap += Math.min(src, tgt);
+      span += Math.max(src, tgt);
+    }
+    if (span <= 0) {
+      return 0.5;
+    }
+    return clamp(overlap / span, 0.05, 1);
+  }
 
-    const targetLock =
-      target.metrics.retention * 0.45 +
-      tgt.identityBond * 0.25 +
-      tgt.ritualDepth * 0.15 +
-      tgt.institutionCapacity * 0.15;
+  targetSusceptibility(target, socialSignals) {
+    const strategy = target.strategy || this.buildInitialStrategy(target);
+    const lock =
+      target.metrics.retention * 0.34 +
+      target.traits.identityBond * 0.2 +
+      target.traits.ritualDepth * 0.12 +
+      target.traits.institutionCapacity * 0.15 +
+      strategy.defensiveFocus * 0.19;
+    const susceptibility =
+      (1 - lock) * 0.58 +
+      target.metrics.openness * 0.26 +
+      socialSignals.socialFragmentation * 0.1 +
+      socialSignals.migration * 0.06;
+    return clamp(susceptibility, 0.03, 0.95);
+  }
 
-    const susceptibility = clamp((1 - targetLock) * 0.65 + target.metrics.openness * 0.35, 0.05, 0.95);
+  estimateSocialMismatch(agent, socialSignals) {
+    const strategy = agent.strategy || this.buildInitialStrategy(agent);
+    let mismatch = 0;
+    for (const channel of STRATEGY_CHANNELS) {
+      const pressure = this.getSignalPressureValue(socialSignals, channel);
+      const trait = this.getChannelTrait(agent, channel);
+      const weight = 0.45 + Number(strategy.channels[channel] || 0);
+      mismatch += Math.max(0, pressure - trait) * weight;
+    }
+    return clamp(mismatch / STRATEGY_CHANNELS.length, 0, 1);
+  }
+
+  computeAgentOutBudget(agent, socialSignals) {
+    const minReserve = 700;
+    const available = Math.max(0, agent.followers - minReserve);
+    if (available <= 0) {
+      return 0;
+    }
+
+    const strategy = agent.strategy || this.buildInitialStrategy(agent);
+    const mismatch = this.estimateSocialMismatch(agent, socialSignals);
+    const churnRate =
+      0.0016 +
+      (1 - agent.metrics.retention) * 0.015 +
+      agent.metrics.openness * 0.009 +
+      mismatch * 0.011 +
+      socialSignals.socialFragmentation * 0.004 +
+      socialSignals.migration * 0.004 -
+      strategy.defensiveFocus * 0.0048 +
+      strategy.fatigue * 0.002;
+
+    const boundedRate = clamp(churnRate, 0.0012, 0.052);
+    const outBudgetRaw = Math.floor(agent.followers * boundedRate * randomIn(0.9, 1.1));
+    const cap = Math.floor(agent.followers * (0.046 + agent.metrics.openness * 0.018));
+    return clamp(outBudgetRaw, 0, Math.min(available, cap));
+  }
+
+  pairTransferCap(fromAgent, toAgent) {
+    const fromStrategy = fromAgent.strategy || this.buildInitialStrategy(fromAgent);
+    const toStrategy = toAgent.strategy || this.buildInitialStrategy(toAgent);
+    const compatibility = clamp(
+      1 - this.doctrineDistance(fromAgent, toAgent) * 0.62 + this.regionalOverlap(fromAgent, toAgent) * 0.24,
+      0.2,
+      1.08
+    );
+    const opennessFactor = 0.72 + toAgent.metrics.openness * 0.7;
+    const resistance =
+      toAgent.metrics.retention * 0.38 +
+      toStrategy.defensiveFocus * 0.28 +
+      toAgent.traits.identityBond * 0.18;
+    const conversionWindow = clamp(1 - resistance, 0.16, 0.98);
+    const tempoFactor = clamp(0.74 + fromStrategy.tempo * 0.42 - fromStrategy.fatigue * 0.22, 0.4, 1.2);
+
+    const base = fromAgent.followers * 0.023;
+    const dynamicCap = Math.floor(base * compatibility * opennessFactor * conversionWindow * tempoFactor);
+    const hardCap = Math.floor(fromAgent.followers * 0.042);
+    return clamp(dynamicCap, 8, Math.max(8, hardCap));
+  }
+
+  sourcePullScore(source, target, socialSignals) {
+    const sourceStrategy = source.strategy || this.buildInitialStrategy(source);
+    const outreachStrength = this.channelOutreachStrength(source, socialSignals);
+    const susceptibility = this.targetSusceptibility(target, socialSignals);
+    const distance = this.doctrineDistance(source, target);
+    const overlap = this.regionalOverlap(source, target);
 
     const bridge = clamp(
-      0.45 +
-        (source.metrics.openness + target.metrics.openness) * 0.22 +
-        src.intellectualDialog * 0.16 -
-        Math.abs(src.ritualDepth - tgt.ritualDepth) * 0.14,
-      0.08,
-      1
+      0.28 +
+        (1 - distance) * 0.46 +
+        overlap * 0.16 +
+        (source.metrics.openness + target.metrics.openness) * 0.12,
+      0.06,
+      1.08
     );
 
-    const momentum = clamp(source.followers / this.totalFollowers, 0.03, 0.5);
+    const networkEffect = clamp(0.42 + Math.sqrt(source.followers / this.totalFollowers), 0.4, 1.18);
+    const momentum = clamp(
+      0.58 +
+        sourceStrategy.momentum * 0.24 +
+        sourceStrategy.credibility * 0.18 +
+        sourceStrategy.tempo * 0.12 -
+        sourceStrategy.fatigue * 0.18,
+      0.25,
+      1.25
+    );
+    const recentInboundPressure = clamp(
+      (source.transferIn || 0) / Math.max(1, source.followers),
+      0,
+      0.14
+    );
+    const recentOutboundShock = clamp(
+      (target.transferOut || 0) / Math.max(1, target.followers),
+      0,
+      0.18
+    );
+    const saturationPenalty = clamp(1 - recentInboundPressure * 0.9, 0.72, 1);
+    const defensivePenalty = target.topTo?.name === source.name ? 0.86 : 1;
+    const shockWindow = clamp(0.9 + recentOutboundShock * 0.52, 0.9, 1.08);
 
-    return outreachPower * susceptibility * bridge * momentum * randomIn(0.86, 1.16);
+    return (
+      outreachStrength *
+      susceptibility *
+      bridge *
+      networkEffect *
+      momentum *
+      saturationPenalty *
+      defensivePenalty *
+      shockWindow *
+      randomIn(0.9, 1.1)
+    );
   }
 
   transferReason(source, target, socialSignals, locale = DEFAULT_LOCALE) {
+    const strategy = source.strategy || this.buildInitialStrategy(source);
     const reasons = [
       {
         key: 'digital_spread',
-        value: source.traits.digitalMission * socialSignals.digitalization
+        value:
+          source.traits.digitalMission *
+          socialSignals.digitalization *
+          (0.55 + (strategy.channels.digital || 0))
       },
       {
         key: 'community_service',
-        value: source.traits.communityService * socialSignals.economicStress
+        value:
+          source.traits.communityService *
+          socialSignals.economicStress *
+          (0.55 + (strategy.channels.service || 0))
       },
       {
         key: 'identity_shift',
-        value: source.traits.identityBond * socialSignals.identityPolitics
+        value:
+          source.traits.identityBond *
+          socialSignals.identityPolitics *
+          (0.55 + (strategy.channels.identity || 0)) *
+          (0.72 + target.metrics.openness * 0.55)
       },
       {
         key: 'meaning_search',
-        value: source.traits.ritualDepth * socialSignals.meaningSearch
+        value:
+          source.traits.ritualDepth *
+          socialSignals.meaningSearch *
+          (0.55 + (strategy.channels.ritual || 0))
       },
       {
         key: 'youth_resonance',
-        value: source.traits.youthAppeal * socialSignals.youthPressure
+        value:
+          source.traits.youthAppeal *
+          socialSignals.youthPressure *
+          (0.55 + (strategy.channels.youth || 0))
       },
       {
         key: 'institutional_pull',
-        value: source.traits.institutionCapacity * socialSignals.institutionalTrust
+        value:
+          source.traits.institutionCapacity *
+          socialSignals.institutionalTrust *
+          (0.55 + (strategy.channels.institution || 0))
       }
     ].sort((a, b) => b.value - a.value);
 
@@ -689,21 +1079,7 @@ class ReligionSimulation {
     const events = [];
 
     for (const target of agents) {
-      const minReserve = 700;
-      const available = Math.max(0, target.followers - minReserve);
-      if (available <= 0) {
-        continue;
-      }
-
-      const churnRate =
-        0.003 +
-        (1 - target.metrics.retention) * 0.02 +
-        target.metrics.openness * 0.012 +
-        socialSignals.socialFragmentation * 0.005 +
-        socialSignals.migration * 0.005;
-
-      const outBudgetRaw = Math.floor(target.followers * churnRate * randomIn(0.86, 1.14));
-      const outBudget = clamp(outBudgetRaw, 0, Math.min(available, Math.floor(target.followers * 0.08)));
+      const outBudget = this.computeAgentOutBudget(target, socialSignals);
       if (outBudget <= 0) {
         continue;
       }
@@ -726,7 +1102,11 @@ class ReligionSimulation {
       );
 
       for (const item of candidates) {
-        const amount = allocations.get(item.source.id) || 0;
+        const amount = clamp(
+          allocations.get(item.source.id) || 0,
+          0,
+          this.pairTransferCap(target, item.source)
+        );
         if (amount <= 0) {
           continue;
         }
@@ -751,22 +1131,7 @@ class ReligionSimulation {
   buildOutBudgets(agents, socialSignals) {
     const budgets = new Map();
     for (const agent of agents) {
-      const minReserve = 700;
-      const available = Math.max(0, agent.followers - minReserve);
-      if (available <= 0) {
-        budgets.set(agent.id, 0);
-        continue;
-      }
-
-      const churnRate =
-        0.003 +
-        (1 - agent.metrics.retention) * 0.02 +
-        agent.metrics.openness * 0.012 +
-        socialSignals.socialFragmentation * 0.005 +
-        socialSignals.migration * 0.005;
-      const outBudgetRaw = Math.floor(agent.followers * churnRate * randomIn(0.88, 1.12));
-      const outBudget = clamp(outBudgetRaw, 0, Math.min(available, Math.floor(agent.followers * 0.08)));
-      budgets.set(agent.id, outBudget);
+      budgets.set(agent.id, this.computeAgentOutBudget(agent, socialSignals));
     }
     return budgets;
   }
@@ -793,7 +1158,7 @@ class ReligionSimulation {
         return 0;
       }
 
-      const pairCap = Math.max(10, Math.floor(fromAgent.followers * 0.035));
+      const pairCap = this.pairTransferCap(fromAgent, toAgent);
       const amount = clamp(normalizeInteger(requestedAmount, 0), 0, Math.min(left, pairCap));
       if (amount <= 0) {
         return 0;
@@ -1087,17 +1452,22 @@ class ReligionSimulation {
     const seeds = this.buildSeedAgents();
     const generated = await this.openaiClient.generateProfiles(seeds);
 
-    const agents = generated.map((item) => ({
-      ...item,
-      followers: INITIAL_FOLLOWERS_PER_RELIGION,
-      delta: 0,
-      transferIn: 0,
-      transferOut: 0,
-      topFrom: null,
-      topTo: null,
-      history: [INITIAL_FOLLOWERS_PER_RELIGION],
-      lastAction: initialActionTemplate.replace('{name}', item.name)
-    }));
+    const agents = generated.map((item) => {
+      const strategy = this.buildInitialStrategy(item);
+      return {
+        ...item,
+        strategy,
+        strategyFocus: this.strategyFocusSummary(strategy),
+        followers: INITIAL_FOLLOWERS_PER_RELIGION,
+        delta: 0,
+        transferIn: 0,
+        transferOut: 0,
+        topFrom: null,
+        topTo: null,
+        history: [INITIAL_FOLLOWERS_PER_RELIGION],
+        lastAction: initialActionTemplate.replace('{name}', item.name)
+      };
+    });
 
     const startedAt = new Date().toISOString();
     const socialSignals = { ...GLOBAL_SOCIAL_BASELINE };
@@ -1147,6 +1517,10 @@ class ReligionSimulation {
     }
     const activeLocale = normalizeLocale(state.locale || DEFAULT_LOCALE);
     state.socialSignals = this.driftSocialSignals(state.socialSignals);
+    this.adaptAgentStrategies(state.agents, state.socialSignals);
+    for (const agent of state.agents) {
+      agent.strategyFocus = this.strategyFocusSummary(agent.strategy);
+    }
 
     const rulePlan = this.computeTransferPlan(state.agents, state.socialSignals, activeLocale);
     const aiLinks = await this.openaiClient.generateTransferStructure(
@@ -1258,6 +1632,8 @@ class ReligionSimulation {
         transferOut: agent.transferOut,
         topFrom: agent.topFrom,
         topTo: agent.topTo,
+        strategyFocus: agent.strategyFocus,
+        strategy: agent.strategy,
         metrics: agent.metrics,
         traits: agent.traits,
         lastAction: agent.lastAction,
