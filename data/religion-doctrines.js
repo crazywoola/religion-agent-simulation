@@ -1,11 +1,13 @@
 export const INITIAL_FOLLOWERS_PER_RELIGION = 10000;
 
 // 教义与传播规则：用于模拟同化效率、留存、社会适配和地区亲和度。
+// exitBarrier: 0-1，表示信众离开该宗教的社会/制度/心理成本（越高越难离开）
 export const RELIGION_DOCTRINES = [
   {
     id: 'buddhism',
     name: '佛教',
     color: '#f4a261',
+    exitBarrier: 0.22,
     doctrine: '强调慈悲、缘起与减轻痛苦，注重个体修行与内在觉察。',
     doctrineLong:
       '佛教关注“苦、集、灭、道”的实践路径，强调通过戒、定、慧减少贪嗔痴并提升觉察力。在现代社会中，它常以禅修、心理支持、慈善与跨文化交流的形式进入公共生活，吸引寻求内在平衡与伦理实践的人群。',
@@ -41,6 +43,7 @@ export const RELIGION_DOCTRINES = [
     id: 'hinduism',
     name: '印度教',
     color: '#e76f51',
+    exitBarrier: 0.65,
     doctrine: '强调业、轮回与梵我关系，保留多元神学与仪式传统。',
     doctrineLong:
       '印度教是多元传统的集合，既有形上学讨论，也有家庭仪式与节庆生活，强调行为后果（业）与人生循环（轮回）。在当代社会中，它通过家庭网络、寺庙社群、文化节庆和侨民认同维系稳定传播，同时保留高度地方化表达。',
@@ -76,6 +79,7 @@ export const RELIGION_DOCTRINES = [
     id: 'taoism',
     name: '道教',
     color: '#2a9d8f',
+    exitBarrier: 0.20,
     doctrine: '强调道法自然、身心平衡与与世协和，重视顺势而为。',
     doctrineLong:
       '道教将宇宙秩序、生命修养与社会伦理结合在一起，强调“无为”并非消极，而是避免过度干预、尊重自然规律。在现代场景中，道教常通过养生文化、生态观念、民俗节庆与宫观活动建立连接，对关注健康与传统文化的人群具有持续吸引力。',
@@ -111,6 +115,7 @@ export const RELIGION_DOCTRINES = [
     id: 'islam',
     name: '伊斯兰教',
     color: '#264653',
+    exitBarrier: 0.82,
     doctrine: '强调独一信仰、社群秩序与伦理责任，注重实践与共同体。',
     doctrineLong:
       '伊斯兰教将信仰、礼拜与社会伦理紧密结合，强调对真主的顺服、社群互助和日常生活中的规范实践。在当代社会中，它依托清真寺网络、家庭教育、公益慈善与跨地域社群保持较强凝聚力，并在迁移背景下形成新的城市宗教空间。',
@@ -146,6 +151,7 @@ export const RELIGION_DOCTRINES = [
     id: 'protestant',
     name: '基督教',
     color: '#3d5a80',
+    exitBarrier: 0.38,
     doctrine: '强调个人信仰关系、救赎与团契生活，重视见证与使命。',
     doctrineLong:
       '新教传统重视个人与上帝的关系、圣经阅读与社区团契，强调“信仰应进入公共生活”这一实践取向。在现代城市中，其传播常与社区服务、青年事工、音乐敬拜、小组制度和线上内容结合，具备较强组织弹性与扩展能力。',
@@ -181,6 +187,7 @@ export const RELIGION_DOCTRINES = [
     id: 'pastafarianism',
     name: '飞天面条神教',
     color: '#ee9b00',
+    exitBarrier: 0.05,
     doctrine: '以幽默讽喻反思教条，鼓励开放讨论与批判性思考。',
     doctrineLong:
       '飞天面条神教常被视为网络时代的讽喻性宗教表达，核心在于通过幽默方式讨论政教边界、公共教育与信仰自由。其扩散高度依赖线上文化、社交媒体与青年亚文化社群，凝聚力相对松散但传播速度较快。',
@@ -216,6 +223,7 @@ export const RELIGION_DOCTRINES = [
     id: 'catholicism',
     name: '天主教',
     color: '#98c1d9',
+    exitBarrier: 0.55,
     doctrine: '强调圣事传统、教会共同体与爱德实践，重视制度与传承。',
     doctrineLong:
       '天主教强调圣事生活、教会传统与普世性共同体，并通过教区结构将信仰实践延展至教育、医疗与慈善领域。在现代社会中，其制度化组织和跨国网络使其在长期留存、社会服务和跨代传承方面具有较强韧性。',
@@ -251,6 +259,7 @@ export const RELIGION_DOCTRINES = [
     id: 'shinto',
     name: '日本神道教',
     color: '#c08497',
+    exitBarrier: 0.32,
     doctrine: '强调神道与自然、祖灵、地方祭礼的连续性，重视净化与和谐。',
     doctrineLong:
       '神道教以“神”（kami）与自然、地方共同体和祖先记忆的关系为核心，强调祭礼、净化与季节性仪式在社会生活中的角色。现代日本社会中，神道实践常与文化认同、地方节庆、人生礼仪及公共空间象征交织，形成“宗教与文化并存”的独特格局。',
@@ -280,6 +289,43 @@ export const RELIGION_DOCTRINES = [
       north_america: 0.31,
       latin_america: 0.11,
       global_online: 0.38
+    }
+  },
+  {
+    id: 'secular',
+    name: '无宗教/世俗主义',
+    color: '#607d8b',
+    exitBarrier: 0.15,
+    isSecular: true,
+    doctrine: '以理性、科学与人文价值为基础，追求独立于宗教框架的意义建构。',
+    doctrineLong:
+      '世俗主义并非一种有组织的宗教，而是现代社会中"无宗教认同"群体的集合表达。其成员通过科学理性、伦理哲学、社会运动或个人精神实践构建意义，不依附任何神学框架。在数字化、教育扩张与去机构化背景下，世俗化趋势在欧洲、北美和东亚持续上升。',
+    classics: ['《人文主义宣言》', '《物种起源》', '《纯粹理性批判》', '《伦理学》（斯宾诺莎）'],
+    style: '通过教育、数字内容、批判性思维和个人自由叙事扩散。',
+    metrics: { zeal: 0.32, persuasion: 0.48, openness: 0.90, retention: 0.44 },
+    traits: {
+      communityService: 0.58,
+      digitalMission: 0.78,
+      ritualDepth: 0.06,
+      intellectualDialog: 0.92,
+      youthAppeal: 0.76,
+      identityBond: 0.28,
+      institutionCapacity: 0.38
+    },
+    governance: {
+      orthodoxy: 0.05,
+      antiProselytization: 0.04,
+      tribunalCapacity: 0.05,
+      dueProcess: 0.98
+    },
+    regionalAffinity: {
+      east_asia: 0.72,
+      south_asia: 0.28,
+      middle_east_africa: 0.14,
+      europe: 0.92,
+      north_america: 0.82,
+      latin_america: 0.48,
+      global_online: 0.96
     }
   }
 ];

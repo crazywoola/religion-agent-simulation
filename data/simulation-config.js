@@ -35,10 +35,83 @@ export const SIMULATION_SCENARIOS = {
 };
 
 export const SIMULATION_CONFIG = {
-  version: '2026.03.03',
+  version: '2026.03.04',
   scenarioBlendRate: 0.16,
   explainability: {
     topFactors: 3
+  },
+  // exitBarrier: 系数，影响 computeAgentOutBudget 中流失率
+  exitBarrierWeight: 0.68,
+  // secularBuff: 世俗主义在世俗化信号高时的额外吸引力系数
+  secularBuff: 1.55,
+  // 随机事件系统
+  events: {
+    enabled: true,
+    checkEveryNRounds: 3,      // 每 N 轮检查一次
+    maxPerCheck: 2,            // 每次最多触发事件数
+    decayPerRound: 0.18,       // 每轮信号冲击衰减率
+    pool: [
+      {
+        id: 'religious_scandal',
+        prob: 0.13,
+        shock: { institutionalTrust: -0.13, secularization: 0.09, mediaPolarization: 0.07 },
+        duration: 4
+      },
+      {
+        id: 'digital_revival',
+        prob: 0.11,
+        shock: { digitalization: 0.11, meaningSearch: 0.07, youthPressure: 0.06 },
+        duration: 3
+      },
+      {
+        id: 'political_persecution',
+        prob: 0.09,
+        shock: { stateRegulation: 0.16, legalPluralism: -0.12, identityPolitics: 0.08 },
+        duration: 5
+      },
+      {
+        id: 'migration_wave',
+        prob: 0.14,
+        shock: { migration: 0.18, socialFragmentation: 0.09, economicStress: 0.06 },
+        duration: 4
+      },
+      {
+        id: 'economic_crisis',
+        prob: 0.10,
+        shock: { economicStress: 0.20, meaningSearch: 0.12, institutionalTrust: -0.08 },
+        duration: 6
+      },
+      {
+        id: 'youth_awakening',
+        prob: 0.10,
+        shock: { youthPressure: 0.14, meaningSearch: 0.09, digitalization: 0.05 },
+        duration: 3
+      },
+      {
+        id: 'polarization_spike',
+        prob: 0.12,
+        shock: { mediaPolarization: 0.17, identityPolitics: 0.12, legalPluralism: -0.07 },
+        duration: 5
+      },
+      {
+        id: 'pluralism_wave',
+        prob: 0.08,
+        shock: { legalPluralism: 0.14, secularization: 0.07, stateRegulation: -0.06 },
+        duration: 4
+      },
+      {
+        id: 'climate_anxiety',
+        prob: 0.09,
+        shock: { meaningSearch: 0.15, youthPressure: 0.10, socialFragmentation: 0.07 },
+        duration: 4
+      },
+      {
+        id: 'institutional_reform',
+        prob: 0.07,
+        shock: { institutionalTrust: 0.14, stateRegulation: -0.08, legalPluralism: 0.09 },
+        duration: 5
+      }
+    ]
   },
   transfer: {
     churn: {
