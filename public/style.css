@@ -439,12 +439,22 @@ select:focus {
   line-height: 1.45;
 }
 
+.transfer-factors {
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: #485487;
+}
+
 .transfer-corridor {
   margin-top: 5px;
   padding-top: 5px;
   border-top: 1px dashed #a8b2d6;
   font-size: 0.76rem;
   color: var(--muted);
+}
+
+.log-filter-control {
+  margin-bottom: 8px;
 }
 
 .log-meta {

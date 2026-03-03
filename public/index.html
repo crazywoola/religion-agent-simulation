@@ -35,6 +35,15 @@
             </select>
           </label>
           <label>
+            <span id="scenarioLabel">Scenario</span>
+            <select id="scenarioSelect">
+              <option value="balanced">Balanced</option>
+              <option value="high_regulation">High Regulation</option>
+              <option value="high_secularization">High Secularization</option>
+              <option value="high_polarization">High Polarization</option>
+            </select>
+          </label>
+          <label>
             <span id="tickLabel">Tick Interval (ms)</span>
             <input id="tickInput" type="number" value="2000" min="800" max="10000" step="200" />
           </label>
@@ -69,6 +78,14 @@
         <div id="transferBoard" class="transfer-board"></div>
 
         <h2 id="logSectionTitle">Mission Logs</h2>
+        <label class="log-filter-control">
+          <span id="logFilterLabel">Log Filter</span>
+          <select id="logFilterSelect">
+            <option value="all">All</option>
+            <option value="mission">Mission</option>
+            <option value="judgment">Judgment</option>
+          </select>
+        </label>
         <div id="logList" class="log-list"></div>
       </aside>
     </div>

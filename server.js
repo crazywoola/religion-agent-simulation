@@ -8,6 +8,11 @@ import {
   RELIGION_DOCTRINES
 } from './data/religion-doctrines.js';
 import { GLOBAL_SOCIAL_BASELINE, WORLD_REGIONS } from './data/world-context.js';
+import {
+  DEFAULT_SCENARIO,
+  SIMULATION_CONFIG,
+  SIMULATION_SCENARIOS
+} from './data/simulation-config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,6 +20,39 @@ const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || '0.0.0.0';
 const SUPPORTED_LOCALES = ['en', 'zh-CN', 'ja'];
 const DEFAULT_LOCALE = 'en';
+
+function normalizeScenario(input) {
+  if (!input || typeof input !== 'string') {
+    return DEFAULT_SCENARIO;
+  }
+  return Object.hasOwn(SIMULATION_SCENARIOS, input) ? input : DEFAULT_SCENARIO;
+}
+
+function listAvailableScenarios() {
+  return Object.values(SIMULATION_SCENARIOS).map((item) => ({
+    id: item.id,
+    signalOverrides: item.signalOverrides
+  }));
+}
+
+function buildScenarioSignalTarget(scenarioId) {
+  const scenario = SIMULATION_SCENARIOS[normalizeScenario(scenarioId)] || SIMULATION_SCENARIOS[DEFAULT_SCENARIO];
+  const target = { ...GLOBAL_SOCIAL_BASELINE };
+  for (const [key, value] of Object.entries(scenario.signalOverrides || {})) {
+    target[key] = clamp((target[key] ?? 0.55) + Number(value || 0), 0.2, 0.95);
+  }
+  return target;
+}
+
+function blendSignalsToScenario(current, scenarioId, rate = SIMULATION_CONFIG.scenarioBlendRate) {
+  const target = buildScenarioSignalTarget(scenarioId);
+  const next = {};
+  for (const [key, value] of Object.entries(target)) {
+    const currentValue = clamp(Number(current?.[key] ?? GLOBAL_SOCIAL_BASELINE[key] ?? 0.55), 0.2, 0.95);
+    next[key] = clamp(currentValue * (1 - rate) + value * rate, 0.2, 0.95);
+  }
+  return next;
+}
 
 function resolveListenHostUrl(host) {
   if (!host || host === '0.0.0.0' || host === '::') {
@@ -777,6 +815,7 @@ religionState=${JSON.stringify(agentState)}`;
 class ReligionSimulation {
   constructor(openaiClient) {
     this.openaiClient = openaiClient;
+    this.config = SIMULATION_CONFIG;
     this.state = null;
     this.totalFollowers = RELIGION_DOCTRINES.length * INITIAL_FOLLOWERS_PER_RELIGION;
   }
@@ -1064,19 +1103,20 @@ class ReligionSimulation {
 
     const strategy = agent.strategy || this.buildInitialStrategy(agent);
     const mismatch = this.estimateSocialMismatch(agent, socialSignals);
+    const churn = this.config.transfer.churn;
     const churnRate =
-      0.0016 +
-      (1 - agent.metrics.retention) * 0.015 +
-      agent.metrics.openness * 0.009 +
-      mismatch * 0.011 +
-      socialSignals.socialFragmentation * 0.004 +
-      socialSignals.migration * 0.004 -
-      socialSignals.stateRegulation * 0.0035 +
-      socialSignals.legalPluralism * 0.0024 +
-      socialSignals.mediaPolarization * 0.003 +
-      socialSignals.secularization * 0.0035 -
-      strategy.defensiveFocus * 0.0048 +
-      strategy.fatigue * 0.002;
+      churn.base +
+      (1 - agent.metrics.retention) * churn.lowRetention +
+      agent.metrics.openness * churn.openness +
+      mismatch * churn.mismatch +
+      socialSignals.socialFragmentation * churn.socialFragmentation +
+      socialSignals.migration * churn.migration +
+      socialSignals.stateRegulation * churn.stateRegulation +
+      socialSignals.legalPluralism * churn.legalPluralism +
+      socialSignals.mediaPolarization * churn.mediaPolarization +
+      socialSignals.secularization * churn.secularization +
+      strategy.defensiveFocus * churn.defensiveFocus +
+      strategy.fatigue * churn.fatigue;
 
     const boundedRate = clamp(churnRate, 0.0012, 0.052);
     const outBudgetRaw = Math.floor(agent.followers * boundedRate * randomIn(0.9, 1.1));
@@ -1186,7 +1226,7 @@ class ReligionSimulation {
     );
   }
 
-  transferReason(source, target, socialSignals, locale = DEFAULT_LOCALE) {
+  transferReasonDetail(source, target, socialSignals, locale = DEFAULT_LOCALE) {
     const strategy = source.strategy || this.buildInitialStrategy(source);
     const reasons = [
       {
@@ -1255,7 +1295,15 @@ class ReligionSimulation {
       }
     ].sort((a, b) => b.value - a.value);
 
-    return localizedReasonLabel(reasons[0].key, locale);
+    const topFactors = reasons.slice(0, this.config.explainability.topFactors).map((item) => ({
+      key: item.key,
+      label: localizedReasonLabel(item.key, locale),
+      score: Number(item.value.toFixed(4))
+    }));
+    return {
+      reason: localizedReasonLabel(reasons[0].key, locale),
+      reasonFactors: topFactors
+    };
   }
 
   computeTransferPlan(agents, socialSignals, locale = DEFAULT_LOCALE) {
@@ -1295,6 +1343,13 @@ class ReligionSimulation {
           continue;
         }
 
+        const reasonDetail = this.transferReasonDetail(
+          item.source,
+          target,
+          socialSignals,
+          locale
+        );
+
         deltas.set(target.id, deltas.get(target.id) - amount);
         deltas.set(item.source.id, deltas.get(item.source.id) + amount);
         events.push({
@@ -1303,7 +1358,8 @@ class ReligionSimulation {
           toId: item.source.id,
           toName: item.source.name,
           amount,
-          reason: this.transferReason(item.source, target, socialSignals, locale)
+          reason: reasonDetail.reason,
+          reasonFactors: reasonDetail.reasonFactors
         });
       }
     }
@@ -1333,7 +1389,7 @@ class ReligionSimulation {
     const merged = new Map();
     let aiAppliedAmount = 0;
 
-    const addEvent = (fromAgent, toAgent, requestedAmount, reason, sourceTag) => {
+    const addEvent = (fromAgent, toAgent, requestedAmount, reason, reasonFactors, sourceTag) => {
       if (!fromAgent || !toAgent || fromAgent.id === toAgent.id) {
         return 0;
       }
@@ -1356,6 +1412,7 @@ class ReligionSimulation {
         if (sourceTag === 'ai') {
           hit.source = 'ai';
           hit.reason = reason || hit.reason;
+          hit.reasonFactors = Array.isArray(reasonFactors) ? reasonFactors : [];
         }
       } else {
         merged.set(key, {
@@ -1365,6 +1422,7 @@ class ReligionSimulation {
           toName: toAgent.name,
           amount,
           reason: reason || localizedReasonLabel('digital_spread', locale),
+          reasonFactors: Array.isArray(reasonFactors) ? reasonFactors : [],
           source: sourceTag
         });
       }
@@ -1380,14 +1438,14 @@ class ReligionSimulation {
       for (const link of sortedAi) {
         const fromAgent = nameToAgent.get(link.from);
         const toAgent = nameToAgent.get(link.to);
-        addEvent(fromAgent, toAgent, link.amount, link.reason, 'ai');
+        addEvent(fromAgent, toAgent, link.amount, link.reason, [], 'ai');
       }
     }
 
     for (const event of fallbackEvents) {
       const fromAgent = agentById.get(event.fromId);
       const toAgent = agentById.get(event.toId);
-      addEvent(fromAgent, toAgent, event.amount, event.reason, 'rule');
+      addEvent(fromAgent, toAgent, event.amount, event.reason, event.reasonFactors, 'rule');
     }
 
     const events = [...merged.values()].sort((a, b) => b.amount - a.amount);
@@ -1407,7 +1465,7 @@ class ReligionSimulation {
     return { deltas, events, engine, aiAppliedAmount };
   }
 
-  judgmentReasonKey(fromAgent, toAgent, socialSignals) {
+  judgmentReasonDetail(fromAgent, toAgent, socialSignals, locale = DEFAULT_LOCALE) {
     const governance = fromAgent.governance || normalizeGovernance();
     const scores = [
       {
@@ -1438,13 +1496,23 @@ class ReligionSimulation {
           (1 - socialSignals.legalPluralism) * 0.44
       }
     ].sort((a, b) => b.value - a.value);
-    return scores[0].key;
+    const topFactors = scores.slice(0, this.config.explainability.topFactors).map((item) => ({
+      key: item.key,
+      label: localizedJudgmentReasonLabel(item.key, locale),
+      score: Number(item.value.toFixed(4))
+    }));
+    return {
+      reasonKey: scores[0].key,
+      reason: localizedJudgmentReasonLabel(scores[0].key, locale),
+      factors: topFactors
+    };
   }
 
   applyReligiousJudgment(agents, events, socialSignals, round, locale = DEFAULT_LOCALE) {
     const moderatedEvents = [];
     const records = [];
     const agentById = new Map(agents.map((agent) => [agent.id, agent]));
+    const judgmentCfg = this.config.judgment;
 
     for (const event of events) {
       const fromAgent = agentById.get(event.fromId);
@@ -1455,41 +1523,51 @@ class ReligionSimulation {
 
       const governance = fromAgent.governance || normalizeGovernance();
       const regimePressure = clamp(
-        (1 - socialSignals.legalPluralism) * 0.34 +
-          socialSignals.stateRegulation * 0.32 +
-          socialSignals.identityPolitics * 0.2 +
-          socialSignals.mediaPolarization * 0.14,
+        (1 - socialSignals.legalPluralism) * judgmentCfg.regime.antiPluralism +
+          socialSignals.stateRegulation * judgmentCfg.regime.stateRegulation +
+          socialSignals.identityPolitics * judgmentCfg.regime.identityPolitics +
+          socialSignals.mediaPolarization * judgmentCfg.regime.mediaPolarization,
         0.04,
         0.96
       );
       const enforcementCapacity = clamp(
-        governance.tribunalCapacity * 0.42 +
-          fromAgent.traits.institutionCapacity * 0.32 +
-          governance.orthodoxy * 0.26,
+        governance.tribunalCapacity * judgmentCfg.enforcement.tribunalCapacity +
+          fromAgent.traits.institutionCapacity * judgmentCfg.enforcement.institutionCapacity +
+          governance.orthodoxy * judgmentCfg.enforcement.orthodoxy,
         0.08,
         0.98
       );
       const missionaryPush = clamp(
-        toAgent.metrics.zeal * 0.35 +
-          toAgent.metrics.persuasion * 0.31 +
-          toAgent.traits.digitalMission * 0.15 +
-          socialSignals.digitalization * 0.1 +
-          socialSignals.migration * 0.09,
+        toAgent.metrics.zeal * judgmentCfg.missionaryPush.zeal +
+          toAgent.metrics.persuasion * judgmentCfg.missionaryPush.persuasion +
+          toAgent.traits.digitalMission * judgmentCfg.missionaryPush.digitalMission +
+          socialSignals.digitalization * judgmentCfg.missionaryPush.digitalization +
+          socialSignals.migration * judgmentCfg.missionaryPush.migration,
         0.06,
         1.08
       );
-      const dueProcessBrake = clamp(1 - governance.dueProcess * 0.42, 0.26, 0.94);
+      const dueProcessBrake = clamp(
+        1 - governance.dueProcess * judgmentCfg.rate.dueProcessBrake,
+        0.26,
+        0.94
+      );
       const judgmentRate = clamp(
         regimePressure *
           enforcementCapacity *
-          (0.3 + governance.antiProselytization * 0.42 + governance.orthodoxy * 0.24) *
-          (0.7 + missionaryPush * 0.46) *
+          (judgmentCfg.rate.base +
+            governance.antiProselytization * judgmentCfg.rate.antiProselytization +
+            governance.orthodoxy * judgmentCfg.rate.orthodoxy) *
+          (judgmentCfg.rate.pushBase + missionaryPush * judgmentCfg.rate.pushFactor) *
           dueProcessBrake *
-          randomIn(0.86, 1.08),
+          randomIn(judgmentCfg.rate.randomMin, judgmentCfg.rate.randomMax),
         0,
-        0.8
+        judgmentCfg.rate.maxRate
       );
-      const blocked = clamp(Math.floor(event.amount * judgmentRate), 0, Math.floor(event.amount * 0.82));
+      const blocked = clamp(
+        Math.floor(event.amount * judgmentRate),
+        0,
+        Math.floor(event.amount * judgmentCfg.rate.maxBlockShare)
+      );
       const remaining = event.amount - blocked;
 
       if (remaining > 0) {
@@ -1501,7 +1579,7 @@ class ReligionSimulation {
       }
 
       if (blocked > 0) {
-        const reasonKey = this.judgmentReasonKey(fromAgent, toAgent, socialSignals);
+        const reasonDetail = this.judgmentReasonDetail(fromAgent, toAgent, socialSignals, locale);
         records.push({
           round,
           religionId: fromAgent.id,
@@ -1511,8 +1589,9 @@ class ReligionSimulation {
           attempted: event.amount,
           blocked,
           severity: blocked / Math.max(1, event.amount),
-          reasonKey,
-          reason: localizedJudgmentReasonLabel(reasonKey, locale)
+          reasonKey: reasonDetail.reasonKey,
+          reason: reasonDetail.reason,
+          factors: reasonDetail.factors
         });
       }
     }
@@ -1599,10 +1678,38 @@ class ReligionSimulation {
       to: event.toName,
       amount: event.amount,
       reason: event.reason,
+      reasonFactors: Array.isArray(event.reasonFactors) ? event.reasonFactors : [],
       source: event.source || 'rule'
     }));
 
     return { byReligion, topPairs };
+  }
+
+  computeRegionalVolatility(regions) {
+    if (!Array.isArray(regions) || regions.length === 0) {
+      return 0;
+    }
+    const values = regions.map((region) => clamp(Number(region.competitionIndex || 0), 0, 1));
+    const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
+    const variance = values.reduce((sum, value) => sum + (value - mean) ** 2, 0) / values.length;
+    return Math.sqrt(variance);
+  }
+
+  buildRoundMetrics(agents, transferEvents, judgmentRecords, regions) {
+    const totalFlow = transferEvents.reduce((sum, event) => sum + Number(event.amount || 0), 0);
+    const blockedByJudgment = judgmentRecords.reduce(
+      (sum, record) => sum + Number(record.blocked || 0),
+      0
+    );
+    const positiveNet = agents.reduce((sum, agent) => sum + Math.max(0, Number(agent.delta || 0)), 0);
+    const attemptedFlow = totalFlow + blockedByJudgment;
+    return {
+      totalFlow,
+      blockedByJudgment,
+      judgmentRatio: attemptedFlow > 0 ? blockedByJudgment / attemptedFlow : 0,
+      netConversionEfficiency: totalFlow > 0 ? positiveNet / totalFlow : 0,
+      regionalVolatility: this.computeRegionalVolatility(regions)
+    };
   }
 
   regionFitScore(agent, region, socialSignals) {
@@ -1745,9 +1852,10 @@ class ReligionSimulation {
     };
   }
 
-  async start({ useOpenAI = true, locale = DEFAULT_LOCALE } = {}) {
+  async start({ useOpenAI = true, locale = DEFAULT_LOCALE, scenario = DEFAULT_SCENARIO } = {}) {
     this.openaiClient.setEnabled(useOpenAI);
     const resolvedLocale = normalizeLocale(locale);
+    const resolvedScenario = normalizeScenario(scenario);
     const initPrefix =
       resolvedLocale === 'zh-CN'
         ? '初始化：'
@@ -1782,21 +1890,24 @@ class ReligionSimulation {
     });
 
     const startedAt = new Date().toISOString();
-    const socialSignals = { ...GLOBAL_SOCIAL_BASELINE };
+    const socialSignals = buildScenarioSignalTarget(resolvedScenario);
     const regions = this.buildRegionalLandscape(agents, socialSignals);
     const transferEngine = 'rule';
     const structureOutput = this.buildStructureOutput(0, [], regions, transferEngine);
+    const roundMetrics = this.buildRoundMetrics(agents, [], [], regions);
 
     this.state = {
       round: 0,
       startedAt,
       updatedAt: startedAt,
       locale: resolvedLocale,
+      scenario: resolvedScenario,
       socialSignals,
       agents,
       regions,
       transferEngine,
       structureOutput,
+      roundMetrics,
       topTransfers: [],
       judgmentRecords: [],
       logs: agents.map((agent) => ({
@@ -1823,13 +1934,18 @@ class ReligionSimulation {
     return this.state;
   }
 
-  async tick({ locale } = {}) {
+  async tick({ locale, scenario } = {}) {
     const state = this.ensureState();
     state.round += 1;
     if (locale) {
       state.locale = normalizeLocale(locale);
     }
+    if (scenario) {
+      state.scenario = normalizeScenario(scenario);
+    }
+    state.scenario = normalizeScenario(state.scenario || DEFAULT_SCENARIO);
     const activeLocale = normalizeLocale(state.locale || DEFAULT_LOCALE);
+    state.socialSignals = blendSignalsToScenario(state.socialSignals, state.scenario);
     state.socialSignals = this.driftSocialSignals(state.socialSignals);
     this.adaptAgentStrategies(state.agents, state.socialSignals);
     for (const agent of state.agents) {
@@ -1941,6 +2057,12 @@ class ReligionSimulation {
       state.regions,
       state.transferEngine
     );
+    state.roundMetrics = this.buildRoundMetrics(
+      state.agents,
+      judgedPlan.events,
+      judgedPlan.records,
+      state.regions
+    );
     state.updatedAt = now;
     return this.snapshot();
   }
@@ -1954,6 +2076,9 @@ class ReligionSimulation {
       startedAt: state.startedAt,
       updatedAt: state.updatedAt,
       locale: state.locale || DEFAULT_LOCALE,
+      scenario: normalizeScenario(state.scenario || DEFAULT_SCENARIO),
+      availableScenarios: listAvailableScenarios(),
+      configVersion: this.config.version,
       useOpenAI: this.openaiClient.enabled,
       totalFollowers,
       invariantOk: totalFollowers === this.totalFollowers,
@@ -1985,6 +2110,7 @@ class ReligionSimulation {
       regions: state.regions,
       topTransfers: state.topTransfers,
       judgmentRecords: state.judgmentRecords.slice(-100),
+      roundMetrics: state.roundMetrics,
       structureOutput: state.structureOutput,
       logs: state.logs.slice(-160)
     };
@@ -2011,7 +2137,8 @@ app.post('/api/simulation/start', async (req, res) => {
   try {
     const useOpenAI = req.body?.useOpenAI !== false;
     const locale = normalizeLocale(req.body?.locale || DEFAULT_LOCALE);
-    const snapshot = await simulation.start({ useOpenAI, locale });
+    const scenario = normalizeScenario(req.body?.scenario || DEFAULT_SCENARIO);
+    const snapshot = await simulation.start({ useOpenAI, locale, scenario });
     res.json(snapshot);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -2021,11 +2148,20 @@ app.post('/api/simulation/start', async (req, res) => {
 app.post('/api/simulation/tick', async (req, res) => {
   try {
     const locale = normalizeLocale(req.body?.locale || DEFAULT_LOCALE);
-    const snapshot = await simulation.tick({ locale });
+    const scenario = req.body?.scenario ? normalizeScenario(req.body?.scenario) : undefined;
+    const snapshot = await simulation.tick({ locale, scenario });
     res.json(snapshot);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
+});
+
+app.get('/api/simulation/scenarios', (_req, res) => {
+  res.json({
+    defaultScenario: DEFAULT_SCENARIO,
+    scenarios: listAvailableScenarios(),
+    configVersion: SIMULATION_CONFIG.version
+  });
 });
 
 app.get('/api/simulation/state', (_req, res) => {

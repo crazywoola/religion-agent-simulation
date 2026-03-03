@@ -14,7 +14,9 @@ const DICTIONARY = {
       stop: 'Pause',
       polling: 'Tick Interval (ms)',
       useOpenAI: 'Use OpenAI API for doctrine/action generation',
-      language: 'Language'
+      language: 'Language',
+      scenario: 'Scenario',
+      logFilter: 'Log Filter'
     },
     section: {
       religions: 'Religion Profiles',
@@ -61,10 +63,15 @@ const DICTIONARY = {
       rule: 'Rule',
       corridor: 'Corridor',
       intensity: 'Intensity',
-      speed: 'Speed'
+      speed: 'Speed',
+      factors: 'Top factors'
     },
     insight: {
+      scenario: 'Scenario',
       totalFlow: 'Total Transfer Volume',
+      judgmentRatio: 'Judgment Ratio',
+      conversionEfficiency: 'Net Conversion Efficiency',
+      regionalVolatility: 'Regional Volatility',
       aiShare: 'AI Contribution',
       strongestCorridor: 'Strongest Corridor',
       dominantReligion: 'Global Dominant Religion',
@@ -97,7 +104,19 @@ const DICTIONARY = {
     log: {
       header: 'Round {round} · {time} · {name}',
       net: 'Net: {delta} (In {inflow} / Out {outflow})',
-      judgment: 'Judgment Record'
+      judgment: 'Judgment Record',
+      empty: 'No logs for current filter'
+    },
+    logFilter: {
+      all: 'All',
+      mission: 'Mission',
+      judgment: 'Judgment'
+    },
+    scenario: {
+      balanced: 'Balanced',
+      high_regulation: 'High Regulation',
+      high_secularization: 'High Secularization',
+      high_polarization: 'High Polarization'
     },
     religionNames: {
       buddhism: 'Buddhism',
@@ -131,7 +150,9 @@ const DICTIONARY = {
       stop: '暂停',
       polling: '轮询间隔(ms)',
       useOpenAI: '使用 OpenAI API 生成教义/传教日志',
-      language: '语言'
+      language: '语言',
+      scenario: '场景',
+      logFilter: '日志筛选'
     },
     section: {
       religions: '宗教信息',
@@ -178,10 +199,15 @@ const DICTIONARY = {
       rule: '规则',
       corridor: '走廊',
       intensity: '强度',
-      speed: '速度'
+      speed: '速度',
+      factors: '主因子'
     },
     insight: {
+      scenario: '场景',
       totalFlow: '总转化流量',
+      judgmentRatio: '审判拦截率',
+      conversionEfficiency: '净转化效率',
+      regionalVolatility: '区域波动性',
       aiShare: 'AI 贡献占比',
       strongestCorridor: '最强转化走廊',
       dominantReligion: '全局主导宗教',
@@ -214,7 +240,19 @@ const DICTIONARY = {
     log: {
       header: '第 {round} 轮 · {time} · {name}',
       net: '净变化：{delta}（流入 {inflow} / 流出 {outflow}）',
-      judgment: '宗教审判记录'
+      judgment: '宗教审判记录',
+      empty: '当前筛选条件下暂无日志'
+    },
+    logFilter: {
+      all: '全部',
+      mission: '传教',
+      judgment: '审判'
+    },
+    scenario: {
+      balanced: '平衡场景',
+      high_regulation: '高监管场景',
+      high_secularization: '高世俗化场景',
+      high_polarization: '高极化场景'
     },
     religionNames: {
       buddhism: '佛教',
@@ -248,7 +286,9 @@ const DICTIONARY = {
       stop: '一時停止',
       polling: 'ティック間隔(ms)',
       useOpenAI: '教義/行動ログ生成に OpenAI API を使用',
-      language: '言語'
+      language: '言語',
+      scenario: 'シナリオ',
+      logFilter: 'ログフィルター'
     },
     section: {
       religions: '宗教プロファイル',
@@ -295,10 +335,15 @@ const DICTIONARY = {
       rule: 'ルール',
       corridor: 'コリドー',
       intensity: '強度',
-      speed: '速度'
+      speed: '速度',
+      factors: '主要因子'
     },
     insight: {
+      scenario: 'シナリオ',
       totalFlow: '総転化フロー量',
+      judgmentRatio: '審判遮断率',
+      conversionEfficiency: '純転化効率',
+      regionalVolatility: '地域ボラティリティ',
       aiShare: 'AI 寄与率',
       strongestCorridor: '最強コリドー',
       dominantReligion: '全体優勢宗教',
@@ -331,7 +376,19 @@ const DICTIONARY = {
     log: {
       header: 'ラウンド {round} · {time} · {name}',
       net: '純変化：{delta}（流入 {inflow} / 流出 {outflow}）',
-      judgment: '宗教審判ログ'
+      judgment: '宗教審判ログ',
+      empty: '現在のフィルターにログがありません'
+    },
+    logFilter: {
+      all: 'すべて',
+      mission: '布教',
+      judgment: '審判'
+    },
+    scenario: {
+      balanced: 'バランス',
+      high_regulation: '高規制',
+      high_secularization: '高世俗化',
+      high_polarization: '高分極化'
     },
     religionNames: {
       buddhism: '仏教',

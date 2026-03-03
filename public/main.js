@@ -7,6 +7,8 @@ const stopBtn = document.getElementById('stopBtn');
 const tickInput = document.getElementById('tickInput');
 const openaiToggle = document.getElementById('openaiToggle');
 const languageSelect = document.getElementById('languageSelect');
+const scenarioSelect = document.getElementById('scenarioSelect');
+const logFilterSelect = document.getElementById('logFilterSelect');
 const statusEl = document.getElementById('status');
 const religionCardsEl = document.getElementById('religionCards');
 const insightBoardEl = document.getElementById('insightBoard');
@@ -21,8 +23,10 @@ const stageWrapEl = document.querySelector('.stage-wrap');
 const appTitleEl = document.getElementById('appTitle');
 const appHintEl = document.getElementById('appHint');
 const languageLabelEl = document.getElementById('languageLabel');
+const scenarioLabelEl = document.getElementById('scenarioLabel');
 const tickLabelEl = document.getElementById('tickLabel');
 const openaiLabelEl = document.getElementById('openaiLabel');
+const logFilterLabelEl = document.getElementById('logFilterLabel');
 const religionSectionTitleEl = document.getElementById('religionSectionTitle');
 const insightSectionTitleEl = document.getElementById('insightSectionTitle');
 const regionSectionTitleEl = document.getElementById('regionSectionTitle');
@@ -31,6 +35,8 @@ const logSectionTitleEl = document.getElementById('logSectionTitle');
 
 const savedLocale =
   typeof localStorage !== 'undefined' ? localStorage.getItem('app_locale') : null;
+const savedScenario =
+  typeof localStorage !== 'undefined' ? localStorage.getItem('app_scenario') : null;
 const i18n = createI18n(savedLocale || getPreferredLocale());
 
 let tickTimer = null;
@@ -39,6 +45,7 @@ let religionOrder = [];
 let antClock = 0;
 let currentLocale = i18n.locale;
 let regionNodeLocale = i18n.locale;
+let activeLogFilter = 'all';
 
 const RELIGION_EMOJI = {
   buddhism: '☸️',
@@ -83,6 +90,10 @@ function religionDisplay(religion) {
   return `${religionEmoji(religion)} ${religionLabel(religion)}`;
 }
 
+function scenarioLabel(scenarioId) {
+  return i18n.t(`scenario.${scenarioId}`);
+}
+
 function regionLabel(region) {
   return i18n.regionName(region.id, region.name);
 }
@@ -97,8 +108,10 @@ function applyStaticI18n() {
   startBtn.textContent = i18n.t('controls.start');
   stopBtn.textContent = i18n.t('controls.stop');
   languageLabelEl.textContent = i18n.t('controls.language');
+  scenarioLabelEl.textContent = i18n.t('controls.scenario');
   tickLabelEl.textContent = i18n.t('controls.polling');
   openaiLabelEl.textContent = i18n.t('controls.useOpenAI');
+  logFilterLabelEl.textContent = i18n.t('controls.logFilter');
 
   religionSectionTitleEl.textContent = i18n.t('section.religions');
   insightSectionTitleEl.textContent = i18n.t('section.insights');
@@ -110,6 +123,14 @@ function applyStaticI18n() {
     option.textContent = getLocaleLabel(option.value);
   }
   languageSelect.value = i18n.locale;
+
+  for (const option of scenarioSelect.options) {
+    option.textContent = scenarioLabel(option.value);
+  }
+
+  for (const option of logFilterSelect.options) {
+    option.textContent = i18n.t(`logFilter.${option.value}`);
+  }
 }
 
 function setLocale(locale, rerender = true) {
@@ -709,10 +730,17 @@ function renderTransferBoard(state) {
         : i18n.t('common.none');
       const intensityText = corridor ? formatPercent(corridor.intensity, 0) : i18n.t('common.none');
       const speedText = corridor ? corridor.speed.toFixed(2) : i18n.t('common.none');
+      const factors = Array.isArray(item.reasonFactors) ? item.reasonFactors.slice(0, 3) : [];
+      const factorText = factors.length
+        ? factors
+            .map((factor) => `${factor.label} ${formatPercent(Number(factor.score || 0), 0)}`)
+            .join(' · ')
+        : i18n.t('common.none');
       return `
       <article class="transfer-item">
         <div><strong>${religionDisplay(fromReligion || { id: item.fromId, name: item.from })}</strong> -> <strong>${religionDisplay(toReligion || { id: item.toId, name: item.to })}</strong>：${i18n.number(item.amount)}</div>
         <div class="muted">[${sourceLabel}] ${item.reason}</div>
+        <div class="transfer-factors">${i18n.t('transfer.factors')} ${factorText}</div>
         <div class="transfer-corridor">${i18n.t('transfer.corridor')} ${corridorText} · ${i18n.t('transfer.intensity')} ${intensityText} · ${i18n.t('transfer.speed')} ${speedText}</div>
       </article>
     `;
@@ -724,9 +752,11 @@ function renderInsights(state) {
   const links = state.structureOutput?.antLinks || [];
   const topTransfer = state.topTransfers[0] || null;
   const judgmentCount = Array.isArray(state.judgmentRecords) ? state.judgmentRecords.length : 0;
-  const totalFlow = links.length
+  const metrics = state.roundMetrics || {};
+  const fallbackFlow = links.length
     ? links.reduce((sum, item) => sum + item.amount, 0)
     : state.topTransfers.reduce((sum, item) => sum + item.amount, 0);
+  const totalFlow = Number(metrics.totalFlow ?? fallbackFlow);
   const aiFlow = links.reduce((sum, item) => sum + (item.source === 'ai' ? item.amount : 0), 0);
   const aiShare = totalFlow > 0 ? aiFlow / totalFlow : 0;
 
@@ -752,9 +782,14 @@ function renderInsights(state) {
     : i18n.t('insight.noData');
 
   const engineLabel = i18n.t(`engine.${state.transferEngine || 'rule'}`);
+  const scenarioText = scenarioLabel(state.scenario || 'balanced');
 
   const items = [
+    [i18n.t('insight.scenario'), scenarioText],
     [i18n.t('insight.totalFlow'), i18n.number(totalFlow)],
+    [i18n.t('insight.judgmentRatio'), formatPercent(metrics.judgmentRatio || 0, 1)],
+    [i18n.t('insight.conversionEfficiency'), formatPercent(metrics.netConversionEfficiency || 0, 1)],
+    [i18n.t('insight.regionalVolatility'), formatPercent(metrics.regionalVolatility || 0, 1)],
     [i18n.t('insight.aiShare'), formatPercent(aiShare, 1)],
     [i18n.t('insight.strongestCorridor'), strongestCorridorText],
     [i18n.t('insight.dominantReligion'), dominantReligionText],
@@ -827,7 +862,16 @@ function renderMapHud(state) {
 
 function renderLogs(state) {
   const religionById = new Map(state.religions.map((religion) => [religion.id, religion]));
-  const recent = state.logs.slice(-24).reverse();
+  const filtered =
+    activeLogFilter === 'all'
+      ? state.logs
+      : state.logs.filter((log) => (log.type || 'mission') === activeLogFilter);
+  const recent = filtered.slice(-24).reverse();
+
+  if (!recent.length) {
+    logListEl.innerHTML = `<div class="muted">${i18n.t('log.empty')}</div>`;
+    return;
+  }
 
   logListEl.innerHTML = recent
     .map((log) => {
@@ -862,6 +906,9 @@ function renderLogs(state) {
 
 function renderAll(state) {
   liveState = state;
+  if (state.scenario && scenarioSelect.value !== state.scenario) {
+    scenarioSelect.value = state.scenario;
+  }
   const invariant = i18n.t(state.invariantOk ? 'status.invariantFixed' : 'status.invariantAbnormal');
   const engine = i18n.t(`engine.${state.transferEngine || 'rule'}`);
   const openai = i18n.t(state.useOpenAI ? 'common.on' : 'common.off');
@@ -978,14 +1025,16 @@ async function postJson(url, body = {}) {
 async function startSimulation() {
   const snapshot = await postJson('/api/simulation/start', {
     useOpenAI: openaiToggle.checked,
-    locale: i18n.locale
+    locale: i18n.locale,
+    scenario: scenarioSelect.value
   });
   renderAll(snapshot);
 }
 
 async function tickSimulation() {
   const snapshot = await postJson('/api/simulation/tick', {
-    locale: i18n.locale
+    locale: i18n.locale,
+    scenario: scenarioSelect.value
   });
   renderAll(snapshot);
 }
@@ -1042,6 +1091,23 @@ stopBtn.addEventListener('click', () => {
 languageSelect.addEventListener('change', (event) => {
   setLocale(event.target.value, true);
 });
+
+scenarioSelect.addEventListener('change', (event) => {
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem('app_scenario', event.target.value);
+  }
+});
+
+logFilterSelect.addEventListener('change', (event) => {
+  activeLogFilter = event.target.value || 'all';
+  if (liveState) {
+    renderLogs(liveState);
+  }
+});
+
+if (savedScenario && [...scenarioSelect.options].some((option) => option.value === savedScenario)) {
+  scenarioSelect.value = savedScenario;
+}
 
 setLocale(i18n.locale, false);
 statusEl.textContent = i18n.t('status.notStarted');
