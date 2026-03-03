@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OpenAI 多宗教 Agent 模拟器</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.164.1/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.164.1/examples/jsm/"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <div class="layout">
+      <aside class="panel left">
+        <h1>宗教 Agent 模拟</h1>
+        <p class="hint">
+          每个宗教初始 10000 信徒。系统仅模拟宗教间同化/流失，<strong>总信徒恒定不变</strong>。
+        </p>
+
+        <div class="controls">
+          <button id="startBtn">开始模拟</button>
+          <button id="stopBtn" disabled>暂停</button>
+          <label>
+            轮询间隔(ms)
+            <input id="tickInput" type="number" value="2000" min="800" max="10000" step="200" />
+          </label>
+          <label class="switch">
+            <input id="openaiToggle" type="checkbox" checked />
+            <span>使用 OpenAI API 生成教义/传教日志</span>
+          </label>
+        </div>
+
+        <div class="status" id="status">状态：未开始</div>
+
+        <h2>宗教信息</h2>
+        <div id="religionCards" class="religion-cards"></div>
+      </aside>
+
+      <main class="stage-wrap">
+        <canvas id="sceneCanvas"></canvas>
+      </main>
+
+      <aside class="panel right">
+        <h2>区域格局</h2>
+        <div id="regionBoard" class="region-board"></div>
+
+        <h2>关键同化链路</h2>
+        <div id="transferBoard" class="transfer-board"></div>
+
+        <h2>传教日志</h2>
+        <div id="logList" class="log-list"></div>
+      </aside>
+    </div>
+
+    <script type="module" src="/main.js"></script>
+  </body>
+</html>

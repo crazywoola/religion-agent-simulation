@@ -1,0 +1,14 @@
+{
+  "name": "religion-agent-simulation",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "NODE_USE_ENV_PROXY=1 node server.js",
+    "start": "NODE_USE_ENV_PROXY=1 node server.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.5.0",
+    "express": "^4.21.2"
+  }
+}

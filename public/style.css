@@ -1,0 +1,219 @@
+:root {
+  --bg-top: #f0ebe0;
+  --bg-bottom: #d8dfd6;
+  --panel: #fffdf6;
+  --text: #13222f;
+  --muted: #566473;
+  --line: #d6d5ca;
+  --primary: #1f5f7a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: var(--text);
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  background:
+    radial-gradient(circle at 18% 10%, #f7f4e8, transparent 42%),
+    radial-gradient(circle at 82% 0%, #e4e9df, transparent 34%),
+    linear-gradient(160deg, var(--bg-top), var(--bg-bottom));
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 340px minmax(460px, 1fr) 360px;
+  gap: 14px;
+  height: 100vh;
+  padding: 14px;
+}
+
+.panel {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--panel) 92%, #ffffff 8%);
+  padding: 14px;
+  overflow: auto;
+}
+
+h1,
+h2 {
+  margin: 0 0 10px;
+}
+
+h1 {
+  font-size: 1.35rem;
+}
+
+h2 {
+  font-size: 1rem;
+  margin-top: 14px;
+}
+
+.hint {
+  margin: 0 0 12px;
+  line-height: 1.45;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.controls {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+button {
+  border: 1px solid #1a4760;
+  background: linear-gradient(130deg, #276f92, #164d69);
+  color: #f7fbff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+label {
+  display: grid;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.switch {
+  grid-template-columns: 18px 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+input[type='number'] {
+  border: 1px solid #b8c2ca;
+  border-radius: 8px;
+  padding: 7px 8px;
+  font: inherit;
+}
+
+.status {
+  border: 1px solid #d4dae0;
+  background: #f7fbff;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+}
+
+.stage-wrap {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% -20%, #e9f1f4, #cedde4 48%, #b9ced7 100%);
+}
+
+#sceneCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.religion-cards,
+.region-board,
+.transfer-board,
+.log-list {
+  display: grid;
+  gap: 8px;
+}
+
+.religion-card,
+.region-item,
+.transfer-item,
+.log-item {
+  border: 1px solid #d7dde2;
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: #fbfdff;
+}
+
+.religion-card {
+  border-left: 7px solid var(--tone);
+}
+
+.row-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.sub {
+  margin-top: 4px;
+  font-size: 0.81rem;
+  line-height: 1.42;
+  color: #3d4a57;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.delta-up {
+  color: #0f8a50;
+}
+
+.delta-down {
+  color: #bc2d24;
+}
+
+.region-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.region-bar {
+  margin-top: 6px;
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: #e4e9ef;
+  overflow: hidden;
+}
+
+.region-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2f6f8f, #7cb0ca);
+}
+
+.transfer-item {
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.log-meta {
+  margin-bottom: 3px;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+@media (max-width: 1260px) {
+  .layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(420px, 56vh) auto;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .stage-wrap {
+    min-height: 480px;
+  }
+}
