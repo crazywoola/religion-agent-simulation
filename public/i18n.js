@@ -16,14 +16,40 @@ const DICTIONARY = {
       useOpenAI: 'Use OpenAI API for doctrine/action generation',
       language: 'Language',
       scenario: 'Scenario',
-      logFilter: 'Log Filter'
+      logFilter: 'Log Filter',
+      speed: 'Speed',
+      screenshot: 'Screenshot',
+      signalReset: 'Reset Signals'
     },
     section: {
       religions: 'Religion Profiles',
       insights: 'Map Insights',
       regions: 'Regional Landscape',
       transfers: 'Key Assimilation Links',
-      logs: 'Mission Logs'
+      logs: 'Mission Logs',
+      events: 'Breaking Events',
+      signals: 'Signal Control',
+      history: 'Follower Trend'
+    },
+    modal: {
+      traits: 'Trait Radar',
+      strategy: 'Strategy Channels',
+      governance: 'Governance',
+      exitBarrier: 'Exit Barrier',
+      followers: 'Followers',
+      close: 'Close'
+    },
+    event: {
+      religious_scandal: 'Religious Scandal',
+      digital_revival: 'Digital Revival',
+      political_persecution: 'Political Persecution',
+      migration_wave: 'Migration Wave',
+      economic_crisis: 'Economic Crisis',
+      youth_awakening: 'Youth Awakening',
+      polarization_spike: 'Polarization Spike',
+      pluralism_wave: 'Pluralism Wave',
+      climate_anxiety: 'Climate Anxiety',
+      institutional_reform: 'Institutional Reform'
     },
     status: {
       notStarted: 'Status: Not started',
@@ -126,7 +152,8 @@ const DICTIONARY = {
       islam: 'Islam',
       protestant: 'Christianity (Protestant)',
       pastafarianism: 'Pastafarianism',
-      catholicism: 'Catholicism'
+      catholicism: 'Catholicism',
+      secular: 'Secular / No Religion'
     },
     regionNames: {
       north_america: 'North America',
@@ -152,14 +179,40 @@ const DICTIONARY = {
       useOpenAI: '使用 OpenAI API 生成教义/传教日志',
       language: '语言',
       scenario: '场景',
-      logFilter: '日志筛选'
+      logFilter: '日志筛选',
+      speed: '速度',
+      screenshot: '截图',
+      signalReset: '重置信号'
     },
     section: {
       religions: '宗教信息',
       insights: '地图洞察',
       regions: '区域格局',
       transfers: '关键同化链路',
-      logs: '传教日志'
+      logs: '传教日志',
+      events: '突发事件',
+      signals: '信号调控',
+      history: '信众趋势'
+    },
+    modal: {
+      traits: '特质雷达',
+      strategy: '策略通道',
+      governance: '治理机制',
+      exitBarrier: '离教壁垒',
+      followers: '信众数',
+      close: '关闭'
+    },
+    event: {
+      religious_scandal: '宗教丑闻',
+      digital_revival: '数字复兴',
+      political_persecution: '政治迫害',
+      migration_wave: '移民潮',
+      economic_crisis: '经济危机',
+      youth_awakening: '青年觉醒',
+      polarization_spike: '极化激增',
+      pluralism_wave: '多元化浪潮',
+      climate_anxiety: '气候焦虑',
+      institutional_reform: '制度改革'
     },
     status: {
       notStarted: '状态：未开始',
@@ -262,7 +315,8 @@ const DICTIONARY = {
       islam: '伊斯兰教',
       protestant: '基督教',
       pastafarianism: '飞天面条神教',
-      catholicism: '天主教'
+      catholicism: '天主教',
+      secular: '无宗教/世俗主义'
     },
     regionNames: {
       north_america: '北美',
@@ -288,14 +342,40 @@ const DICTIONARY = {
       useOpenAI: '教義/行動ログ生成に OpenAI API を使用',
       language: '言語',
       scenario: 'シナリオ',
-      logFilter: 'ログフィルター'
+      logFilter: 'ログフィルター',
+      speed: '速度',
+      screenshot: 'スクリーンショット',
+      signalReset: 'シグナルリセット'
     },
     section: {
       religions: '宗教プロファイル',
       insights: 'マップ洞察',
       regions: '地域勢力図',
       transfers: '主要同化リンク',
-      logs: '布教ログ'
+      logs: '布教ログ',
+      events: '突発イベント',
+      signals: 'シグナル操作',
+      history: '信徒トレンド'
+    },
+    modal: {
+      traits: '特性レーダー',
+      strategy: '戦略チャンネル',
+      governance: 'ガバナンス',
+      exitBarrier: '離脱障壁',
+      followers: '信徒数',
+      close: '閉じる'
+    },
+    event: {
+      religious_scandal: '宗教スキャンダル',
+      digital_revival: 'デジタル復興',
+      political_persecution: '政治的迫害',
+      migration_wave: '移民の波',
+      economic_crisis: '経済危機',
+      youth_awakening: '若者の覚醒',
+      polarization_spike: '分極化の急増',
+      pluralism_wave: '多元主義の波',
+      climate_anxiety: '気候不安',
+      institutional_reform: '制度改革'
     },
     status: {
       notStarted: '状態：未開始',
@@ -398,7 +478,8 @@ const DICTIONARY = {
       islam: 'イスラム教',
       protestant: 'キリスト教（プロテスタント）',
       pastafarianism: '空飛ぶスパゲッティ・モンスター教',
-      catholicism: 'カトリック'
+      catholicism: 'カトリック',
+      secular: '無宗教・世俗主義'
     },
     regionNames: {
       north_america: '北米',
