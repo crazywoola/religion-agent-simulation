@@ -1048,7 +1048,7 @@ function stopLoop() {
 
 function startLoop() {
   stopLoop();
-  const delay = Number(tickInput.value) || 2000;
+  const delay = Number(tickInput.value) || 5000;
 
   tickTimer = setInterval(async () => {
     try {
