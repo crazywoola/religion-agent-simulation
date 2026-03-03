@@ -40,6 +40,17 @@ let antClock = 0;
 let currentLocale = i18n.locale;
 let regionNodeLocale = i18n.locale;
 
+const RELIGION_EMOJI = {
+  buddhism: '☸️',
+  hinduism: '🕉️',
+  taoism: '☯️',
+  shinto: '⛩️',
+  islam: '☪️',
+  protestant: '✝️',
+  catholicism: '✝️',
+  pastafarianism: '🍝'
+};
+
 function clampValue(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
@@ -58,6 +69,18 @@ function listJoin(items) {
 
 function religionLabel(religion) {
   return i18n.religionName(religion.id, religion.name);
+}
+
+function religionEmojiById(id) {
+  return RELIGION_EMOJI[id] || '🕊️';
+}
+
+function religionEmoji(religion) {
+  return religionEmojiById(religion?.id);
+}
+
+function religionDisplay(religion) {
+  return `${religionEmoji(religion)} ${religionLabel(religion)}`;
 }
 
 function regionLabel(region) {
@@ -303,11 +326,14 @@ function createTextSprite(text) {
   c.height = 96;
   const ctx = c.getContext('2d');
 
-  ctx.fillStyle = 'rgba(15,25,35,0.72)';
+  ctx.fillStyle = 'rgba(38,53,92,0.72)';
   ctx.fillRect(12, 18, 296, 58);
+  ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(12, 18, 296, 58);
 
   ctx.fillStyle = '#f4f8ff';
-  ctx.font = '600 36px "IBM Plex Sans", sans-serif';
+  ctx.font = '700 34px "Baloo 2", "Nunito", sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(text, 160, 48);
@@ -614,7 +640,7 @@ function renderCards(state) {
       return `
         <article class="religion-card" style="--tone:${religion.color}">
           <div class="row-title">
-            <span>${religionLabel(religion)}</span>
+            <span>${religionDisplay(religion)}</span>
             <span>${i18n.number(religion.followers)} <span class="${deltaClass}">(${formatSigned(religion.delta)})</span></span>
           </div>
           <div class="sub"><strong>${i18n.t('card.inOut')}：</strong>${religion.transferIn} / ${religion.transferOut}</div>
@@ -641,7 +667,7 @@ function renderRegionBoard(state) {
         <article class="region-item">
           <div class="region-head">
             <span>${regionLabel(region)}</span>
-            <span>${religionLabel(topReligion || { id: top.id, name: top.name })} ${percent}%</span>
+            <span>${religionDisplay(topReligion || { id: top.id, name: top.name })} ${percent}%</span>
           </div>
           <div class="sub muted">${i18n.t('region.summary', {
             total: i18n.number(region.totalFollowers),
@@ -685,7 +711,7 @@ function renderTransferBoard(state) {
       const speedText = corridor ? corridor.speed.toFixed(2) : i18n.t('common.none');
       return `
       <article class="transfer-item">
-        <div><strong>${religionLabel(fromReligion || { id: item.fromId, name: item.from })}</strong> -> <strong>${religionLabel(toReligion || { id: item.toId, name: item.to })}</strong>：${i18n.number(item.amount)}</div>
+        <div><strong>${religionDisplay(fromReligion || { id: item.fromId, name: item.from })}</strong> -> <strong>${religionDisplay(toReligion || { id: item.toId, name: item.to })}</strong>：${i18n.number(item.amount)}</div>
         <div class="muted">[${sourceLabel}] ${item.reason}</div>
         <div class="transfer-corridor">${i18n.t('transfer.corridor')} ${corridorText} · ${i18n.t('transfer.intensity')} ${intensityText} · ${i18n.t('transfer.speed')} ${speedText}</div>
       </article>
@@ -697,6 +723,7 @@ function renderTransferBoard(state) {
 function renderInsights(state) {
   const links = state.structureOutput?.antLinks || [];
   const topTransfer = state.topTransfers[0] || null;
+  const judgmentCount = Array.isArray(state.judgmentRecords) ? state.judgmentRecords.length : 0;
   const totalFlow = links.length
     ? links.reduce((sum, item) => sum + item.amount, 0)
     : state.topTransfers.reduce((sum, item) => sum + item.amount, 0);
@@ -710,12 +737,12 @@ function renderInsights(state) {
   )[0];
 
   const strongestCorridorText = topTransfer
-    ? `${religionLabel(religionById.get(topTransfer.fromId) || { id: topTransfer.fromId, name: topTransfer.from })} -> ${religionLabel(
+    ? `${religionDisplay(religionById.get(topTransfer.fromId) || { id: topTransfer.fromId, name: topTransfer.from })} -> ${religionDisplay(
         religionById.get(topTransfer.toId) || { id: topTransfer.toId, name: topTransfer.to }
       )} (${i18n.number(topTransfer.amount)})`
     : i18n.t('insight.noData');
   const dominantReligionText = dominantReligion
-    ? `${religionLabel(dominantReligion)} (${formatPercent(
+    ? `${religionDisplay(dominantReligion)} (${formatPercent(
         dominantReligion.followers / state.totalFollowers,
         1
       )})`
@@ -732,6 +759,7 @@ function renderInsights(state) {
     [i18n.t('insight.strongestCorridor'), strongestCorridorText],
     [i18n.t('insight.dominantReligion'), dominantReligionText],
     [i18n.t('insight.mostCompetitiveRegion'), competitiveRegionText],
+    [i18n.t('insight.judgmentCount'), i18n.number(judgmentCount)],
     [i18n.t('insight.lineCount'), i18n.number(links.length)],
     [i18n.t('insight.engine'), engineLabel]
   ];
@@ -788,7 +816,7 @@ function renderMapHud(state) {
       <article class="legend-pill">
         <div class="legend-name">
           <span class="legend-dot" style="background:${religion.color}"></span>
-          <span class="legend-text">${religionLabel(religion)}</span>
+          <span class="legend-text">${religionEmoji(religion)} ${religionLabel(religion)}</span>
         </div>
         <span>${formatPercent(share, 1)}</span>
       </article>
@@ -804,21 +832,27 @@ function renderLogs(state) {
   logListEl.innerHTML = recent
     .map((log) => {
       const religion = log.religionId ? religionById.get(log.religionId) : null;
+      const religionName = religion
+        ? religionDisplay(religion)
+        : `${religionEmojiById(log.religionId)} ${log.name || ''}`.trim();
       const title = i18n.t('log.header', {
         round: log.round,
         time: i18n.time(log.time),
-        name: religion ? religionLabel(religion) : log.name
+        name: religionName
       });
       const delta = formatSigned(log.delta);
-      const net = i18n.t('log.net', {
-        delta,
-        inflow: log.transferIn,
-        outflow: log.transferOut
-      });
+      const isJudgment = log.type === 'judgment';
+      const net = isJudgment
+        ? `${i18n.t('log.judgment')} · ${i18n.number(log.judgment?.blocked || log.transferOut || 0)}`
+        : i18n.t('log.net', {
+            delta,
+            inflow: log.transferIn,
+            outflow: log.transferOut
+          });
       return `
-      <article class="log-item">
+      <article class="log-item ${isJudgment ? 'is-judgment' : ''}">
         <div class="log-meta">${title}</div>
-        <div>${log.action}</div>
+        <div>${isJudgment ? `<span class="log-tag">${i18n.t('log.judgment')}</span>` : ''}${log.action}</div>
         <div class="log-meta">${net}</div>
       </article>
     `;

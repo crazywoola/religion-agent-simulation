@@ -71,6 +71,7 @@ const DICTIONARY = {
       mostCompetitiveRegion: 'Most Competitive Region',
       lineCount: 'Active Lines',
       engine: 'Transfer Engine',
+      judgmentCount: 'Religious Judgments',
       noData: 'Not enough data'
     },
     hud: {
@@ -87,11 +88,16 @@ const DICTIONARY = {
       identityPolitics: 'Identity Politics',
       youthPressure: 'Youth Pressure',
       meaningSearch: 'Meaning Search',
-      socialFragmentation: 'Social Fragmentation'
+      socialFragmentation: 'Social Fragmentation',
+      secularization: 'Secularization',
+      legalPluralism: 'Legal Pluralism',
+      mediaPolarization: 'Media Polarization',
+      stateRegulation: 'State Regulation'
     },
     log: {
       header: 'Round {round} · {time} · {name}',
-      net: 'Net: {delta} (In {inflow} / Out {outflow})'
+      net: 'Net: {delta} (In {inflow} / Out {outflow})',
+      judgment: 'Judgment Record'
     },
     religionNames: {
       buddhism: 'Buddhism',
@@ -182,6 +188,7 @@ const DICTIONARY = {
       mostCompetitiveRegion: '竞争最激烈区域',
       lineCount: '活跃链路数',
       engine: '转化引擎',
+      judgmentCount: '宗教审判次数',
       noData: '暂无足够数据'
     },
     hud: {
@@ -198,11 +205,16 @@ const DICTIONARY = {
       identityPolitics: '身份政治',
       youthPressure: '青年压力',
       meaningSearch: '意义追寻',
-      socialFragmentation: '社会碎片化'
+      socialFragmentation: '社会碎片化',
+      secularization: '世俗化',
+      legalPluralism: '法律多元',
+      mediaPolarization: '舆论极化',
+      stateRegulation: '国家监管'
     },
     log: {
       header: '第 {round} 轮 · {time} · {name}',
-      net: '净变化：{delta}（流入 {inflow} / 流出 {outflow}）'
+      net: '净变化：{delta}（流入 {inflow} / 流出 {outflow}）',
+      judgment: '宗教审判记录'
     },
     religionNames: {
       buddhism: '佛教',
@@ -293,6 +305,7 @@ const DICTIONARY = {
       mostCompetitiveRegion: '最激戦地域',
       lineCount: 'アクティブ線数',
       engine: '転化エンジン',
+      judgmentCount: '宗教審判件数',
       noData: '十分なデータがありません'
     },
     hud: {
@@ -309,11 +322,16 @@ const DICTIONARY = {
       identityPolitics: 'アイデンティティ政治',
       youthPressure: '若年層圧力',
       meaningSearch: '意味追求',
-      socialFragmentation: '社会分断'
+      socialFragmentation: '社会分断',
+      secularization: '世俗化',
+      legalPluralism: '法的多元性',
+      mediaPolarization: 'メディア分極化',
+      stateRegulation: '国家規制'
     },
     log: {
       header: 'ラウンド {round} · {time} · {name}',
-      net: '純変化：{delta}（流入 {inflow} / 流出 {outflow}）'
+      net: '純変化：{delta}（流入 {inflow} / 流出 {outflow}）',
+      judgment: '宗教審判ログ'
     },
     religionNames: {
       buddhism: '仏教',

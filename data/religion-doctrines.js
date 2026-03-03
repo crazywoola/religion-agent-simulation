@@ -21,6 +21,12 @@ export const RELIGION_DOCTRINES = [
       identityBond: 0.54,
       institutionCapacity: 0.66
     },
+    governance: {
+      orthodoxy: 0.42,
+      antiProselytization: 0.44,
+      tribunalCapacity: 0.48,
+      dueProcess: 0.81
+    },
     regionalAffinity: {
       east_asia: 0.95,
       south_asia: 0.71,
@@ -49,6 +55,12 @@ export const RELIGION_DOCTRINES = [
       youthAppeal: 0.56,
       identityBond: 0.82,
       institutionCapacity: 0.69
+    },
+    governance: {
+      orthodoxy: 0.68,
+      antiProselytization: 0.72,
+      tribunalCapacity: 0.63,
+      dueProcess: 0.58
     },
     regionalAffinity: {
       east_asia: 0.24,
@@ -79,6 +91,12 @@ export const RELIGION_DOCTRINES = [
       identityBond: 0.49,
       institutionCapacity: 0.51
     },
+    governance: {
+      orthodoxy: 0.36,
+      antiProselytization: 0.41,
+      tribunalCapacity: 0.35,
+      dueProcess: 0.76
+    },
     regionalAffinity: {
       east_asia: 0.92,
       south_asia: 0.19,
@@ -107,6 +125,12 @@ export const RELIGION_DOCTRINES = [
       youthAppeal: 0.59,
       identityBond: 0.9,
       institutionCapacity: 0.83
+    },
+    governance: {
+      orthodoxy: 0.84,
+      antiProselytization: 0.86,
+      tribunalCapacity: 0.82,
+      dueProcess: 0.52
     },
     regionalAffinity: {
       east_asia: 0.39,
@@ -137,6 +161,12 @@ export const RELIGION_DOCTRINES = [
       identityBond: 0.66,
       institutionCapacity: 0.78
     },
+    governance: {
+      orthodoxy: 0.59,
+      antiProselytization: 0.57,
+      tribunalCapacity: 0.69,
+      dueProcess: 0.66
+    },
     regionalAffinity: {
       east_asia: 0.43,
       south_asia: 0.32,
@@ -165,6 +195,12 @@ export const RELIGION_DOCTRINES = [
       youthAppeal: 0.86,
       identityBond: 0.37,
       institutionCapacity: 0.26
+    },
+    governance: {
+      orthodoxy: 0.16,
+      antiProselytization: 0.18,
+      tribunalCapacity: 0.21,
+      dueProcess: 0.85
     },
     regionalAffinity: {
       east_asia: 0.41,
@@ -195,6 +231,12 @@ export const RELIGION_DOCTRINES = [
       identityBond: 0.79,
       institutionCapacity: 0.91
     },
+    governance: {
+      orthodoxy: 0.77,
+      antiProselytization: 0.73,
+      tribunalCapacity: 0.88,
+      dueProcess: 0.62
+    },
     regionalAffinity: {
       east_asia: 0.32,
       south_asia: 0.26,
@@ -223,6 +265,12 @@ export const RELIGION_DOCTRINES = [
       youthAppeal: 0.5,
       identityBond: 0.83,
       institutionCapacity: 0.73
+    },
+    governance: {
+      orthodoxy: 0.64,
+      antiProselytization: 0.69,
+      tribunalCapacity: 0.67,
+      dueProcess: 0.57
     },
     regionalAffinity: {
       east_asia: 0.99,

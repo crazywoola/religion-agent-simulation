@@ -93,6 +93,23 @@ function normalizeTraits(traits = {}) {
   };
 }
 
+function normalizeGovernance(governance = {}, fallback = {}) {
+  return {
+    orthodoxy: clamp(Number(governance.orthodoxy ?? fallback.orthodoxy ?? 0.55), 0.05, 0.98),
+    antiProselytization: clamp(
+      Number(governance.antiProselytization ?? fallback.antiProselytization ?? 0.55),
+      0.05,
+      0.98
+    ),
+    tribunalCapacity: clamp(
+      Number(governance.tribunalCapacity ?? fallback.tribunalCapacity ?? 0.55),
+      0.05,
+      0.98
+    ),
+    dueProcess: clamp(Number(governance.dueProcess ?? fallback.dueProcess ?? 0.55), 0.05, 0.98)
+  };
+}
+
 function normalizeClassics(classics, fallback = []) {
   if (!Array.isArray(classics)) {
     return fallback;
@@ -254,9 +271,66 @@ function localizedReasonLabel(reasonKey, locale = DEFAULT_LOCALE) {
       en: 'Institutional network pull',
       'zh-CN': '制度型组织吸纳',
       ja: '制度ネットワークの吸引'
+    },
+    secular_shift: {
+      en: 'Secular value drift',
+      'zh-CN': '世俗价值迁移',
+      ja: '世俗価値への移行'
+    },
+    polarization_alignment: {
+      en: 'Polarized identity alignment',
+      'zh-CN': '极化身份趋同',
+      ja: '分極化した同一性への整合'
+    },
+    pluralism_dialogue: {
+      en: 'Pluralism-driven dialogue',
+      'zh-CN': '多元对话吸引',
+      ja: '多元対話による吸引'
     }
   };
   return labels[reasonKey]?.[lang] || labels[reasonKey]?.en || reasonKey;
+}
+
+function localizedJudgmentReasonLabel(reasonKey, locale = DEFAULT_LOCALE) {
+  const lang = normalizeLocale(locale);
+  const labels = {
+    orthodoxy_enforcement: {
+      en: 'Orthodoxy enforcement',
+      'zh-CN': '教义正统性执法',
+      ja: '教義正統性の執行'
+    },
+    anti_proselytization_guard: {
+      en: 'Anti-proselytization guard',
+      'zh-CN': '反传教防护',
+      ja: '改宗勧誘の抑制'
+    },
+    identity_conflict: {
+      en: 'Identity conflict control',
+      'zh-CN': '身份冲突管控',
+      ja: 'アイデンティティ衝突の抑制'
+    },
+    legal_restriction: {
+      en: 'Regulatory restriction',
+      'zh-CN': '监管限制',
+      ja: '規制制限'
+    }
+  };
+  return labels[reasonKey]?.[lang] || labels[reasonKey]?.en || reasonKey;
+}
+
+function localJudgmentText(record, locale = DEFAULT_LOCALE) {
+  const lang = normalizeLocale(locale);
+  const level = Math.round(clamp(record.severity || 0, 0, 1) * 100);
+
+  if (lang === 'zh-CN') {
+    return `${record.religionName}发起宗教审判，判定${record.targetReligionName}的传教活动存在异端风险，拦截${record.blocked}人（${record.reason}，强度${level}%）。`;
+  }
+
+  if (lang === 'ja') {
+    return `${record.religionName}は宗教審判を実施し、${record.targetReligionName}からの改宗勧誘を異端リスクとして判定。${record.blocked}人を抑止した（${record.reason}、強度${level}%）。`;
+  }
+
+  return `${record.religionName} launched a religious judgment, classifying proselytization from ${record.targetReligionName} as heresy risk and blocking ${record.blocked} followers (${record.reason}, intensity ${level}%).`;
 }
 
 function allocateByScore(total, scoredItems) {
@@ -708,24 +782,45 @@ class ReligionSimulation {
   }
 
   buildSeedAgents() {
-    return RELIGION_DOCTRINES.map((seed) => ({
-      id: seed.id,
-      name: seed.name,
-      color: seed.color,
-      doctrine: seed.doctrine,
-      doctrineLong: seed.doctrineLong,
-      classics: normalizeClassics(seed.classics, []),
-      style: seed.style,
-      metrics: normalizeMetric(seed.metrics),
-      traits: normalizeTraits(seed.traits),
-      regionalAffinity: seed.regionalAffinity
-    }));
+    return RELIGION_DOCTRINES.map((seed) => {
+      const metrics = normalizeMetric(seed.metrics);
+      const traits = normalizeTraits(seed.traits);
+      const governanceFallback = {
+        orthodoxy: 0.24 + traits.identityBond * 0.45 + traits.ritualDepth * 0.16,
+        antiProselytization: 0.2 + traits.identityBond * 0.38 + metrics.retention * 0.22,
+        tribunalCapacity: 0.18 + traits.institutionCapacity * 0.58 + metrics.zeal * 0.16,
+        dueProcess: 0.28 + traits.intellectualDialog * 0.44 + traits.communityService * 0.18
+      };
+
+      return {
+        id: seed.id,
+        name: seed.name,
+        color: seed.color,
+        doctrine: seed.doctrine,
+        doctrineLong: seed.doctrineLong,
+        classics: normalizeClassics(seed.classics, []),
+        style: seed.style,
+        metrics,
+        traits,
+        governance: normalizeGovernance(seed.governance, governanceFallback),
+        regionalAffinity: seed.regionalAffinity
+      };
+    });
   }
 
   driftSocialSignals(current) {
     const next = {};
     for (const [key, value] of Object.entries(current)) {
-      const jitter = key === 'socialFragmentation' ? 0.017 : 0.025;
+      let jitter = 0.025;
+      if (key === 'socialFragmentation') {
+        jitter = 0.017;
+      } else if (
+        key === 'legalPluralism' ||
+        key === 'secularization' ||
+        key === 'stateRegulation'
+      ) {
+        jitter = 0.014;
+      }
       next[key] = clamp(value + randomIn(-jitter, jitter), 0.2, 0.95);
     }
     return next;
@@ -824,7 +919,17 @@ class ReligionSimulation {
         const defensiveBias =
           channel === 'identity' || channel === 'institution' ? 1 + stress * 1.4 : 1;
         const growthBias = channel === 'digital' || channel === 'youth' ? 1 + success * 0.9 : 1;
-        targetChannels[channel] = pressurePriority * defensiveBias * growthBias;
+        const cultureBias =
+          channel === 'identity'
+            ? 0.86 + socialSignals.mediaPolarization * 0.32
+            : channel === 'intellectual'
+              ? 0.84 + socialSignals.legalPluralism * 0.3
+              : channel === 'ritual'
+                ? 0.8 + (1 - socialSignals.secularization) * 0.35
+                : channel === 'institution'
+                  ? 0.84 + socialSignals.stateRegulation * 0.28
+                  : 1;
+        targetChannels[channel] = pressurePriority * defensiveBias * growthBias * cultureBias;
       }
 
       const normalizedTarget = normalizeChannelWeights(targetChannels);
@@ -930,7 +1035,11 @@ class ReligionSimulation {
       (1 - lock) * 0.58 +
       target.metrics.openness * 0.26 +
       socialSignals.socialFragmentation * 0.1 +
-      socialSignals.migration * 0.06;
+      socialSignals.migration * 0.06 +
+      socialSignals.secularization * 0.06 +
+      socialSignals.mediaPolarization * 0.04 +
+      socialSignals.legalPluralism * 0.05 -
+      socialSignals.stateRegulation * 0.08;
     return clamp(susceptibility, 0.03, 0.95);
   }
 
@@ -962,6 +1071,10 @@ class ReligionSimulation {
       mismatch * 0.011 +
       socialSignals.socialFragmentation * 0.004 +
       socialSignals.migration * 0.004 -
+      socialSignals.stateRegulation * 0.0035 +
+      socialSignals.legalPluralism * 0.0024 +
+      socialSignals.mediaPolarization * 0.003 +
+      socialSignals.secularization * 0.0035 -
       strategy.defensiveFocus * 0.0048 +
       strategy.fatigue * 0.002;
 
@@ -995,6 +1108,8 @@ class ReligionSimulation {
 
   sourcePullScore(source, target, socialSignals) {
     const sourceStrategy = source.strategy || this.buildInitialStrategy(source);
+    const sourceGovernance = source.governance || normalizeGovernance();
+    const targetGovernance = target.governance || normalizeGovernance();
     const outreachStrength = this.channelOutreachStrength(source, socialSignals);
     const susceptibility = this.targetSusceptibility(target, socialSignals);
     const distance = this.doctrineDistance(source, target);
@@ -1032,6 +1147,28 @@ class ReligionSimulation {
     const saturationPenalty = clamp(1 - recentInboundPressure * 0.9, 0.72, 1);
     const defensivePenalty = target.topTo?.name === source.name ? 0.86 : 1;
     const shockWindow = clamp(0.9 + recentOutboundShock * 0.52, 0.9, 1.08);
+    const discourseWindow = clamp(
+      0.76 + socialSignals.legalPluralism * 0.24 + (1 - socialSignals.mediaPolarization) * 0.1,
+      0.62,
+      1.16
+    );
+    const secularWindow = clamp(
+      0.82 +
+        socialSignals.secularization *
+          (source.metrics.openness * 0.16 + source.traits.intellectualDialog * 0.14) +
+        (1 - socialSignals.secularization) * source.traits.ritualDepth * 0.08,
+      0.72,
+      1.22
+    );
+    const regulationPenalty = clamp(
+      1 -
+        socialSignals.stateRegulation *
+          (0.24 +
+            sourceGovernance.antiProselytization * 0.2 +
+            targetGovernance.antiProselytization * 0.23),
+      0.55,
+      1
+    );
 
     return (
       outreachStrength *
@@ -1041,6 +1178,9 @@ class ReligionSimulation {
       momentum *
       saturationPenalty *
       defensivePenalty *
+      discourseWindow *
+      secularWindow *
+      regulationPenalty *
       shockWindow *
       randomIn(0.9, 1.1)
     );
@@ -1091,6 +1231,27 @@ class ReligionSimulation {
           source.traits.institutionCapacity *
           socialSignals.institutionalTrust *
           (0.55 + (strategy.channels.institution || 0))
+      },
+      {
+        key: 'secular_shift',
+        value:
+          source.traits.intellectualDialog *
+          socialSignals.secularization *
+          (0.55 + (strategy.channels.intellectual || 0))
+      },
+      {
+        key: 'polarization_alignment',
+        value:
+          source.traits.identityBond *
+          socialSignals.mediaPolarization *
+          (0.55 + (strategy.channels.identity || 0))
+      },
+      {
+        key: 'pluralism_dialogue',
+        value:
+          source.traits.intellectualDialog *
+          socialSignals.legalPluralism *
+          (0.55 + (strategy.channels.intellectual || 0))
       }
     ].sort((a, b) => b.value - a.value);
 
@@ -1246,6 +1407,128 @@ class ReligionSimulation {
     return { deltas, events, engine, aiAppliedAmount };
   }
 
+  judgmentReasonKey(fromAgent, toAgent, socialSignals) {
+    const governance = fromAgent.governance || normalizeGovernance();
+    const scores = [
+      {
+        key: 'orthodoxy_enforcement',
+        value:
+          governance.orthodoxy * 0.52 +
+          fromAgent.traits.ritualDepth * 0.2 +
+          fromAgent.traits.identityBond * 0.28
+      },
+      {
+        key: 'anti_proselytization_guard',
+        value:
+          governance.antiProselytization * 0.56 +
+          toAgent.metrics.zeal * 0.24 +
+          toAgent.metrics.persuasion * 0.2
+      },
+      {
+        key: 'identity_conflict',
+        value:
+          fromAgent.traits.identityBond * 0.52 +
+          socialSignals.identityPolitics * 0.34 +
+          socialSignals.mediaPolarization * 0.14
+      },
+      {
+        key: 'legal_restriction',
+        value:
+          socialSignals.stateRegulation * 0.56 +
+          (1 - socialSignals.legalPluralism) * 0.44
+      }
+    ].sort((a, b) => b.value - a.value);
+    return scores[0].key;
+  }
+
+  applyReligiousJudgment(agents, events, socialSignals, round, locale = DEFAULT_LOCALE) {
+    const moderatedEvents = [];
+    const records = [];
+    const agentById = new Map(agents.map((agent) => [agent.id, agent]));
+
+    for (const event of events) {
+      const fromAgent = agentById.get(event.fromId);
+      const toAgent = agentById.get(event.toId);
+      if (!fromAgent || !toAgent) {
+        continue;
+      }
+
+      const governance = fromAgent.governance || normalizeGovernance();
+      const regimePressure = clamp(
+        (1 - socialSignals.legalPluralism) * 0.34 +
+          socialSignals.stateRegulation * 0.32 +
+          socialSignals.identityPolitics * 0.2 +
+          socialSignals.mediaPolarization * 0.14,
+        0.04,
+        0.96
+      );
+      const enforcementCapacity = clamp(
+        governance.tribunalCapacity * 0.42 +
+          fromAgent.traits.institutionCapacity * 0.32 +
+          governance.orthodoxy * 0.26,
+        0.08,
+        0.98
+      );
+      const missionaryPush = clamp(
+        toAgent.metrics.zeal * 0.35 +
+          toAgent.metrics.persuasion * 0.31 +
+          toAgent.traits.digitalMission * 0.15 +
+          socialSignals.digitalization * 0.1 +
+          socialSignals.migration * 0.09,
+        0.06,
+        1.08
+      );
+      const dueProcessBrake = clamp(1 - governance.dueProcess * 0.42, 0.26, 0.94);
+      const judgmentRate = clamp(
+        regimePressure *
+          enforcementCapacity *
+          (0.3 + governance.antiProselytization * 0.42 + governance.orthodoxy * 0.24) *
+          (0.7 + missionaryPush * 0.46) *
+          dueProcessBrake *
+          randomIn(0.86, 1.08),
+        0,
+        0.8
+      );
+      const blocked = clamp(Math.floor(event.amount * judgmentRate), 0, Math.floor(event.amount * 0.82));
+      const remaining = event.amount - blocked;
+
+      if (remaining > 0) {
+        moderatedEvents.push({
+          ...event,
+          amount: remaining,
+          judgmentBlocked: blocked
+        });
+      }
+
+      if (blocked > 0) {
+        const reasonKey = this.judgmentReasonKey(fromAgent, toAgent, socialSignals);
+        records.push({
+          round,
+          religionId: fromAgent.id,
+          religionName: fromAgent.name,
+          targetReligionId: toAgent.id,
+          targetReligionName: toAgent.name,
+          attempted: event.amount,
+          blocked,
+          severity: blocked / Math.max(1, event.amount),
+          reasonKey,
+          reason: localizedJudgmentReasonLabel(reasonKey, locale)
+        });
+      }
+    }
+
+    moderatedEvents.sort((a, b) => b.amount - a.amount);
+    records.sort((a, b) => b.blocked - a.blocked);
+
+    const deltas = new Map(agents.map((agent) => [agent.id, 0]));
+    for (const event of moderatedEvents) {
+      deltas.set(event.fromId, (deltas.get(event.fromId) || 0) - event.amount);
+      deltas.set(event.toId, (deltas.get(event.toId) || 0) + event.amount);
+    }
+
+    return { events: moderatedEvents, deltas, records };
+  }
+
   reconcileInvariant(agents) {
     let total = agents.reduce((sum, agent) => sum + agent.followers, 0);
     let diff = this.totalFollowers - total;
@@ -1331,11 +1614,17 @@ class ReligionSimulation {
       affinity * 0.36 +
       traits.communityService * (0.03 + factors.economicStress * 0.08) +
       traits.digitalMission * (0.03 + factors.digitalization * 0.09) +
-      traits.ritualDepth * (0.03 + factors.meaningSearch * 0.09) +
-      traits.intellectualDialog * (0.02 + (1 - socialSignals.socialFragmentation) * 0.06) +
+      traits.ritualDepth *
+        (0.03 + factors.meaningSearch * 0.07 + (1 - factors.secularization) * 0.05) +
+      traits.intellectualDialog *
+        (0.02 +
+          (1 - socialSignals.socialFragmentation) * 0.04 +
+          factors.legalPluralism * 0.04) +
       traits.youthAppeal * (0.02 + factors.youthPressure * 0.07) +
-      traits.identityBond * (0.02 + factors.identityPolitics * 0.07) +
-      traits.institutionCapacity * (0.02 + factors.institutionalTrust * 0.07);
+      traits.identityBond *
+        (0.02 + factors.identityPolitics * 0.05 + factors.mediaPolarization * 0.04) +
+      traits.institutionCapacity *
+        (0.02 + factors.institutionalTrust * 0.05 + factors.stateRegulation * 0.04);
 
     return clamp(score, 0.001, 2.5);
   }
@@ -1509,7 +1798,9 @@ class ReligionSimulation {
       transferEngine,
       structureOutput,
       topTransfers: [],
+      judgmentRecords: [],
       logs: agents.map((agent) => ({
+        type: 'mission',
         round: 0,
         time: startedAt,
         religionId: agent.id,
@@ -1553,23 +1844,34 @@ class ReligionSimulation {
       rulePlan.events,
       activeLocale
     );
-    const { deltas, events, engine } = this.computeTransferPlanFromStructure(
+    const structurePlan = this.computeTransferPlanFromStructure(
       state.agents,
       state.socialSignals,
       aiLinks,
       rulePlan.events,
       activeLocale
     );
-    state.transferEngine = engine;
+    state.transferEngine = structurePlan.engine;
+    const judgedPlan = this.applyReligiousJudgment(
+      state.agents,
+      structurePlan.events,
+      state.socialSignals,
+      state.round,
+      activeLocale
+    );
+    state.judgmentRecords.push(...judgedPlan.records);
+    if (state.judgmentRecords.length > 520) {
+      state.judgmentRecords = state.judgmentRecords.slice(-520);
+    }
 
     for (const agent of state.agents) {
-      agent.delta = deltas.get(agent.id) || 0;
+      agent.delta = judgedPlan.deltas.get(agent.id) || 0;
       agent.followers += agent.delta;
     }
 
     this.reconcileInvariant(state.agents);
 
-    const transferSummary = this.summarizeTransfers(events, state.agents);
+    const transferSummary = this.summarizeTransfers(judgedPlan.events, state.agents);
     state.topTransfers = transferSummary.topPairs;
 
     for (const agent of state.agents) {
@@ -1594,11 +1896,28 @@ class ReligionSimulation {
     );
 
     const now = new Date().toISOString();
+    for (const record of judgedPlan.records.slice(0, 18)) {
+      state.logs.push({
+        type: 'judgment',
+        round: state.round,
+        time: now,
+        religionId: record.religionId,
+        name: record.religionName,
+        action: localJudgmentText(record, activeLocale),
+        delta: 0,
+        transferIn: 0,
+        transferOut: record.blocked,
+        followers: state.agents.find((agent) => agent.id === record.religionId)?.followers || 0,
+        judgment: record
+      });
+    }
+
     for (const agent of state.agents) {
       const action =
         actionMap?.get(agent.name) || localActionText(agent, { net: agent.delta }, activeLocale);
       agent.lastAction = action;
       state.logs.push({
+        type: 'mission',
         round: state.round,
         time: now,
         religionId: agent.id,
@@ -1659,11 +1978,13 @@ class ReligionSimulation {
         strategy: agent.strategy,
         metrics: agent.metrics,
         traits: agent.traits,
+        governance: agent.governance,
         lastAction: agent.lastAction,
         history: agent.history
       })),
       regions: state.regions,
       topTransfers: state.topTransfers,
+      judgmentRecords: state.judgmentRecords.slice(-100),
       structureOutput: state.structureOutput,
       logs: state.logs.slice(-160)
     };
