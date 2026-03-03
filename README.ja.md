@@ -41,7 +41,6 @@ npm run dev
 - `AI_API_KEY`
 - `AI_MODEL`
 - `AI_API_BASE`
-- `MOONSHOT_API_KEY` / `MOONSHOT_MODEL` / `MOONSHOT_API_BASE`（任意）
 - `AI_API_LOG`
 - `AI_API_LOG_PAYLOAD`
 - `AI_TRANSFER_AGENT`
@@ -50,6 +49,10 @@ npm run dev
 - `AI_API_RETRY_BASE_DELAY_MS`
 - `NODE_USE_ENV_PROXY`
 - `PORT`
+
+プロバイダ既定値：
+- `openai`：モデル `gpt-4o-mini`、ベースURL `https://api.openai.com/v1`
+- `moonshot`：モデル `kimi-k2-turbo-preview`、ベースURL `https://api.moonshot.cn/v1`
 
 `fetch failed | code=ECONNRESET` が頻発する場合は、`AI_API_TIMEOUT_MS` と `AI_API_MAX_RETRIES` を増やし、`AI_API_BASE` / プロキシ設定の到達性を確認してください。
 

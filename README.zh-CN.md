@@ -41,7 +41,6 @@ npm run dev
 - `AI_API_KEY`
 - `AI_MODEL`
 - `AI_API_BASE`
-- `MOONSHOT_API_KEY` / `MOONSHOT_MODEL` / `MOONSHOT_API_BASE`（可选）
 - `AI_API_LOG`
 - `AI_API_LOG_PAYLOAD`
 - `AI_TRANSFER_AGENT`
@@ -50,6 +49,10 @@ npm run dev
 - `AI_API_RETRY_BASE_DELAY_MS`
 - `NODE_USE_ENV_PROXY`
 - `PORT`
+
+Provider 默认值：
+- `openai`：模型 `gpt-4o-mini`，基地址 `https://api.openai.com/v1`
+- `moonshot`：模型 `kimi-k2-turbo-preview`，基地址 `https://api.moonshot.cn/v1`
 
 若频繁出现 `fetch failed | code=ECONNRESET`，可适当增大 `AI_API_TIMEOUT_MS` 与 `AI_API_MAX_RETRIES`，并确认 `AI_API_BASE` / 代理网络可达。
 

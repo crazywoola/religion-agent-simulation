@@ -75,7 +75,6 @@ See `.env.example`:
 - `AI_API_KEY`
 - `AI_MODEL`
 - `AI_API_BASE`
-- `MOONSHOT_API_KEY` / `MOONSHOT_MODEL` / `MOONSHOT_API_BASE` (optional shortcuts)
 - `AI_API_LOG`
 - `AI_API_LOG_PAYLOAD`
 - `AI_TRANSFER_AGENT`
@@ -84,6 +83,10 @@ See `.env.example`:
 - `AI_API_RETRY_BASE_DELAY_MS`
 - `NODE_USE_ENV_PROXY`
 - `PORT`
+
+Provider defaults:
+- `openai`: model `gpt-4o-mini`, base `https://api.openai.com/v1`
+- `moonshot`: model `kimi-k2-turbo-preview`, base `https://api.moonshot.cn/v1`
 
 If you see frequent `fetch failed | code=ECONNRESET`, increase `AI_API_TIMEOUT_MS` and `AI_API_MAX_RETRIES`, and make sure `AI_API_BASE` / proxy settings are reachable.
 
