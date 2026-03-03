@@ -426,6 +426,12 @@ function formatErrorDetail(err) {
   return parts.join(' | ') || 'unknown_error';
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
 function truncateText(text, maxLen = 600) {
   if (typeof text !== 'string') {
     return '';
@@ -508,6 +514,13 @@ class OpenAIClient {
     this.logEnabled = process.env.OPENAI_API_LOG !== '0';
     this.logPayload = process.env.OPENAI_API_LOG_PAYLOAD === '1';
     this.transferAgentEnabled = process.env.OPENAI_TRANSFER_AGENT !== '0';
+    this.timeoutMs = clamp(normalizeInteger(process.env.OPENAI_API_TIMEOUT_MS, 25000), 1000, 120000);
+    this.maxRetries = clamp(normalizeInteger(process.env.OPENAI_API_MAX_RETRIES, 2), 0, 8);
+    this.retryBaseDelayMs = clamp(
+      normalizeInteger(process.env.OPENAI_API_RETRY_BASE_DELAY_MS, 350),
+      50,
+      30000
+    );
     this.requestSeq = 0;
   }
 
@@ -520,6 +533,85 @@ class OpenAIClient {
       return;
     }
     console.log(`[OpenAI][${event}] ${JSON.stringify(payload)}`);
+  }
+
+  isRetryableNetworkError(err) {
+    const code = String(err?.code || err?.cause?.code || '').toUpperCase();
+    if (
+      [
+        'ECONNRESET',
+        'ETIMEDOUT',
+        'ECONNREFUSED',
+        'EHOSTUNREACH',
+        'ENETUNREACH',
+        'UND_ERR_CONNECT_TIMEOUT',
+        'UND_ERR_HEADERS_TIMEOUT',
+        'UND_ERR_SOCKET',
+        'ABORT_ERR'
+      ].includes(code)
+    ) {
+      return true;
+    }
+
+    if (err?.name === 'AbortError') {
+      return true;
+    }
+
+    const message = `${err?.message || ''} ${err?.cause?.message || ''}`.toLowerCase();
+    return (
+      message.includes('fetch failed') ||
+      message.includes('network') ||
+      message.includes('socket') ||
+      message.includes('timed out') ||
+      message.includes('connection reset')
+    );
+  }
+
+  isRetryableHttpStatus(status) {
+    return [408, 409, 425, 429, 500, 502, 503, 504].includes(status);
+  }
+
+  parseRetryAfterMs(headerValue) {
+    if (!headerValue || typeof headerValue !== 'string') {
+      return null;
+    }
+    const trimmed = headerValue.trim();
+    if (!trimmed) {
+      return null;
+    }
+    const asSeconds = Number(trimmed);
+    if (Number.isFinite(asSeconds) && asSeconds >= 0) {
+      return clamp(Math.round(asSeconds * 1000), 0, 120000);
+    }
+
+    const asDate = Date.parse(trimmed);
+    if (!Number.isFinite(asDate)) {
+      return null;
+    }
+    return clamp(asDate - Date.now(), 0, 120000);
+  }
+
+  computeRetryDelayMs(attempt, retryAfterMs = null) {
+    const exponential = this.retryBaseDelayMs * 2 ** Math.max(0, attempt - 1);
+    const jitter = Math.floor(Math.random() * this.retryBaseDelayMs);
+    const computed = clamp(exponential + jitter, this.retryBaseDelayMs, 120000);
+    if (Number.isFinite(retryAfterMs) && retryAfterMs > 0) {
+      return Math.max(computed, retryAfterMs);
+    }
+    return computed;
+  }
+
+  async waitBeforeRetry({ callId, trace, attempt, maxAttempts, reason, retryAfterMs = null }) {
+    const delayMs = this.computeRetryDelayMs(attempt, retryAfterMs);
+    this.log('request.retry_wait', {
+      callId,
+      trace,
+      attempt,
+      maxAttempts,
+      reason,
+      delayMs
+    });
+    await sleep(delayMs);
   }
 
   async chat(messages, options = {}) {
@@ -537,6 +629,7 @@ class OpenAIClient {
       max_tokens: options.maxTokens ?? 1500,
       messages
     };
+    const maxAttempts = this.maxRetries + 1;
 
     this.log('request.start', {
       callId,
@@ -546,7 +639,9 @@ class OpenAIClient {
       model: requestBody.model,
       messageCount: messages.length,
       temperature: requestBody.temperature,
-      maxTokens: requestBody.max_tokens
+      maxTokens: requestBody.max_tokens,
+      timeoutMs: this.timeoutMs,
+      maxAttempts
     });
 
     if (this.logPayload) {
@@ -561,51 +656,102 @@ class OpenAIClient {
       });
     }
 
-    let response;
-    try {
-      response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${this.apiKey}`
-        },
-        body: JSON.stringify(requestBody)
-      });
-    } catch (err) {
-      this.log('request.network_error', {
-        callId,
-        trace,
-        durationMs: Date.now() - startedAt,
-        error: formatErrorDetail(err)
-      });
-      throw new Error(`OpenAI network failure: ${formatErrorDetail(err)}`);
-    }
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      let response;
+      let timeoutHandle = null;
+      const controller = new AbortController();
+      try {
+        timeoutHandle = setTimeout(() => {
+          controller.abort();
+        }, this.timeoutMs);
+        response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${this.apiKey}`
+          },
+          body: JSON.stringify(requestBody),
+          signal: controller.signal
+        });
+      } catch (err) {
+        const retryable = this.isRetryableNetworkError(err);
+        this.log('request.network_error', {
+          callId,
+          trace,
+          durationMs: Date.now() - startedAt,
+          attempt,
+          maxAttempts,
+          error: formatErrorDetail(err),
+          retryable
+        });
 
-    if (!response.ok) {
-      const detail = await response.text();
-      this.log('request.http_error', {
+        if (retryable && attempt < maxAttempts) {
+          await this.waitBeforeRetry({
+            callId,
+            trace,
+            attempt,
+            maxAttempts,
+            reason: 'network'
+          });
+          continue;
+        }
+
+        throw new Error(`OpenAI network failure: ${formatErrorDetail(err)}`);
+      } finally {
+        if (timeoutHandle) {
+          clearTimeout(timeoutHandle);
+        }
+      }
+
+      if (!response.ok) {
+        const detail = await response.text();
+        const retryable = this.isRetryableHttpStatus(response.status);
+        const retryAfterMs = this.parseRetryAfterMs(response.headers.get('retry-after'));
+        this.log('request.http_error', {
+          callId,
+          trace,
+          durationMs: Date.now() - startedAt,
+          attempt,
+          maxAttempts,
+          status: response.status,
+          requestId: response.headers.get('x-request-id') || null,
+          retryAfterMs,
+          retryable,
+          detail: truncateText(detail, 1000)
+        });
+
+        if (retryable && attempt < maxAttempts) {
+          await this.waitBeforeRetry({
+            callId,
+            trace,
+            attempt,
+            maxAttempts,
+            reason: `http_${response.status}`,
+            retryAfterMs
+          });
+          continue;
+        }
+
+        throw new Error(`OpenAI API failed ${response.status}: ${truncateText(detail, 1000)}`);
+      }
+
+      const payload = await response.json();
+      this.log('request.success', {
         callId,
         trace,
         durationMs: Date.now() - startedAt,
+        attempt,
+        maxAttempts,
         status: response.status,
         requestId: response.headers.get('x-request-id') || null,
-        detail: truncateText(detail, 1000)
+        responseId: payload?.id || null,
+        usage: payload?.usage || null,
+        choiceCount: Array.isArray(payload?.choices) ? payload.choices.length : 0
       });
-      throw new Error(`OpenAI API failed ${response.status}: ${detail}`);
+      return payload?.choices?.[0]?.message?.content || null;
     }
 
-    const payload = await response.json();
-    this.log('request.success', {
-      callId,
-      trace,
-      durationMs: Date.now() - startedAt,
-      status: response.status,
-      requestId: response.headers.get('x-request-id') || null,
-      responseId: payload?.id || null,
-      usage: payload?.usage || null,
-      choiceCount: Array.isArray(payload?.choices) ? payload.choices.length : 0
-    });
-    return payload?.choices?.[0]?.message?.content || null;
+    throw new Error('OpenAI request exhausted all retries');
   }
 
   async generateProfiles(seedAgents) {

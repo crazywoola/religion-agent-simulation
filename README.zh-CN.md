@@ -43,8 +43,13 @@ npm run dev
 - `OPENAI_API_LOG`
 - `OPENAI_API_LOG_PAYLOAD`
 - `OPENAI_TRANSFER_AGENT`
+- `OPENAI_API_TIMEOUT_MS`
+- `OPENAI_API_MAX_RETRIES`
+- `OPENAI_API_RETRY_BASE_DELAY_MS`
 - `NODE_USE_ENV_PROXY`
 - `PORT`
+
+若频繁出现 `fetch failed | code=ECONNRESET`，可适当增大 `OPENAI_API_TIMEOUT_MS` 与 `OPENAI_API_MAX_RETRIES`，并确认 `OPENAI_API_BASE` / 代理网络可达。
 
 ## API
 - `POST /api/simulation/start` body: `{ "useOpenAI": true | false, "locale": "en|zh-CN|ja" }`

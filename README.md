@@ -74,8 +74,13 @@ See `.env.example`:
 - `OPENAI_API_LOG`
 - `OPENAI_API_LOG_PAYLOAD`
 - `OPENAI_TRANSFER_AGENT`
+- `OPENAI_API_TIMEOUT_MS`
+- `OPENAI_API_MAX_RETRIES`
+- `OPENAI_API_RETRY_BASE_DELAY_MS`
 - `NODE_USE_ENV_PROXY`
 - `PORT`
+
+If you see frequent `fetch failed | code=ECONNRESET`, increase `OPENAI_API_TIMEOUT_MS` and `OPENAI_API_MAX_RETRIES`, and make sure `OPENAI_API_BASE` / proxy settings are reachable.
 
 ## API
 - `POST /api/simulation/start`
