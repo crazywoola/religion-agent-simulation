@@ -18,6 +18,7 @@ const DICTIONARY = {
     },
     section: {
       religions: 'Religion Profiles',
+      insights: 'Map Insights',
       regions: 'Regional Landscape',
       transfers: 'Key Assimilation Links',
       logs: 'Mission Logs'
@@ -57,7 +58,36 @@ const DICTIONARY = {
     transfer: {
       empty: 'No transfer links yet',
       ai: 'AI',
-      rule: 'Rule'
+      rule: 'Rule',
+      corridor: 'Corridor',
+      intensity: 'Intensity',
+      speed: 'Speed'
+    },
+    insight: {
+      totalFlow: 'Total Transfer Volume',
+      aiShare: 'AI Contribution',
+      strongestCorridor: 'Strongest Corridor',
+      dominantReligion: 'Global Dominant Religion',
+      mostCompetitiveRegion: 'Most Competitive Region',
+      lineCount: 'Active Lines',
+      engine: 'Transfer Engine',
+      noData: 'Not enough data'
+    },
+    hud: {
+      round: 'Round',
+      totalFollowers: 'Total Followers',
+      activeLines: 'Active Lines',
+      topSignal: 'Top Signal'
+    },
+    signal: {
+      digitalization: 'Digitalization',
+      economicStress: 'Economic Stress',
+      migration: 'Migration',
+      institutionalTrust: 'Institutional Trust',
+      identityPolitics: 'Identity Politics',
+      youthPressure: 'Youth Pressure',
+      meaningSearch: 'Meaning Search',
+      socialFragmentation: 'Social Fragmentation'
     },
     log: {
       header: 'Round {round} · {time} · {name}',
@@ -99,6 +129,7 @@ const DICTIONARY = {
     },
     section: {
       religions: '宗教信息',
+      insights: '地图洞察',
       regions: '区域格局',
       transfers: '关键同化链路',
       logs: '传教日志'
@@ -138,7 +169,36 @@ const DICTIONARY = {
     transfer: {
       empty: '暂无转移链路',
       ai: 'AI',
-      rule: '规则'
+      rule: '规则',
+      corridor: '走廊',
+      intensity: '强度',
+      speed: '速度'
+    },
+    insight: {
+      totalFlow: '总转化流量',
+      aiShare: 'AI 贡献占比',
+      strongestCorridor: '最强转化走廊',
+      dominantReligion: '全局主导宗教',
+      mostCompetitiveRegion: '竞争最激烈区域',
+      lineCount: '活跃链路数',
+      engine: '转化引擎',
+      noData: '暂无足够数据'
+    },
+    hud: {
+      round: '轮次',
+      totalFollowers: '总信徒',
+      activeLines: '活跃链路',
+      topSignal: '主导社会信号'
+    },
+    signal: {
+      digitalization: '数字化',
+      economicStress: '经济压力',
+      migration: '迁移流动',
+      institutionalTrust: '制度信任',
+      identityPolitics: '身份政治',
+      youthPressure: '青年压力',
+      meaningSearch: '意义追寻',
+      socialFragmentation: '社会碎片化'
     },
     log: {
       header: '第 {round} 轮 · {time} · {name}',
@@ -180,6 +240,7 @@ const DICTIONARY = {
     },
     section: {
       religions: '宗教プロファイル',
+      insights: 'マップ洞察',
       regions: '地域勢力図',
       transfers: '主要同化リンク',
       logs: '布教ログ'
@@ -219,7 +280,36 @@ const DICTIONARY = {
     transfer: {
       empty: '転化リンクはまだありません',
       ai: 'AI',
-      rule: 'ルール'
+      rule: 'ルール',
+      corridor: 'コリドー',
+      intensity: '強度',
+      speed: '速度'
+    },
+    insight: {
+      totalFlow: '総転化フロー量',
+      aiShare: 'AI 寄与率',
+      strongestCorridor: '最強コリドー',
+      dominantReligion: '全体優勢宗教',
+      mostCompetitiveRegion: '最激戦地域',
+      lineCount: 'アクティブ線数',
+      engine: '転化エンジン',
+      noData: '十分なデータがありません'
+    },
+    hud: {
+      round: 'ラウンド',
+      totalFollowers: '信徒総数',
+      activeLines: 'アクティブ線',
+      topSignal: '主要社会シグナル'
+    },
+    signal: {
+      digitalization: 'デジタル化',
+      economicStress: '経済ストレス',
+      migration: '移動・流入',
+      institutionalTrust: '制度信頼',
+      identityPolitics: 'アイデンティティ政治',
+      youthPressure: '若年層圧力',
+      meaningSearch: '意味追求',
+      socialFragmentation: '社会分断'
     },
     log: {
       header: 'ラウンド {round} · {time} · {name}',

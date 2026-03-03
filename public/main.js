@@ -9,9 +9,12 @@ const openaiToggle = document.getElementById('openaiToggle');
 const languageSelect = document.getElementById('languageSelect');
 const statusEl = document.getElementById('status');
 const religionCardsEl = document.getElementById('religionCards');
+const insightBoardEl = document.getElementById('insightBoard');
 const regionBoardEl = document.getElementById('regionBoard');
 const transferBoardEl = document.getElementById('transferBoard');
 const logListEl = document.getElementById('logList');
+const mapHudStatsEl = document.getElementById('mapHudStats');
+const mapLegendEl = document.getElementById('mapLegend');
 const canvas = document.getElementById('sceneCanvas');
 
 const appTitleEl = document.getElementById('appTitle');
@@ -20,6 +23,7 @@ const languageLabelEl = document.getElementById('languageLabel');
 const tickLabelEl = document.getElementById('tickLabel');
 const openaiLabelEl = document.getElementById('openaiLabel');
 const religionSectionTitleEl = document.getElementById('religionSectionTitle');
+const insightSectionTitleEl = document.getElementById('insightSectionTitle');
 const regionSectionTitleEl = document.getElementById('regionSectionTitle');
 const transferSectionTitleEl = document.getElementById('transferSectionTitle');
 const logSectionTitleEl = document.getElementById('logSectionTitle');
@@ -41,6 +45,10 @@ function clampValue(value, min, max) {
 
 function formatSigned(value) {
   return value >= 0 ? `+${value}` : `${value}`;
+}
+
+function formatPercent(value, digits = 1) {
+  return `${(Number(value) * 100).toFixed(digits)}%`;
 }
 
 function listJoin(items) {
@@ -69,6 +77,7 @@ function applyStaticI18n() {
   openaiLabelEl.textContent = i18n.t('controls.useOpenAI');
 
   religionSectionTitleEl.textContent = i18n.t('section.religions');
+  insightSectionTitleEl.textContent = i18n.t('section.insights');
   regionSectionTitleEl.textContent = i18n.t('section.regions');
   transferSectionTitleEl.textContent = i18n.t('section.transfers');
   logSectionTitleEl.textContent = i18n.t('section.logs');
@@ -418,6 +427,14 @@ function clearAntLinks() {
   for (const link of antLinks) {
     antLinkGroup.remove(link.line);
     disposeObject3D(link.line);
+    if (link.glowLine) {
+      antLinkGroup.remove(link.glowLine);
+      disposeObject3D(link.glowLine);
+    }
+    if (link.pulse) {
+      antLinkGroup.remove(link.pulse);
+      disposeObject3D(link.pulse);
+    }
     for (const ant of link.ants) {
       antLinkGroup.remove(ant);
       disposeObject3D(ant);
@@ -470,25 +487,56 @@ function updateAntLinks(state) {
 
     const sourceColor = religionById.get(link.fromReligionId)?.color || '#29485a';
     const targetColor = religionById.get(link.toReligionId)?.color || '#f1f6ff';
+    const intensity = clampValue(Number(link.intensity || 0.4), 0.1, 1.2);
+
+    const dashedMaterial = new THREE.LineDashedMaterial({
+      color: sourceColor,
+      transparent: true,
+      opacity: 0.38 + intensity * 0.2,
+      dashSize: 0.35 + intensity * 0.95,
+      gapSize: 0.28 + (1 - intensity) * 0.48
+    });
     const line = new THREE.Line(
       new THREE.BufferGeometry().setFromPoints(points),
-      new THREE.LineBasicMaterial({
-        color: sourceColor,
-        transparent: true,
-        opacity: 0.44
-      })
+      dashedMaterial
     );
+    line.computeLineDistances();
     antLinkGroup.add(line);
 
-    const antCount = clampValue(Number(link.ants || 5), 2, 12);
+    const glowLine = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(points),
+      new THREE.LineBasicMaterial({
+        color: targetColor,
+        transparent: true,
+        opacity: 0.08 + intensity * 0.2,
+        blending: THREE.AdditiveBlending
+      })
+    );
+    antLinkGroup.add(glowLine);
+
+    const pulse = new THREE.Mesh(
+      new THREE.RingGeometry(0.18, 0.3, 32),
+      new THREE.MeshBasicMaterial({
+        color: targetColor,
+        transparent: true,
+        opacity: 0.46,
+        side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending
+      })
+    );
+    pulse.rotation.x = -Math.PI / 2;
+    pulse.position.copy(end.clone().setY(0.27));
+    antLinkGroup.add(pulse);
+
+    const antCount = clampValue(Number(link.ants || 5), 3, 14);
     const ants = [];
     for (let i = 0; i < antCount; i += 1) {
       const ant = new THREE.Mesh(
-        new THREE.SphereGeometry(0.09, 10, 10),
+        new THREE.SphereGeometry(0.065 + intensity * 0.045, 10, 10),
         new THREE.MeshStandardMaterial({
           color: targetColor,
           emissive: targetColor,
-          emissiveIntensity: 0.45,
+          emissiveIntensity: 0.55,
           roughness: 0.35,
           metalness: 0.08
         })
@@ -500,10 +548,14 @@ function updateAntLinks(state) {
 
     antLinks.push({
       line,
+      glowLine,
+      pulse,
       curve,
       ants,
       speed: 0.012 + clampValue(Number(link.speed || 0.3), 0.08, 1.2) * 0.016,
-      phase: Math.random()
+      intensity,
+      phase: Math.random(),
+      pulsePhase: Math.random() * Math.PI * 2
     });
   }
 }
@@ -565,17 +617,136 @@ function renderTransferBoard(state) {
   }
 
   const religionById = new Map(state.religions.map((religion) => [religion.id, religion]));
+  const linkByPair = new Map(
+    (state.structureOutput?.antLinks || []).map((link) => [
+      `${link.fromReligionId}->${link.toReligionId}`,
+      link
+    ])
+  );
 
   transferBoardEl.innerHTML = state.topTransfers
     .slice(0, 12)
     .map((item) => {
       const fromReligion = religionById.get(item.fromId);
       const toReligion = religionById.get(item.toId);
+      const corridor = linkByPair.get(`${item.fromId}->${item.toId}`);
       const sourceLabel = i18n.t(item.source === 'ai' ? 'transfer.ai' : 'transfer.rule');
+      const corridorText = corridor
+        ? `${regionLabel({ id: corridor.fromRegionId, name: corridor.fromRegionName })} -> ${regionLabel({
+            id: corridor.toRegionId,
+            name: corridor.toRegionName
+          })}`
+        : i18n.t('common.none');
+      const intensityText = corridor ? formatPercent(corridor.intensity, 0) : i18n.t('common.none');
+      const speedText = corridor ? corridor.speed.toFixed(2) : i18n.t('common.none');
       return `
       <article class="transfer-item">
         <div><strong>${religionLabel(fromReligion || { id: item.fromId, name: item.from })}</strong> -> <strong>${religionLabel(toReligion || { id: item.toId, name: item.to })}</strong>：${i18n.number(item.amount)}</div>
         <div class="muted">[${sourceLabel}] ${item.reason}</div>
+        <div class="transfer-corridor">${i18n.t('transfer.corridor')} ${corridorText} · ${i18n.t('transfer.intensity')} ${intensityText} · ${i18n.t('transfer.speed')} ${speedText}</div>
+      </article>
+    `;
+    })
+    .join('');
+}
+
+function renderInsights(state) {
+  const links = state.structureOutput?.antLinks || [];
+  const topTransfer = state.topTransfers[0] || null;
+  const totalFlow = links.length
+    ? links.reduce((sum, item) => sum + item.amount, 0)
+    : state.topTransfers.reduce((sum, item) => sum + item.amount, 0);
+  const aiFlow = links.reduce((sum, item) => sum + (item.source === 'ai' ? item.amount : 0), 0);
+  const aiShare = totalFlow > 0 ? aiFlow / totalFlow : 0;
+
+  const religionById = new Map(state.religions.map((religion) => [religion.id, religion]));
+  const dominantReligion = [...state.religions].sort((a, b) => b.followers - a.followers)[0];
+  const mostCompetitiveRegion = [...state.regions].sort(
+    (a, b) => b.competitionIndex - a.competitionIndex
+  )[0];
+
+  const strongestCorridorText = topTransfer
+    ? `${religionLabel(religionById.get(topTransfer.fromId) || { id: topTransfer.fromId, name: topTransfer.from })} -> ${religionLabel(
+        religionById.get(topTransfer.toId) || { id: topTransfer.toId, name: topTransfer.to }
+      )} (${i18n.number(topTransfer.amount)})`
+    : i18n.t('insight.noData');
+  const dominantReligionText = dominantReligion
+    ? `${religionLabel(dominantReligion)} (${formatPercent(
+        dominantReligion.followers / state.totalFollowers,
+        1
+      )})`
+    : i18n.t('insight.noData');
+  const competitiveRegionText = mostCompetitiveRegion
+    ? `${regionLabel(mostCompetitiveRegion)} (${formatPercent(mostCompetitiveRegion.competitionIndex, 0)})`
+    : i18n.t('insight.noData');
+
+  const engineLabel = i18n.t(`engine.${state.transferEngine || 'rule'}`);
+
+  const items = [
+    [i18n.t('insight.totalFlow'), i18n.number(totalFlow)],
+    [i18n.t('insight.aiShare'), formatPercent(aiShare, 1)],
+    [i18n.t('insight.strongestCorridor'), strongestCorridorText],
+    [i18n.t('insight.dominantReligion'), dominantReligionText],
+    [i18n.t('insight.mostCompetitiveRegion'), competitiveRegionText],
+    [i18n.t('insight.lineCount'), i18n.number(links.length)],
+    [i18n.t('insight.engine'), engineLabel]
+  ];
+
+  insightBoardEl.innerHTML = items
+    .map(
+      ([key, value]) => `
+      <article class="insight-item">
+        <div class="insight-key">${key}</div>
+        <div class="insight-value">${value}</div>
+      </article>
+    `
+    )
+    .join('');
+}
+
+function renderMapHud(state) {
+  const links = state.structureOutput?.antLinks || [];
+  const signalEntries = Object.entries(state.socialSignals || {})
+    .map(([id, score]) => ({ id, score: Number(score) || 0 }))
+    .sort((a, b) => b.score - a.score);
+  const topSignal = signalEntries[0];
+
+  mapHudStatsEl.innerHTML = `
+    <article class="hud-chip">
+      <div class="hud-label">${i18n.t('hud.round')}</div>
+      <div class="hud-value">${i18n.number(state.round)}</div>
+    </article>
+    <article class="hud-chip">
+      <div class="hud-label">${i18n.t('hud.totalFollowers')}</div>
+      <div class="hud-value">${i18n.number(state.totalFollowers)}</div>
+    </article>
+    <article class="hud-chip">
+      <div class="hud-label">${i18n.t('hud.activeLines')}</div>
+      <div class="hud-value">${i18n.number(links.length)}</div>
+    </article>
+    <article class="hud-chip">
+      <div class="hud-label">${i18n.t('hud.topSignal')}</div>
+      <div class="hud-value">${
+        topSignal
+          ? `${i18n.t(`signal.${topSignal.id}`)} ${formatPercent(topSignal.score, 0)}`
+          : i18n.t('common.none')
+      }</div>
+    </article>
+  `;
+
+  const sortedReligions = [...state.religions]
+    .sort((a, b) => b.followers - a.followers)
+    .slice(0, 8);
+  mapLegendEl.innerHTML = sortedReligions
+    .map((religion) => {
+      const share = state.totalFollowers > 0 ? religion.followers / state.totalFollowers : 0;
+      return `
+      <article class="legend-pill">
+        <div class="legend-name">
+          <span class="legend-dot" style="background:${religion.color}"></span>
+          <span class="legend-text">${religionLabel(religion)}</span>
+        </div>
+        <span>${formatPercent(share, 1)}</span>
       </article>
     `;
     })
@@ -626,9 +797,11 @@ function renderAll(state) {
   });
 
   renderCards(state);
+  renderInsights(state);
   renderRegionBoard(state);
   renderTransferBoard(state);
   renderLogs(state);
+  renderMapHud(state);
   updateMap(state);
   updateAntLinks(state);
 }
@@ -669,11 +842,31 @@ function animate() {
 
   for (const link of antLinks) {
     const base = antClock * link.speed + link.phase;
+    if (link.line?.material?.isLineDashedMaterial) {
+      link.line.material.dashOffset = -base * 3.2;
+      link.line.material.opacity =
+        0.34 + link.intensity * 0.26 + Math.sin(base * 5.4 + link.phase * 6) * 0.07;
+    }
+    if (link.glowLine?.material) {
+      link.glowLine.material.opacity =
+        0.06 + link.intensity * 0.16 + Math.sin(base * 4.6 + link.phase * 4) * 0.04;
+    }
+    if (link.pulse) {
+      const wave = (Math.sin(base * 7 + link.pulsePhase) + 1) / 2;
+      const scale = 0.85 + wave * (0.75 + link.intensity * 0.6);
+      link.pulse.scale.set(scale, scale, scale);
+      link.pulse.material.opacity = 0.2 + wave * 0.42;
+    }
+
     for (let i = 0; i < link.ants.length; i += 1) {
       const ant = link.ants[i];
       const t = (base + i / link.ants.length) % 1;
       const point = link.curve.getPointAt(t);
+      const wave = Math.sin(base * 8 + i * 0.7 + link.phase * 6);
+      point.y += wave * (0.03 + link.intensity * 0.06);
       ant.position.copy(point);
+      const scale = 0.78 + ((wave + 1) / 2) * 0.55;
+      ant.scale.setScalar(scale);
     }
   }
 
