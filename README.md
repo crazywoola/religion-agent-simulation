@@ -22,6 +22,7 @@ This project simulates how multiple religion agents influence each other over ti
 
 ## Full Game Screenshot
 ![Full game screenshot](./assets/full-game-screenshot.png)
+Captured from a live run at round 3 using the current local `.env` configuration.
 
 ## Key Features
 - Multi-agent simulation for 8 religions (including Shinto).
