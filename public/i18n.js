@@ -4,7 +4,7 @@ export const DEFAULT_LOCALE = 'en';
 const DICTIONARY = {
   en: {
     app: {
-      title: 'OpenAI Multi-Religion Agent Simulator',
+      title: 'AI Multi-Religion Agent Simulator',
       header: 'Religion Agent Simulation',
       hint:
         'Each religion starts with 10,000 followers. The system simulates only assimilation/loss across religions, while the total population remains constant.'
@@ -13,9 +13,10 @@ const DICTIONARY = {
       start: 'Start Simulation',
       stop: 'Pause',
       polling: 'Tick Interval (ms)',
-      useOpenAI: 'Use OpenAI API for doctrine/action generation',
+      useAI: 'Use AI API for doctrine/action generation',
       language: 'Language',
       scenario: 'Scenario',
+      provider: 'AI Provider',
       logFilter: 'Log Filter',
       speed: 'Speed',
       screenshot: 'Screenshot',
@@ -55,7 +56,7 @@ const DICTIONARY = {
       notStarted: 'Status: Not started',
       initializing: 'Status: Initializing...',
       running:
-        'Status: Running (Round {round}) | Followers {total} / {target} ({invariant}) | Engine: {engine} | OpenAI: {openai}',
+        'Status: Running (Round {round}) | Followers {total} / {target} ({invariant}) | Engine: {engine} | AI: {ai} | Provider: {provider}',
       pausedRound: 'Status: Paused (at round {round})',
       paused: 'Status: Paused',
       error: 'Status: Error - {message}',
@@ -72,6 +73,10 @@ const DICTIONARY = {
       on: 'On',
       off: 'Off',
       none: 'N/A'
+    },
+    provider: {
+      openai: 'OpenAI',
+      moonshot: 'Moonshot / Kimi'
     },
     card: {
       inOut: 'Assimilation In/Out',
@@ -167,7 +172,7 @@ const DICTIONARY = {
   },
   'zh-CN': {
     app: {
-      title: 'OpenAI 多宗教 Agent 模拟器',
+      title: 'AI 多宗教 Agent 模拟器',
       header: '宗教 Agent 模拟',
       hint:
         '每个宗教初始 10000 信徒。系统仅模拟宗教间同化/流失，且总信徒恒定不变。'
@@ -176,9 +181,10 @@ const DICTIONARY = {
       start: '开始模拟',
       stop: '暂停',
       polling: '轮询间隔(ms)',
-      useOpenAI: '使用 OpenAI API 生成教义/传教日志',
+      useAI: '使用 AI API 生成教义/传教日志',
       language: '语言',
       scenario: '场景',
+      provider: 'AI 提供商',
       logFilter: '日志筛选',
       speed: '速度',
       screenshot: '截图',
@@ -218,7 +224,7 @@ const DICTIONARY = {
       notStarted: '状态：未开始',
       initializing: '状态：初始化中...',
       running:
-        '状态：运行中（第 {round} 轮） | 总信徒 {total} / {target}（{invariant}） | 转化引擎：{engine} | OpenAI：{openai}',
+        '状态：运行中（第 {round} 轮） | 总信徒 {total} / {target}（{invariant}） | 转化引擎：{engine} | AI：{ai} | 提供商：{provider}',
       pausedRound: '状态：已暂停（停在第 {round} 轮）',
       paused: '状态：已暂停',
       error: '状态：错误 - {message}',
@@ -235,6 +241,10 @@ const DICTIONARY = {
       on: '开启',
       off: '关闭',
       none: '暂无'
+    },
+    provider: {
+      openai: 'OpenAI',
+      moonshot: 'Moonshot / Kimi'
     },
     card: {
       inOut: '同化流入/流出',
@@ -330,7 +340,7 @@ const DICTIONARY = {
   },
   ja: {
     app: {
-      title: 'OpenAI 宗教エージェント・シミュレーター',
+      title: 'AI 宗教エージェント・シミュレーター',
       header: '宗教エージェント・シミュレーション',
       hint:
         '各宗教は1万人から開始します。宗教間の同化・流出のみをシミュレーションし、総信徒数は一定です。'
@@ -339,9 +349,10 @@ const DICTIONARY = {
       start: 'シミュレーション開始',
       stop: '一時停止',
       polling: 'ティック間隔(ms)',
-      useOpenAI: '教義/行動ログ生成に OpenAI API を使用',
+      useAI: '教義/行動ログ生成に AI API を使用',
       language: '言語',
       scenario: 'シナリオ',
+      provider: 'AI プロバイダ',
       logFilter: 'ログフィルター',
       speed: '速度',
       screenshot: 'スクリーンショット',
@@ -381,7 +392,7 @@ const DICTIONARY = {
       notStarted: '状態：未開始',
       initializing: '状態：初期化中...',
       running:
-        '状態：実行中（ラウンド {round}） | 信徒総数 {total} / {target}（{invariant}） | エンジン：{engine} | OpenAI：{openai}',
+        '状態：実行中（ラウンド {round}） | 信徒総数 {total} / {target}（{invariant}） | エンジン：{engine} | AI：{ai} | プロバイダ：{provider}',
       pausedRound: '状態：一時停止（ラウンド {round}）',
       paused: '状態：一時停止',
       error: '状態：エラー - {message}',
@@ -398,6 +409,10 @@ const DICTIONARY = {
       on: 'オン',
       off: 'オフ',
       none: 'なし'
+    },
+    provider: {
+      openai: 'OpenAI',
+      moonshot: 'Moonshot / Kimi'
     },
     card: {
       inOut: '同化流入/流出',

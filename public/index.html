@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OpenAI Multi-Religion Agent Simulator</title>
+    <title>AI Multi-Religion Agent Simulator</title>
     <link rel="stylesheet" href="/style.css" />
     <script type="importmap">
       {
@@ -52,12 +52,19 @@
             </select>
           </label>
           <label>
+            <span id="providerLabel">AI Provider</span>
+            <select id="providerSelect">
+              <option value="openai">OpenAI</option>
+              <option value="moonshot">Moonshot / Kimi</option>
+            </select>
+          </label>
+          <label>
             <span id="tickLabel">Tick Interval (ms)</span>
             <input id="tickInput" type="number" value="5000" min="800" max="10000" step="200" />
           </label>
           <label class="switch">
             <input id="openaiToggle" type="checkbox" checked />
-            <span id="openaiLabel">Use OpenAI API for doctrine/action generation</span>
+            <span id="openaiLabel">Use AI API for doctrine/action generation</span>
           </label>
         </div>
 

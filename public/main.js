@@ -6,6 +6,7 @@ const startBtn = document.getElementById('startBtn');
 const stopBtn = document.getElementById('stopBtn');
 const tickInput = document.getElementById('tickInput');
 const openaiToggle = document.getElementById('openaiToggle');
+const providerSelect = document.getElementById('providerSelect');
 const languageSelect = document.getElementById('languageSelect');
 const scenarioSelect = document.getElementById('scenarioSelect');
 const logFilterSelect = document.getElementById('logFilterSelect');
@@ -24,6 +25,7 @@ const appTitleEl = document.getElementById('appTitle');
 const appHintEl = document.getElementById('appHint');
 const languageLabelEl = document.getElementById('languageLabel');
 const scenarioLabelEl = document.getElementById('scenarioLabel');
+const providerLabelEl = document.getElementById('providerLabel');
 const tickLabelEl = document.getElementById('tickLabel');
 const openaiLabelEl = document.getElementById('openaiLabel');
 const logFilterLabelEl = document.getElementById('logFilterLabel');
@@ -65,6 +67,8 @@ const savedLocale =
   typeof localStorage !== 'undefined' ? localStorage.getItem('app_locale') : null;
 const savedScenario =
   typeof localStorage !== 'undefined' ? localStorage.getItem('app_scenario') : null;
+const savedProvider =
+  typeof localStorage !== 'undefined' ? localStorage.getItem('app_provider') : null;
 const i18n = createI18n(savedLocale || getPreferredLocale());
 
 let tickTimer = null;
@@ -137,8 +141,9 @@ function applyStaticI18n() {
   stopBtn.textContent = i18n.t('controls.stop');
   languageLabelEl.textContent = i18n.t('controls.language');
   scenarioLabelEl.textContent = i18n.t('controls.scenario');
+  providerLabelEl.textContent = i18n.t('controls.provider');
   tickLabelEl.textContent = i18n.t('controls.polling');
-  openaiLabelEl.textContent = i18n.t('controls.useOpenAI');
+  openaiLabelEl.textContent = i18n.t('controls.useAI');
   logFilterLabelEl.textContent = i18n.t('controls.logFilter');
 
   religionSectionTitleEl.textContent = i18n.t('section.religions');
@@ -162,6 +167,10 @@ function applyStaticI18n() {
 
   for (const option of scenarioSelect.options) {
     option.textContent = scenarioLabel(option.value);
+  }
+
+  for (const option of providerSelect.options) {
+    option.textContent = i18n.t(`provider.${option.value}`);
   }
 
   for (const option of logFilterSelect.options) {
@@ -561,6 +570,9 @@ camera.position.set(0, 30, 42);
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
+controls.enablePan = false;
+controls.minPolarAngle = THREE.MathUtils.degToRad(22);
+controls.maxPolarAngle = THREE.MathUtils.degToRad(82);
 controls.minDistance = 22;
 controls.maxDistance = 95;
 controls.target.set(2, 1.6, 0);
@@ -605,6 +617,10 @@ function fitCameraToMap(force = false) {
 
   cameraFitted = true;
   lastAspect = aspect;
+}
+
+function resetCameraView() {
+  fitCameraToMap(true);
 }
 
 scene.add(new THREE.AmbientLight('#ffffff', 0.8));
@@ -1310,16 +1326,26 @@ function renderAll(state) {
   if (state.scenario && scenarioSelect.value !== state.scenario) {
     scenarioSelect.value = state.scenario;
   }
+  if (
+    state.provider &&
+    [...providerSelect.options].some((option) => option.value === state.provider) &&
+    providerSelect.value !== state.provider
+  ) {
+    providerSelect.value = state.provider;
+  }
   const invariant = i18n.t(state.invariantOk ? 'status.invariantFixed' : 'status.invariantAbnormal');
   const engine = i18n.t(`engine.${state.transferEngine || 'rule'}`);
-  const openai = i18n.t(state.useOpenAI ? 'common.on' : 'common.off');
+  const aiEnabled = Boolean(state.useAI ?? state.useOpenAI);
+  const ai = i18n.t(aiEnabled ? 'common.on' : 'common.off');
+  const provider = i18n.t(`provider.${state.provider || providerSelect.value || 'openai'}`);
   statusEl.textContent = i18n.t('status.running', {
     round: state.round,
     total: i18n.number(state.totalFollowers),
     target: i18n.number(state.targetTotalFollowers),
     invariant,
     engine,
-    openai
+    ai,
+    provider
   });
 
   renderCards(state);
@@ -1437,11 +1463,15 @@ async function postJson(url, body = {}) {
 
 async function startSimulation() {
   const snapshot = await postJson('/api/simulation/start', {
+    useAI: openaiToggle.checked,
     useOpenAI: openaiToggle.checked,
+    provider: providerSelect.value,
     locale: i18n.locale,
     scenario: scenarioSelect.value
   });
   renderAll(snapshot);
+  // Always reset map framing on new game start for a stable first view.
+  resetCameraView();
 }
 
 async function tickSimulation() {
@@ -1512,6 +1542,12 @@ scenarioSelect.addEventListener('change', (event) => {
   }
 });
 
+providerSelect.addEventListener('change', (event) => {
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem('app_provider', event.target.value);
+  }
+});
+
 logFilterSelect.addEventListener('change', (event) => {
   activeLogFilter = event.target.value || 'all';
   if (liveState) {
@@ -1558,6 +1594,9 @@ if (signalResetBtnEl) {
 
 if (savedScenario && [...scenarioSelect.options].some((option) => option.value === savedScenario)) {
   scenarioSelect.value = savedScenario;
+}
+if (savedProvider && [...providerSelect.options].some((option) => option.value === savedProvider)) {
+  providerSelect.value = savedProvider;
 }
 
 setLocale(i18n.locale, false);

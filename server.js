@@ -450,6 +450,64 @@ function normalizeInteger(value, fallback = 0) {
   return Math.max(0, Math.floor(n));
 }
 
+const AI_PROVIDER_PRESETS = {
+  openai: {
+    id: 'openai',
+    label: 'OpenAI',
+    defaultBaseUrl: 'https://api.openai.com/v1',
+    defaultModel: 'gpt-4o-mini',
+    apiKeyEnvKeys: ['AI_API_KEY', 'OPENAI_API_KEY'],
+    baseUrlEnvKeys: ['AI_API_BASE', 'OPENAI_API_BASE'],
+    modelEnvKeys: ['AI_MODEL', 'OPENAI_MODEL']
+  },
+  moonshot: {
+    id: 'moonshot',
+    label: 'Moonshot / Kimi',
+    defaultBaseUrl: 'https://api.moonshot.cn/v1',
+    defaultModel: 'kimi-k2-turbo-preview',
+    apiKeyEnvKeys: ['MOONSHOT_API_KEY', 'KIMI_API_KEY', 'AI_API_KEY'],
+    baseUrlEnvKeys: ['MOONSHOT_API_BASE', 'KIMI_API_BASE'],
+    modelEnvKeys: ['MOONSHOT_MODEL', 'KIMI_MODEL']
+  }
+};
+
+const DEFAULT_AI_PROVIDER = 'openai';
+
+function firstNonEmptyEnv(...keys) {
+  for (const key of keys) {
+    const value = process.env[key];
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+  }
+  return '';
+}
+
+function normalizeProvider(input) {
+  if (!input || typeof input !== 'string') {
+    return DEFAULT_AI_PROVIDER;
+  }
+  const low = input.trim().toLowerCase();
+  if (!low) {
+    return DEFAULT_AI_PROVIDER;
+  }
+  if (low === 'kimi' || low === 'moonshot/kimi' || low === 'moonshot-kimi') {
+    return 'moonshot';
+  }
+  return Object.hasOwn(AI_PROVIDER_PRESETS, low) ? low : DEFAULT_AI_PROVIDER;
+}
+
+function resolveProviderPreset(providerId) {
+  return AI_PROVIDER_PRESETS[normalizeProvider(providerId)] || AI_PROVIDER_PRESETS[DEFAULT_AI_PROVIDER];
+}
+
+function listAvailableProviders() {
+  return Object.values(AI_PROVIDER_PRESETS).map((provider) => ({
+    id: provider.id,
+    label: provider.label
+  }));
+}
+
 const STRATEGY_CHANNELS = [
   'digital',
   'service',
@@ -507,21 +565,52 @@ function normalizeChannelWeights(rawWeights = {}, minWeight = 0.035) {
 
 class OpenAIClient {
   constructor() {
-    this.apiKey = process.env.OPENAI_API_KEY || '';
-    this.baseUrl = process.env.OPENAI_API_BASE || 'https://api.openai.com/v1';
-    this.model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+    this.provider = DEFAULT_AI_PROVIDER;
+    this.providerLabel = resolveProviderPreset(DEFAULT_AI_PROVIDER).label;
+    this.apiKey = '';
+    this.baseUrl = resolveProviderPreset(DEFAULT_AI_PROVIDER).defaultBaseUrl;
+    this.model = resolveProviderPreset(DEFAULT_AI_PROVIDER).defaultModel;
+    this.enabled = false;
+    this.setProvider(process.env.AI_PROVIDER || process.env.OPENAI_PROVIDER || DEFAULT_AI_PROVIDER);
     this.enabled = Boolean(this.apiKey);
-    this.logEnabled = process.env.OPENAI_API_LOG !== '0';
-    this.logPayload = process.env.OPENAI_API_LOG_PAYLOAD === '1';
-    this.transferAgentEnabled = process.env.OPENAI_TRANSFER_AGENT !== '0';
-    this.timeoutMs = clamp(normalizeInteger(process.env.OPENAI_API_TIMEOUT_MS, 25000), 1000, 120000);
-    this.maxRetries = clamp(normalizeInteger(process.env.OPENAI_API_MAX_RETRIES, 2), 0, 8);
+
+    this.logEnabled = (process.env.AI_API_LOG ?? process.env.OPENAI_API_LOG ?? '1') !== '0';
+    this.logPayload = (process.env.AI_API_LOG_PAYLOAD ?? process.env.OPENAI_API_LOG_PAYLOAD) === '1';
+    this.transferAgentEnabled =
+      (process.env.AI_TRANSFER_AGENT ?? process.env.OPENAI_TRANSFER_AGENT ?? '1') !== '0';
+    this.timeoutMs = clamp(
+      normalizeInteger(process.env.AI_API_TIMEOUT_MS ?? process.env.OPENAI_API_TIMEOUT_MS, 25000),
+      1000,
+      120000
+    );
+    this.maxRetries = clamp(
+      normalizeInteger(process.env.AI_API_MAX_RETRIES ?? process.env.OPENAI_API_MAX_RETRIES, 2),
+      0,
+      8
+    );
     this.retryBaseDelayMs = clamp(
-      normalizeInteger(process.env.OPENAI_API_RETRY_BASE_DELAY_MS, 350),
+      normalizeInteger(
+        process.env.AI_API_RETRY_BASE_DELAY_MS ?? process.env.OPENAI_API_RETRY_BASE_DELAY_MS,
+        350
+      ),
       50,
       30000
     );
     this.requestSeq = 0;
+  }
+
+  setProvider(providerId) {
+    const provider = normalizeProvider(providerId);
+    const preset = resolveProviderPreset(provider);
+    const wasEnabled = this.enabled;
+
+    this.provider = provider;
+    this.providerLabel = preset.label;
+    this.apiKey = firstNonEmptyEnv(...preset.apiKeyEnvKeys);
+    this.baseUrl =
+      (firstNonEmptyEnv(...preset.baseUrlEnvKeys) || preset.defaultBaseUrl).replace(/\/+$/, '');
+    this.model = firstNonEmptyEnv(...preset.modelEnvKeys) || preset.defaultModel;
+    this.enabled = Boolean(wasEnabled && this.apiKey);
   }
 
   setEnabled(enabled) {
@@ -532,7 +621,7 @@ class OpenAIClient {
     if (!this.logEnabled) {
       return;
     }
-    console.log(`[OpenAI][${event}] ${JSON.stringify(payload)}`);
+    console.log(`[AI:${this.provider}][${event}] ${JSON.stringify(payload)}`);
   }
 
   isRetryableNetworkError(err) {
@@ -634,6 +723,7 @@ class OpenAIClient {
     this.log('request.start', {
       callId,
       trace,
+      provider: this.provider,
       method: 'POST',
       url,
       model: requestBody.model,
@@ -696,7 +786,7 @@ class OpenAIClient {
           continue;
         }
 
-        throw new Error(`OpenAI network failure: ${formatErrorDetail(err)}`);
+        throw new Error(`AI network failure (${this.providerLabel}): ${formatErrorDetail(err)}`);
       } finally {
         if (timeoutHandle) {
           clearTimeout(timeoutHandle);
@@ -732,7 +822,9 @@ class OpenAIClient {
           continue;
         }
 
-        throw new Error(`OpenAI API failed ${response.status}: ${truncateText(detail, 1000)}`);
+        throw new Error(
+          `AI provider failed (${this.providerLabel}) ${response.status}: ${truncateText(detail, 1000)}`
+        );
       }
 
       const payload = await response.json();
@@ -751,7 +843,7 @@ class OpenAIClient {
       return payload?.choices?.[0]?.message?.content || null;
     }
 
-    throw new Error('OpenAI request exhausted all retries');
+    throw new Error(`AI request exhausted all retries (${this.providerLabel})`);
   }
 
   async generateProfiles(seedAgents) {
@@ -795,7 +887,7 @@ class OpenAIClient {
         };
       });
     } catch (err) {
-      console.warn('OpenAI profile generation fallback:', formatErrorDetail(err));
+      console.warn('AI profile generation fallback:', formatErrorDetail(err));
       return seedAgents;
     }
   }
@@ -852,7 +944,7 @@ class OpenAIClient {
       }
       return actionMap;
     } catch (err) {
-      console.warn('OpenAI round action fallback:', formatErrorDetail(err));
+      console.warn('AI round action fallback:', formatErrorDetail(err));
       return null;
     }
   }
@@ -952,7 +1044,7 @@ religionState=${JSON.stringify(agentState)}`;
 
       return links.length ? links : null;
     } catch (err) {
-      console.warn('OpenAI transfer structure fallback:', formatErrorDetail(err));
+      console.warn('AI transfer structure fallback:', formatErrorDetail(err));
       return null;
     }
   }
@@ -2071,8 +2163,16 @@ class ReligionSimulation {
     };
   }
 
-  async start({ useOpenAI = true, locale = DEFAULT_LOCALE, scenario = DEFAULT_SCENARIO } = {}) {
-    this.openaiClient.setEnabled(useOpenAI);
+  async start({
+    useAI = true,
+    useOpenAI,
+    provider,
+    locale = DEFAULT_LOCALE,
+    scenario = DEFAULT_SCENARIO
+  } = {}) {
+    const aiEnabled = useOpenAI !== undefined ? useOpenAI !== false : useAI !== false;
+    this.openaiClient.setProvider(provider || this.openaiClient.provider);
+    this.openaiClient.setEnabled(aiEnabled);
     const resolvedLocale = normalizeLocale(locale);
     const resolvedScenario = normalizeScenario(scenario);
     const initPrefix =
@@ -2313,8 +2413,12 @@ class ReligionSimulation {
       locale: state.locale || DEFAULT_LOCALE,
       scenario: normalizeScenario(state.scenario || DEFAULT_SCENARIO),
       availableScenarios: listAvailableScenarios(),
+      availableProviders: listAvailableProviders(),
       configVersion: this.config.version,
+      useAI: this.openaiClient.enabled,
       useOpenAI: this.openaiClient.enabled,
+      provider: this.openaiClient.provider,
+      providerLabel: this.openaiClient.providerLabel,
       totalFollowers,
       invariantOk: totalFollowers === this.totalFollowers,
       targetTotalFollowers: this.totalFollowers,
@@ -2367,6 +2471,10 @@ app.get('/api/health', (_req, res) => {
   res.json({
     ok: true,
     now: new Date().toISOString(),
+    provider: openaiClient.provider,
+    providerLabel: openaiClient.providerLabel,
+    availableProviders: listAvailableProviders(),
+    aiConfigured: Boolean(openaiClient.apiKey),
     openaiConfigured: Boolean(process.env.OPENAI_API_KEY),
     invariant: 'religion_total_constant'
   });
@@ -2374,10 +2482,11 @@ app.get('/api/health', (_req, res) => {
 
 app.post('/api/simulation/start', async (req, res) => {
   try {
-    const useOpenAI = req.body?.useOpenAI !== false;
+    const useAI = req.body?.useAI ?? req.body?.useOpenAI;
+    const provider = normalizeProvider(req.body?.provider || openaiClient.provider);
     const locale = normalizeLocale(req.body?.locale || DEFAULT_LOCALE);
     const scenario = normalizeScenario(req.body?.scenario || DEFAULT_SCENARIO);
-    const snapshot = await simulation.start({ useOpenAI, locale, scenario });
+    const snapshot = await simulation.start({ useAI: useAI !== false, provider, locale, scenario });
     res.json(snapshot);
   } catch (err) {
     res.status(500).json({ message: err.message });

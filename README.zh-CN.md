@@ -2,7 +2,7 @@
 
 # 宗教 Agent 地图模拟器
 
-基于 OpenAI + Three.js 的多宗教同化传播仿真系统。
+基于 OpenAI 兼容提供商 + Three.js 的多宗教同化传播仿真系统。
 
 [English](./README.md) | 简体中文 | [日本語](./README.ja.md)
 
@@ -17,7 +17,7 @@
 - 内置 i18n（`en`、`zh-CN`、`ja`），支持运行时切换语言。
 - 混合转化引擎：
   - 规则引擎生成基准链路。
-  - OpenAI Agent 输出结构化转化数量。
+  - AI Agent 输出结构化转化数量。
 - 3D 可视化：
   - 区域主导宗教柱体。
   - 关键同化蚂蚁线路（方向与强度可视）。
@@ -29,7 +29,7 @@
 ```bash
 npm install
 cp .env.example .env
-# 在 .env 填写 OPENAI_API_KEY
+# 在 .env 填写 AI_API_KEY（可选设置 AI_PROVIDER）
 npm run dev
 ```
 
@@ -37,22 +37,24 @@ npm run dev
 
 ## 环境变量
 参考 `.env.example`：
-- `OPENAI_API_KEY`
-- `OPENAI_MODEL`
-- `OPENAI_API_BASE`
-- `OPENAI_API_LOG`
-- `OPENAI_API_LOG_PAYLOAD`
-- `OPENAI_TRANSFER_AGENT`
-- `OPENAI_API_TIMEOUT_MS`
-- `OPENAI_API_MAX_RETRIES`
-- `OPENAI_API_RETRY_BASE_DELAY_MS`
+- `AI_PROVIDER`（`openai` | `moonshot`）
+- `AI_API_KEY`
+- `AI_MODEL`
+- `AI_API_BASE`
+- `MOONSHOT_API_KEY` / `MOONSHOT_MODEL` / `MOONSHOT_API_BASE`（可选）
+- `AI_API_LOG`
+- `AI_API_LOG_PAYLOAD`
+- `AI_TRANSFER_AGENT`
+- `AI_API_TIMEOUT_MS`
+- `AI_API_MAX_RETRIES`
+- `AI_API_RETRY_BASE_DELAY_MS`
 - `NODE_USE_ENV_PROXY`
 - `PORT`
 
-若频繁出现 `fetch failed | code=ECONNRESET`，可适当增大 `OPENAI_API_TIMEOUT_MS` 与 `OPENAI_API_MAX_RETRIES`，并确认 `OPENAI_API_BASE` / 代理网络可达。
+若频繁出现 `fetch failed | code=ECONNRESET`，可适当增大 `AI_API_TIMEOUT_MS` 与 `AI_API_MAX_RETRIES`，并确认 `AI_API_BASE` / 代理网络可达。
 
 ## API
-- `POST /api/simulation/start` body: `{ "useOpenAI": true | false, "locale": "en|zh-CN|ja" }`
+- `POST /api/simulation/start` body: `{ "useAI": true | false, "provider": "openai|moonshot", "locale": "en|zh-CN|ja" }`
 - `POST /api/simulation/tick` body: `{ "locale": "en|zh-CN|ja" }`
 - `GET /api/simulation/state`
 - `GET /api/health`
