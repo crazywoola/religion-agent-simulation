@@ -835,6 +835,8 @@ class ReligionSimulation {
         id: seed.id,
         name: seed.name,
         color: seed.color,
+        isSecular: seed.isSecular || false,
+        exitBarrier: clamp(Number(seed.exitBarrier || 0), 0, 0.95),
         doctrine: seed.doctrine,
         doctrineLong: seed.doctrineLong,
         classics: normalizeClassics(seed.classics, []),
@@ -845,6 +847,63 @@ class ReligionSimulation {
         regionalAffinity: seed.regionalAffinity
       };
     });
+  }
+
+  // 随机事件系统：每 N 轮以概率触发事件，短期扰动社会信号
+  applyEvents(state) {
+    const cfg = this.config.events;
+    if (!cfg?.enabled) return;
+    if (state.round % cfg.checkEveryNRounds !== 0) {
+      // 仍需衰减已有事件
+      this._decayActiveEvents(state);
+      return;
+    }
+
+    this._decayActiveEvents(state);
+
+    const fired = [];
+    for (const eventDef of cfg.pool) {
+      if (fired.length >= cfg.maxPerCheck) break;
+      if (Math.random() < eventDef.prob) {
+        const ev = {
+          id: eventDef.id,
+          startRound: state.round,
+          duration: eventDef.duration,
+          roundsLeft: eventDef.duration,
+          shock: { ...eventDef.shock }
+        };
+        state.activeEvents.push(ev);
+        state.eventHistory.push({
+          id: eventDef.id,
+          round: state.round,
+          shock: ev.shock
+        });
+        if (state.eventHistory.length > 80) {
+          state.eventHistory = state.eventHistory.slice(-80);
+        }
+        fired.push(ev);
+      }
+    }
+
+    // 应用所有活跃事件的冲击到当前社会信号
+    for (const ev of state.activeEvents) {
+      for (const [key, delta] of Object.entries(ev.shock)) {
+        if (key in state.socialSignals) {
+          state.socialSignals[key] = clamp(
+            (state.socialSignals[key] || 0.5) + delta * (ev.roundsLeft / ev.duration),
+            0.1,
+            0.98
+          );
+        }
+      }
+    }
+  }
+
+  _decayActiveEvents(state) {
+    for (const ev of state.activeEvents) {
+      ev.roundsLeft = Math.max(0, ev.roundsLeft - 1);
+    }
+    state.activeEvents = state.activeEvents.filter((ev) => ev.roundsLeft > 0);
   }
 
   driftSocialSignals(current) {
@@ -1118,7 +1177,9 @@ class ReligionSimulation {
       strategy.defensiveFocus * churn.defensiveFocus +
       strategy.fatigue * churn.fatigue;
 
-    const boundedRate = clamp(churnRate, 0.0012, 0.052);
+    // exitBarrier 降低信众流失率（宗教越难离开，流失越少）
+    const barrierReduction = 1 - clamp(Number(agent.exitBarrier || 0), 0, 0.9) * (this.config.exitBarrierWeight || 0.68);
+    const boundedRate = clamp(churnRate * barrierReduction, 0.0012, 0.052);
     const outBudgetRaw = Math.floor(agent.followers * boundedRate * randomIn(0.9, 1.1));
     const cap = Math.floor(agent.followers * (0.046 + agent.metrics.openness * 0.018));
     return clamp(outBudgetRaw, 0, Math.min(available, cap));
@@ -1210,6 +1271,11 @@ class ReligionSimulation {
       1
     );
 
+    // 世俗主义在高世俗化环境下获得额外吸引力加成
+    const secularBuff = source.isSecular
+      ? clamp(socialSignals.secularization * (this.config.secularBuff || 1.55), 0.6, 1.9)
+      : 1;
+
     return (
       outreachStrength *
       susceptibility *
@@ -1222,6 +1288,7 @@ class ReligionSimulation {
       secularWindow *
       regulationPenalty *
       shockWindow *
+      secularBuff *
       randomIn(0.9, 1.1)
     );
   }
@@ -1518,6 +1585,12 @@ class ReligionSimulation {
       const fromAgent = agentById.get(event.fromId);
       const toAgent = agentById.get(event.toId);
       if (!fromAgent || !toAgent) {
+        continue;
+      }
+
+      // 世俗主义没有宗教法庭，不对其他宗教施加审判；其他宗教也难以通过宗教手段拦截世俗化
+      if (fromAgent.isSecular || toAgent.isSecular) {
+        moderatedEvents.push({ ...event, judgmentBlocked: 0 });
         continue;
       }
 
@@ -1910,6 +1983,9 @@ class ReligionSimulation {
       roundMetrics,
       topTransfers: [],
       judgmentRecords: [],
+      activeEvents: [],
+      eventHistory: [],
+      manualSignalOverrides: {},
       logs: agents.map((agent) => ({
         type: 'mission',
         round: 0,
@@ -1947,6 +2023,19 @@ class ReligionSimulation {
     const activeLocale = normalizeLocale(state.locale || DEFAULT_LOCALE);
     state.socialSignals = blendSignalsToScenario(state.socialSignals, state.scenario);
     state.socialSignals = this.driftSocialSignals(state.socialSignals);
+
+    // 应用手动信号覆盖（用户通过滑块设置，单轮生效后自然衰减）
+    if (state.manualSignalOverrides && Object.keys(state.manualSignalOverrides).length > 0) {
+      for (const [key, val] of Object.entries(state.manualSignalOverrides)) {
+        if (key in state.socialSignals) {
+          state.socialSignals[key] = clamp(Number(val), 0.1, 0.98);
+        }
+      }
+      state.manualSignalOverrides = {};
+    }
+
+    // 随机事件系统
+    this.applyEvents(state);
     this.adaptAgentStrategies(state.agents, state.socialSignals);
     for (const agent of state.agents) {
       agent.strategyFocus = this.strategyFocusSummary(agent.strategy);
@@ -2089,6 +2178,8 @@ class ReligionSimulation {
         id: agent.id,
         name: agent.name,
         color: agent.color,
+        isSecular: agent.isSecular || false,
+        exitBarrier: agent.exitBarrier || 0,
         doctrine: agent.doctrine,
         doctrineLong: agent.doctrineLong,
         classics: agent.classics,
@@ -2112,7 +2203,9 @@ class ReligionSimulation {
       judgmentRecords: state.judgmentRecords.slice(-100),
       roundMetrics: state.roundMetrics,
       structureOutput: state.structureOutput,
-      logs: state.logs.slice(-160)
+      logs: state.logs.slice(-160),
+      activeEvents: state.activeEvents || [],
+      eventHistory: (state.eventHistory || []).slice(-40)
     };
   }
 }
@@ -2170,6 +2263,27 @@ app.get('/api/simulation/state', (_req, res) => {
     res.json(snapshot);
   } catch (err) {
     res.status(404).json({ message: err.message });
+  }
+});
+
+// 手动覆盖社会信号（前端滑块控制）
+app.post('/api/simulation/signals', (req, res) => {
+  try {
+    const state = simulation.ensureState();
+    const overrides = req.body?.overrides || {};
+    for (const [key, val] of Object.entries(overrides)) {
+      if (key in state.socialSignals) {
+        const num = Number(val);
+        if (Number.isFinite(num)) {
+          state.manualSignalOverrides[key] = clamp(num, 0.1, 0.98);
+          // 立即应用到当前信号（让快照立即反映）
+          state.socialSignals[key] = clamp(num, 0.1, 0.98);
+        }
+      }
+    }
+    res.json({ ok: true, socialSignals: state.socialSignals });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 });
 
