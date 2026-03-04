@@ -15,8 +15,6 @@ OpenAI 互換プロバイダと Three.js による、複数宗教エージェン
 
 [English](./README.md) | [简体中文](./README.zh-CN.md) | 日本語
 
-<a href="https://www.buymeacoffee.com/pinkbanana" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
-
 </div>
 
 ## 概要
@@ -152,13 +150,6 @@ POST /api/simulation/signals
 - `regionControl`
 - `bossCrisis`
 - `structureOutput.antLinks[].friction`
-
-## サポート
-このプロジェクトが役に立った場合は、コーヒー支援していただけると嬉しいです。
-
-<a href="https://www.buymeacoffee.com/pinkbanana" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
-
-[Buy Me a Coffee](https://www.buymeacoffee.com/pinkbanana)
 
 ## セキュリティ
 - `.env` と `.env.*` は `.gitignore` で除外。

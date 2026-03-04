@@ -15,8 +15,6 @@ AI-driven multi-agent simulation for religious conversion dynamics with OpenAI-c
 
 English | [简体中文](./README.zh-CN.md) | [日本語](./README.ja.md)
 
-<a href="https://www.buymeacoffee.com/pinkbanana" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
-
 </div>
 
 ## Overview
@@ -152,13 +150,6 @@ Snapshot highlights:
 - `regionControl`
 - `bossCrisis`
 - `structureOutput.antLinks[].friction`
-
-## Support
-If this project helps you, you can support continued development here:
-
-<a href="https://www.buymeacoffee.com/pinkbanana" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
-
-[Buy Me a Coffee](https://www.buymeacoffee.com/pinkbanana)
 
 ## Security Notes
 - Secrets are excluded from git via `.gitignore` (`.env`, `.env.*`).
