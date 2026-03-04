@@ -191,7 +191,12 @@ const DICTIONARY = {
       protestant: 'Christianity (Protestant)',
       pastafarianism: 'Pastafarianism',
       catholicism: 'Catholicism',
-      secular: 'Secular / No Religion'
+      secular: 'Secular / No Religion',
+      judaism: 'Judaism',
+      sikhism: 'Sikhism',
+      orthodox: 'Eastern Orthodox',
+      zoroastrianism: 'Zoroastrianism',
+      bahai: "Baha'i Faith"
     },
     regionNames: {
       north_america: 'North America',
@@ -392,7 +397,12 @@ const DICTIONARY = {
       protestant: '基督教',
       pastafarianism: '飞天面条神教',
       catholicism: '天主教',
-      secular: '无宗教/世俗主义'
+      secular: '无宗教/世俗主义',
+      judaism: '犹太教',
+      sikhism: '锡克教',
+      orthodox: '东正教',
+      zoroastrianism: '琐罗亚斯德教',
+      bahai: '巴哈伊教'
     },
     regionNames: {
       north_america: '北美',
@@ -593,7 +603,12 @@ const DICTIONARY = {
       protestant: 'キリスト教（プロテスタント）',
       pastafarianism: '空飛ぶスパゲッティ・モンスター教',
       catholicism: 'カトリック',
-      secular: '無宗教・世俗主義'
+      secular: '無宗教・世俗主義',
+      judaism: 'ユダヤ教',
+      sikhism: 'シク教',
+      orthodox: '東方正教会',
+      zoroastrianism: 'ゾロアスター教',
+      bahai: 'バハイ教'
     },
     regionNames: {
       north_america: '北米',

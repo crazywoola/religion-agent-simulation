@@ -203,7 +203,12 @@ const RELIGION_EMOJI = {
   islam: '☪️',
   protestant: '✝️',
   catholicism: '✝️',
-  pastafarianism: '🍝'
+  pastafarianism: '🍝',
+  judaism: '✡️',
+  sikhism: '🪯',
+  orthodox: '☦️',
+  zoroastrianism: '🔥',
+  bahai: '✴️'
 };
 
 function clampValue(value, min, max) {

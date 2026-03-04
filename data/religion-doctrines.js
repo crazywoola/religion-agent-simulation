@@ -336,5 +336,190 @@ export const RELIGION_DOCTRINES = [
       latin_america: 0.48,
       global_online: 0.96
     }
+  },
+  {
+    id: 'judaism',
+    name: '犹太教',
+    color: '#1565c0',
+    exitBarrier: 0.74,
+    doctrine: '强调与上帝的盟约关系、律法传承与民族记忆，注重伦理实践与学术传统。',
+    doctrineLong:
+      '犹太教以妥拉律法为核心，强调上帝与以色列民族之间的契约关系。其传统融合了伦理讨论、律法诠释、安息日实践与社群教育，在散居历史中形成了极强的文化凝聚力与学术传承。现代犹太教涵盖正统派、保守派与改革派等多元分支。',
+    classics: ['《妥拉》', '《塔木德》', '《密释纳》', '《佐哈尔》'],
+    style: '通过学术传承、社群仪式、家庭教育与伦理辩论维系信仰。',
+    metrics: { zeal: 0.52, persuasion: 0.44, openness: 0.42, retention: 0.91 },
+    traits: {
+      communityService: 0.72,
+      digitalMission: 0.55,
+      ritualDepth: 0.85,
+      intellectualDialog: 0.93,
+      youthAppeal: 0.52,
+      identityBond: 0.94,
+      institutionCapacity: 0.82
+    },
+    governance: {
+      orthodoxy: 0.74,
+      antiProselytization: 0.88,
+      tribunalCapacity: 0.76,
+      dueProcess: 0.72
+    },
+    passive: { signal: 'economicStress', effect: -0.01, label: { en: 'Covenant Resilience', 'zh-CN': '盟约韧性', ja: '契約のレジリエンス' } },
+    regionalAffinity: {
+      east_asia: 0.15,
+      south_asia: 0.12,
+      middle_east_africa: 0.78,
+      europe: 0.62,
+      north_america: 0.86,
+      latin_america: 0.28,
+      global_online: 0.71
+    }
+  },
+  {
+    id: 'sikhism',
+    name: '锡克教',
+    color: '#ff6f00',
+    exitBarrier: 0.68,
+    doctrine: '强调一神信仰、平等主义、社群服务与武勇精神，拒绝种姓制度。',
+    doctrineLong:
+      '锡克教由古鲁那纳克创立，强调唯一造物主、众生平等与无私服务（Seva）。锡克教以公共厨房（Langar）、统一着装标志和武勇传统闻名，在南亚和全球侨民社群中拥有强大凝聚力。现代锡克教在社会正义、社区组织和跨文化对话方面表现活跃。',
+    classics: ['《古鲁·格兰特·萨希布》', '《贾普·萨希布》', '《阿萨·迪·瓦尔》'],
+    style: '通过社群厨房、平等服务、武勇传统与侨民网络传播信仰。',
+    metrics: { zeal: 0.65, persuasion: 0.54, openness: 0.48, retention: 0.86 },
+    traits: {
+      communityService: 0.92,
+      digitalMission: 0.49,
+      ritualDepth: 0.76,
+      intellectualDialog: 0.56,
+      youthAppeal: 0.62,
+      identityBond: 0.88,
+      institutionCapacity: 0.74
+    },
+    governance: {
+      orthodoxy: 0.66,
+      antiProselytization: 0.58,
+      tribunalCapacity: 0.62,
+      dueProcess: 0.68
+    },
+    passive: { signal: 'socialFragmentation', effect: -0.012, label: { en: 'Langar Unity', 'zh-CN': '共食团结', ja: 'ランガルの結束' } },
+    regionalAffinity: {
+      east_asia: 0.18,
+      south_asia: 0.94,
+      middle_east_africa: 0.35,
+      europe: 0.56,
+      north_america: 0.68,
+      latin_america: 0.16,
+      global_online: 0.52
+    }
+  },
+  {
+    id: 'orthodox',
+    name: '东正教',
+    color: '#6a1b9a',
+    exitBarrier: 0.62,
+    doctrine: '强调神圣传统、礼仪之美与教父神学传承，注重圣事生活与教会合一。',
+    doctrineLong:
+      '东正教自称延续不间断的使徒传承，以拜占庭礼仪、圣像崇敬与七次大公会议为核心。其神学重视"神化"（Theosis）——信徒与神性的结合。东正教在东欧、俄罗斯和中东有深厚根基，通过庄严的礼仪传统和修道院文化维系信仰连续性。',
+    classics: ['《圣经》（七十士译本传统）', '《教父文集》', '《信经》', '《爱神集》'],
+    style: '通过庄严礼仪、圣像崇敬、修道院传统与教会节历传播。',
+    metrics: { zeal: 0.6, persuasion: 0.52, openness: 0.35, retention: 0.88 },
+    traits: {
+      communityService: 0.68,
+      digitalMission: 0.42,
+      ritualDepth: 0.94,
+      intellectualDialog: 0.62,
+      youthAppeal: 0.44,
+      identityBond: 0.86,
+      institutionCapacity: 0.84
+    },
+    governance: {
+      orthodoxy: 0.88,
+      antiProselytization: 0.78,
+      tribunalCapacity: 0.82,
+      dueProcess: 0.56
+    },
+    passive: { signal: 'migration', effect: -0.01, label: { en: 'Liturgical Anchor', 'zh-CN': '礼仪之锚', ja: '典礼のアンカー' } },
+    regionalAffinity: {
+      east_asia: 0.16,
+      south_asia: 0.14,
+      middle_east_africa: 0.58,
+      europe: 0.88,
+      north_america: 0.42,
+      latin_america: 0.18,
+      global_online: 0.36
+    }
+  },
+  {
+    id: 'zoroastrianism',
+    name: '琐罗亚斯德教',
+    color: '#bf360c',
+    exitBarrier: 0.78,
+    doctrine: '强调善恶二元对立、自由意志与真理之道，重视圣火崇拜与纯洁实践。',
+    doctrineLong:
+      '琐罗亚斯德教由先知查拉图斯特拉创立，是世界上最古老的一神论宗教之一。其核心是"善思、善言、善行"的伦理三纲，以及光明（阿胡拉·马兹达）与黑暗（安格拉·曼纽）的宇宙斗争。尽管信众规模较小，但其思想深刻影响了犹太教、基督教和伊斯兰教。',
+    classics: ['《阿维斯陀》', '《伽萨》', '《邦达希申》', '《阿尔达·维拉夫之书》'],
+    style: '通过圣火仪式、伦理传承、家族纽带与文化自豪感维系信仰。',
+    metrics: { zeal: 0.48, persuasion: 0.38, openness: 0.32, retention: 0.93 },
+    traits: {
+      communityService: 0.64,
+      digitalMission: 0.36,
+      ritualDepth: 0.92,
+      intellectualDialog: 0.68,
+      youthAppeal: 0.38,
+      identityBond: 0.96,
+      institutionCapacity: 0.58
+    },
+    governance: {
+      orthodoxy: 0.82,
+      antiProselytization: 0.92,
+      tribunalCapacity: 0.54,
+      dueProcess: 0.64
+    },
+    passive: { signal: 'institutionalTrust', effect: 0.008, label: { en: 'Sacred Flame', 'zh-CN': '圣火传承', ja: '聖火の継承' } },
+    regionalAffinity: {
+      east_asia: 0.1,
+      south_asia: 0.72,
+      middle_east_africa: 0.68,
+      europe: 0.22,
+      north_america: 0.34,
+      latin_america: 0.08,
+      global_online: 0.42
+    }
+  },
+  {
+    id: 'bahai',
+    name: '巴哈伊教',
+    color: '#00897b',
+    exitBarrier: 0.35,
+    doctrine: '强调人类一体、宗教统一与进步启示，追求世界和平与社会正义。',
+    doctrineLong:
+      '巴哈伊教由巴哈欧拉于19世纪创立，宣称所有主要宗教来自同一上帝的渐进启示。其核心原则包括人类一体、男女平等、科学与宗教和谐、消除偏见与普世教育。巴哈伊教拥有全球性组织结构和基层磋商制度，在国际社会推动和平对话和发展项目方面活跃。',
+    classics: ['《基塔比·阿格达斯》', '《基塔比·伊甘》', '《隐言经》', '《七谷与四谷》'],
+    style: '通过基层磋商、社区建设、跨文化对话与社会行动扩展影响。',
+    metrics: { zeal: 0.54, persuasion: 0.62, openness: 0.88, retention: 0.62 },
+    traits: {
+      communityService: 0.84,
+      digitalMission: 0.64,
+      ritualDepth: 0.46,
+      intellectualDialog: 0.86,
+      youthAppeal: 0.72,
+      identityBond: 0.52,
+      institutionCapacity: 0.76
+    },
+    governance: {
+      orthodoxy: 0.48,
+      antiProselytization: 0.32,
+      tribunalCapacity: 0.44,
+      dueProcess: 0.88
+    },
+    passive: { signal: 'legalPluralism', effect: 0.012, label: { en: 'Unity Vision', 'zh-CN': '合一愿景', ja: '統一のビジョン' } },
+    regionalAffinity: {
+      east_asia: 0.28,
+      south_asia: 0.52,
+      middle_east_africa: 0.62,
+      europe: 0.48,
+      north_america: 0.64,
+      latin_america: 0.56,
+      global_online: 0.78
+    }
   }
 ];
