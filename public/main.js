@@ -945,7 +945,7 @@ function showCharacterSelect() {
 }
 
 function buildSeedGhostRun() {
-  const ids = ['buddhism','hinduism','taoism','islam','protestant','pastafarianism','catholicism','shinto','secular'];
+  const ids = ['buddhism','hinduism','taoism','islam','protestant','pastafarianism','catholicism','shinto','secular','judaism','sikhism','orthodox','zoroastrianism','bahai'];
   const base = 10000;
   const drifts = {
     buddhism: [0,-20,-35,-50,-40,-55,-70,-60,-80,-90,-75,-100,-85,-110,-95,-120],
@@ -956,7 +956,12 @@ function buildSeedGhostRun() {
     pastafarianism: [0,-45,-70,-100,-80,-110,-130,-120,-150,-160,-140,-170,-155,-180,-165,-190],
     catholicism: [0,30,50,70,55,75,90,80,100,110,90,120,105,130,110,140],
     shinto: [0,-25,-45,-60,-50,-65,-80,-70,-90,-100,-85,-115,-95,-120,-100,-130],
-    secular: [0,10,40,80,15,60,105,25,75,120,20,45,95,55,95,50]
+    secular: [0,10,40,80,15,60,105,25,75,120,20,45,95,55,95,50],
+    judaism: [0,-10,-15,-25,-18,-30,-22,-35,-28,-40,-32,-45,-38,-50,-42,-55],
+    sikhism: [0,20,30,25,35,28,40,32,45,38,50,42,55,48,60,52],
+    orthodox: [0,5,-5,10,0,8,-8,12,-3,15,-6,18,-10,20,-12,22],
+    zoroastrianism: [0,-35,-50,-65,-55,-72,-60,-78,-68,-85,-75,-90,-80,-95,-88,-100],
+    bahai: [0,8,18,28,15,25,35,20,30,40,22,32,42,28,38,48]
   };
   const byReligion = {};
   for (const id of ids) {
@@ -1309,6 +1314,10 @@ const EVENT_COLORS = {
   pluralism_wave: '#239b5f',
   climate_anxiety: '#607d8b',
   institutional_reform: '#4a86b8',
+  ai_doctrine_leak: '#7c3aed',
+  grassroots_relief_network: '#059669',
+  interfaith_education_reform: '#0ea5e9',
+  algorithmic_echo_burst: '#dc2626',
   global_crisis: '#b3223f'
 };
 

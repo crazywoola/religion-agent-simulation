@@ -4,7 +4,7 @@
 const C = {
   bd: 'bridge_dialogue', tg: 'trust_grant', yf: 'youth_festival', ea: 'ethics_audit',
   mc: 'migration_corridor', cm: 'civic_mediation_lab', od: 'open_data_pulpit',
-  mr: 'meaning_retreat_program', la: 'legal_aid_caravan', ca: 'calm_media',
+  mr: 'meaning_retreat', la: 'legal_aid_caravan', ca: 'calm_media',
   cp: 'crisis_pivot', ss: 'solidarity_surge', df: 'digital_fast',
   sd: 'silent_diplomacy', gn: 'grassroots_network'
 };
