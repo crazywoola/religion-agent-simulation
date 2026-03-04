@@ -4978,7 +4978,12 @@ if (intelToggleBtnEl) {
 }
 if (intelDropdownEl) {
   intelDropdownEl.addEventListener('click', (e) => {
-    e.stopPropagation();
+    const clickedIntelItem = e.target.closest('[data-intel-id]');
+    if (clickedIntelItem) {
+      e.stopPropagation();
+      return;
+    }
+    setIntelDropdownOpen(false);
   });
 }
 document.addEventListener('click', () => {
