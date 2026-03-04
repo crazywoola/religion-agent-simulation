@@ -67,6 +67,34 @@ export const BET_OPTION_LIBRARY = [
       'zh-CN': '若 3 回合后活跃链路至少增加 2 条则获胜。',
       ja: '3 ラウンド後にアクティブ線が 2 本以上増えれば勝利。'
     }
+  },
+  {
+    id: 'trust_recovery',
+    short: { en: 'Trust', 'zh-CN': '信任', ja: '信頼' },
+    label: {
+      en: 'Trust rebounds',
+      'zh-CN': '信任回升',
+      ja: '信頼が回復'
+    },
+    description: {
+      en: 'Win if institutional trust is higher than the baseline after 3 rounds.',
+      'zh-CN': '若 3 回合后制度信任高于下注基线则获胜。',
+      ja: '3 ラウンド後に制度信頼がベースラインより高ければ勝利。'
+    }
+  },
+  {
+    id: 'polarization_cooldown',
+    short: { en: 'Cool', 'zh-CN': '冷却', ja: '冷却' },
+    label: {
+      en: 'Polarization drops',
+      'zh-CN': '极化下降',
+      ja: '分極化が低下'
+    },
+    description: {
+      en: 'Win if media polarization is lower than the baseline after 3 rounds.',
+      'zh-CN': '若 3 回合后媒体极化低于下注基线则获胜。',
+      ja: '3 ラウンド後にメディア分極化がベースラインより低ければ勝利。'
+    }
   }
 ];
 
@@ -596,13 +624,38 @@ export const SECRET_AGENDA_LIBRARY = [
       ja: 'ラウンド12以降でゴースト比 +800 を達成。'
     },
     reward: 9
+  },
+  {
+    id: 'card_master',
+    label: { en: 'Card Master', 'zh-CN': '卡牌大师', ja: 'カードマスター' },
+    description: {
+      en: 'Play 5+ strategy cards in a single run.',
+      'zh-CN': '单局中使用 5 张以上策略卡。',
+      ja: '1ランで戦略カードを5枚以上使用。'
+    },
+    reward: 7
+  },
+  {
+    id: 'peace_broker',
+    label: { en: 'Peace Broker', 'zh-CN': '和平经纪人', ja: 'ピースブローカー' },
+    description: {
+      en: 'Keep social fragmentation below 60% for 5 consecutive rounds after round 8.',
+      'zh-CN': '第 8 轮后连续 5 轮保持社会碎片化低于 60%。',
+      ja: 'ラウンド8以降、5連続ラウンドで社会分断を60%未満に維持。'
+    },
+    reward: 12
   }
 ];
 
 export const OBJECTIVE_LIBRARY = [
   {
     id: 'round_advance',
-    label: { en: 'Reach round 12', 'zh-CN': '到达第 12 轮', ja: 'ラウンド12到達' }
+    label: { en: 'Reach round 12', 'zh-CN': '到达第 12 轮', ja: 'ラウンド12到達' },
+    description: {
+      en: 'Survive and advance the simulation to round 12 without pausing or resetting.',
+      'zh-CN': '在不暂停或重置的情况下推进模拟到第 12 轮。',
+      ja: '一時停止やリセットなしでシミュレーションをラウンド12まで進行。'
+    }
   },
   {
     id: 'stability_window',
@@ -610,6 +663,11 @@ export const OBJECTIVE_LIBRARY = [
       en: 'Keep fragmentation below 78%',
       'zh-CN': '社会碎片化低于 78%',
       ja: '社会分断を 78% 未満に維持'
+    },
+    description: {
+      en: 'Maintain social fragmentation below the 78% threshold at the time of evaluation.',
+      'zh-CN': '在评估时保持社会碎片化低于 78% 的阈值。',
+      ja: '評価時に社会分断を78%の閾値未満に維持。'
     }
   },
   {
@@ -618,14 +676,59 @@ export const OBJECTIVE_LIBRARY = [
       en: 'Build a region chain of 3+',
       'zh-CN': '形成 3 连区域控制链',
       ja: '地域連鎖 3 以上'
+    },
+    description: {
+      en: 'Establish at least 3 connected regions dominated by the same religion.',
+      'zh-CN': '建立至少 3 个由同一宗教主导的连续区域。',
+      ja: '同じ宗教が優勢な3つ以上の連続地域を確立。'
     }
   }
 ];
 
 export const ACHIEVEMENT_LIBRARY = [
-  { id: 'combo_king', label: { en: 'Combo King', 'zh-CN': '连击之王', ja: 'コンボ王' } },
-  { id: 'raid_stable', label: { en: 'Raid Stabilizer', 'zh-CN': '危机稳态者', ja: '危機安定者' } },
-  { id: 'oracle', label: { en: 'Bet Oracle', 'zh-CN': '预判先知', ja: '予測の賢者' } },
-  { id: 'deck_scholar', label: { en: 'Deck Scholar', 'zh-CN': '卡组学者', ja: 'デッキ学者' } },
-  { id: 'iron_legend', label: { en: 'Iron Legend', 'zh-CN': '铁人传说', ja: '鉄人伝説' } }
+  {
+    id: 'combo_king',
+    label: { en: 'Combo King', 'zh-CN': '连击之王', ja: 'コンボ王' },
+    description: {
+      en: 'Reach a combo streak of 6+ in a single run.',
+      'zh-CN': '单局中达成 6 连击以上。',
+      ja: '1ランでコンボストリーク6以上を達成。'
+    }
+  },
+  {
+    id: 'raid_stable',
+    label: { en: 'Raid Stabilizer', 'zh-CN': '危机稳态者', ja: '危機安定者' },
+    description: {
+      en: 'Clear a Boss Crisis with zero failed stages (victory outcome).',
+      'zh-CN': 'Boss 危机中零失败阶段通关（胜利结局）。',
+      ja: 'Boss危機を失敗段階ゼロでクリア（勝利結果）。'
+    }
+  },
+  {
+    id: 'oracle',
+    label: { en: 'Bet Oracle', 'zh-CN': '预判先知', ja: '予測の賢者' },
+    description: {
+      en: 'Win 3 consecutive bets in a single run.',
+      'zh-CN': '单局中连续赢得 3 次下注。',
+      ja: '1ランで3連続の賭けに勝利。'
+    }
+  },
+  {
+    id: 'deck_scholar',
+    label: { en: 'Deck Scholar', 'zh-CN': '卡组学者', ja: 'デッキ学者' },
+    description: {
+      en: 'Play at least 8 unique strategy cards across all runs.',
+      'zh-CN': '在所有对局中累计使用 8 种不同的策略卡。',
+      ja: '全ランを通じて8種類以上の戦略カードを使用。'
+    }
+  },
+  {
+    id: 'iron_legend',
+    label: { en: 'Iron Legend', 'zh-CN': '铁人传说', ja: '鉄人伝説' },
+    description: {
+      en: 'Complete an Ironman run with 3 stars.',
+      'zh-CN': '在铁人模式中以 3 星完成对局。',
+      ja: 'アイアンマンモードで3スターを獲得。'
+    }
+  }
 ];
