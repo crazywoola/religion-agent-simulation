@@ -430,6 +430,139 @@ export const DECK_CARD_LIBRARY = [
     },
     cost: 4,
     deltas: { mediaPolarization: -0.06, identityPolitics: -0.04 }
+  },
+  {
+    id: 'crisis_pivot',
+    title: { en: 'Crisis Pivot', 'zh-CN': '危机转向', ja: '危機ピボット' },
+    desc: {
+      en: 'Double effect if Polarization > 60%',
+      'zh-CN': '极化 > 60% 时双倍效果',
+      ja: '分極化 > 60% で効果倍増'
+    },
+    detail: {
+      en: 'Redirect polarized energy into constructive reform. More effective when tensions are already high.',
+      'zh-CN': '将极化能量导向建设性改革。紧张局势越高效果越强。',
+      ja: '分極化のエネルギーを建設的改革へ転換。緊張が高いほど効果的。'
+    },
+    archetype: { en: 'Crisis Management', 'zh-CN': '危机管理', ja: '危機管理' },
+    rarity: { en: 'Conditional', 'zh-CN': '条件', ja: '条件付き' },
+    timing: { en: 'Immediate', 'zh-CN': '即时生效', ja: '即時発動' },
+    tip: {
+      en: 'Hold this card until polarization spikes — the payoff doubles.',
+      'zh-CN': '等极化飙升时再打出——收益翻倍。',
+      ja: '分極化が急増するまで温存——リターンが倍になる。'
+    },
+    cost: 5,
+    deltas: { mediaPolarization: -0.04, institutionalTrust: 0.03, legalPluralism: 0.02 },
+    condition: { signal: 'mediaPolarization', threshold: 0.6, compare: 'gt', multiplier: 2 }
+  },
+  {
+    id: 'solidarity_surge',
+    title: { en: 'Solidarity Surge', 'zh-CN': '团结浪潮', ja: '連帯サージ' },
+    desc: {
+      en: 'Double effect if Economic Stress > 50%',
+      'zh-CN': '经济压力 > 50% 时双倍效果',
+      ja: '経済ストレス > 50% で効果倍増'
+    },
+    detail: {
+      en: 'Rally communities around mutual aid during hardship. Most powerful when economic pressure is acute.',
+      'zh-CN': '在困难时期动员社区互助。经济压力越大效果越强。',
+      ja: '困難な時期にコミュニティ互助を呼びかける。経済圧力が深刻なほど効果的。'
+    },
+    archetype: { en: 'Community Rally', 'zh-CN': '社区动员', ja: 'コミュニティ結集' },
+    rarity: { en: 'Conditional', 'zh-CN': '条件', ja: '条件付き' },
+    timing: { en: 'Immediate', 'zh-CN': '即时生效', ja: '即時発動' },
+    tip: {
+      en: 'Best played during or right after economic crisis events.',
+      'zh-CN': '最适合在经济危机事件期间或之后打出。',
+      ja: '経済危機イベント中または直後に最適。'
+    },
+    cost: 5,
+    deltas: { economicStress: -0.05, socialFragmentation: -0.03, institutionalTrust: 0.03 },
+    condition: { signal: 'economicStress', threshold: 0.5, compare: 'gt', multiplier: 2 }
+  },
+  {
+    id: 'digital_fast',
+    title: { en: 'Digital Fast', 'zh-CN': '数字斋戒', ja: 'デジタル断食' },
+    desc: {
+      en: 'Double effect if Digitalization > 70%',
+      'zh-CN': '数字化 > 70% 时双倍效果',
+      ja: 'デジタル化 > 70% で効果倍増'
+    },
+    detail: {
+      en: 'Encourage communities to step back from digital discourse. Most effective when digital saturation is high.',
+      'zh-CN': '鼓励社群退出数字话语。数字化饱和度越高效果越强。',
+      ja: 'コミュニティにデジタル言説からの退避を促す。デジタル飽和度が高いほど効果的。'
+    },
+    archetype: { en: 'Digital Rebalance', 'zh-CN': '数字再平衡', ja: 'デジタル再均衡' },
+    rarity: { en: 'Conditional', 'zh-CN': '条件', ja: '条件付き' },
+    timing: { en: 'Immediate', 'zh-CN': '即时生效', ja: '即時発動' },
+    tip: {
+      en: 'Great counter to algorithmic echo burst and digital revival events.',
+      'zh-CN': '适合反制算法回音室和数字复兴事件。',
+      ja: 'アルゴリズムバーストやデジタル復興イベントへの対抗に最適。'
+    },
+    cost: 4,
+    deltas: { digitalization: -0.03, meaningSearch: 0.04, mediaPolarization: -0.03 },
+    condition: { signal: 'digitalization', threshold: 0.7, compare: 'gt', multiplier: 2 }
+  },
+  {
+    id: 'silent_diplomacy',
+    title: { en: 'Silent Diplomacy', 'zh-CN': '静默外交', ja: '沈黙外交' },
+    desc: {
+      en: 'Sustained: effects last 2 rounds',
+      'zh-CN': '持续：效果持续 2 轮',
+      ja: '持続：効果が 2 ラウンド続く'
+    },
+    detail: {
+      en: 'Back-channel negotiations between communities that gradually de-escalate tensions over multiple rounds.',
+      'zh-CN': '社区间的幕后谈判，在多个回合中逐步降低紧张。',
+      ja: 'コミュニティ間の裏チャンネル交渉で、数ラウンドにわたり緊張を緩和。'
+    },
+    archetype: { en: 'Sustained Diplomacy', 'zh-CN': '持续外交', ja: '持続外交' },
+    rarity: { en: 'Sustained', 'zh-CN': '持续', ja: '持続' },
+    timing: {
+      en: 'Sustained (2 rounds)',
+      'zh-CN': '持续生效（2 轮）',
+      ja: '持続発動（2ラウンド）'
+    },
+    tip: {
+      en: 'Excellent long-term value. Play early for compounding benefit.',
+      'zh-CN': '长期价值极佳。尽早打出以获取复利效果。',
+      ja: '長期的価値が高い。早めにプレイして複利効果を得よう。'
+    },
+    cost: 6,
+    deltas: { identityPolitics: -0.03, socialFragmentation: -0.02, legalPluralism: 0.03 },
+    sustained: 2
+  },
+  {
+    id: 'grassroots_network',
+    title: { en: 'Grassroots Network', 'zh-CN': '草根网络', ja: '草の根ネットワーク' },
+    desc: {
+      en: 'Sustained: effects last 3 rounds',
+      'zh-CN': '持续：效果持续 3 轮',
+      ja: '持続：効果が 3 ラウンド続く'
+    },
+    detail: {
+      en: 'Build lasting community networks from the ground up. Slow to start but compounds trust and stability.',
+      'zh-CN': '从基层构建持久社区网络。启动缓慢但不断积累信任与稳定。',
+      ja: '草の根から持続的なコミュニティネットワークを構築。立ち上がりは遅いが信頼と安定が蓄積。'
+    },
+    archetype: { en: 'Community Build', 'zh-CN': '社区构建', ja: 'コミュニティ構築' },
+    rarity: { en: 'Sustained', 'zh-CN': '持续', ja: '持続' },
+    timing: {
+      en: 'Sustained (3 rounds)',
+      'zh-CN': '持续生效（3 轮）',
+      ja: '持続発動（3ラウンド）'
+    },
+    tip: {
+      en: 'Play before boss phases for multi-round stabilization.',
+      'zh-CN': '在 Boss 阶段前打出以获取多轮稳定效果。',
+      ja: 'Boss フェーズ前にプレイして複数ラウンドの安定化を得よう。'
+    },
+    cost: 6,
+    deltas: { institutionalTrust: 0.02, socialFragmentation: -0.02, economicStress: -0.02 },
+    sustained: 3
   }
 ];
 

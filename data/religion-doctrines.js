@@ -29,6 +29,7 @@ export const RELIGION_DOCTRINES = [
       tribunalCapacity: 0.48,
       dueProcess: 0.81
     },
+    passive: { signal: 'mediaPolarization', effect: -0.012, label: { en: 'Mindful Calm', 'zh-CN': '正念沉静', ja: '正念の静寂' } },
     regionalAffinity: {
       east_asia: 0.95,
       south_asia: 0.71,
@@ -65,6 +66,7 @@ export const RELIGION_DOCTRINES = [
       tribunalCapacity: 0.63,
       dueProcess: 0.58
     },
+    passive: { signal: 'socialFragmentation', effect: -0.01, label: { en: 'Festival Bond', 'zh-CN': '节庆纽带', ja: '祭典の絆' } },
     regionalAffinity: {
       east_asia: 0.24,
       south_asia: 0.98,
@@ -101,6 +103,7 @@ export const RELIGION_DOCTRINES = [
       tribunalCapacity: 0.35,
       dueProcess: 0.76
     },
+    passive: { signal: 'meaningSearch', effect: 0.012, label: { en: 'Way of Nature', 'zh-CN': '道法自然', ja: '道の導き' } },
     regionalAffinity: {
       east_asia: 0.92,
       south_asia: 0.19,
@@ -137,6 +140,7 @@ export const RELIGION_DOCTRINES = [
       tribunalCapacity: 0.82,
       dueProcess: 0.52
     },
+    passive: { signal: 'identityPolitics', effect: -0.01, label: { en: 'Ummah Solidarity', 'zh-CN': '乌玛团结', ja: 'ウンマの連帯' } },
     regionalAffinity: {
       east_asia: 0.39,
       south_asia: 0.67,
@@ -173,6 +177,7 @@ export const RELIGION_DOCTRINES = [
       tribunalCapacity: 0.69,
       dueProcess: 0.66
     },
+    passive: { signal: 'digitalization', effect: 0.012, label: { en: 'Digital Mission', 'zh-CN': '数字布道', ja: 'デジタル布教' } },
     regionalAffinity: {
       east_asia: 0.43,
       south_asia: 0.32,
@@ -209,6 +214,7 @@ export const RELIGION_DOCTRINES = [
       tribunalCapacity: 0.21,
       dueProcess: 0.85
     },
+    passive: { signal: 'youthPressure', effect: -0.012, label: { en: 'Viral Meme Wave', 'zh-CN': '梗潮传播', ja: 'ミーム・ウェーブ' } },
     regionalAffinity: {
       east_asia: 0.41,
       south_asia: 0.33,
@@ -245,6 +251,7 @@ export const RELIGION_DOCTRINES = [
       tribunalCapacity: 0.88,
       dueProcess: 0.62
     },
+    passive: { signal: 'institutionalTrust', effect: 0.012, label: { en: 'Parish Network', 'zh-CN': '教区网络', ja: '教区ネットワーク' } },
     regionalAffinity: {
       east_asia: 0.32,
       south_asia: 0.26,
@@ -281,6 +288,7 @@ export const RELIGION_DOCTRINES = [
       tribunalCapacity: 0.67,
       dueProcess: 0.57
     },
+    passive: { signal: 'stateRegulation', effect: -0.01, label: { en: 'Shrine Harmony', 'zh-CN': '神社和谐', ja: '神社の調和' } },
     regionalAffinity: {
       east_asia: 0.99,
       south_asia: 0.12,
@@ -318,6 +326,7 @@ export const RELIGION_DOCTRINES = [
       tribunalCapacity: 0.05,
       dueProcess: 0.98
     },
+    passive: { signal: 'secularization', effect: 0.015, label: { en: 'Rational Tide', 'zh-CN': '理性潮流', ja: '理性の潮流' } },
     regionalAffinity: {
       east_asia: 0.72,
       south_asia: 0.28,

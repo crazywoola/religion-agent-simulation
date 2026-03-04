@@ -789,22 +789,44 @@ function buildDeck(seedBase) {
   };
 }
 
+function buildSeedGhostRun() {
+  const ids = ['buddhism','hinduism','taoism','islam','protestant','pastafarianism','catholicism','shinto','secular'];
+  const base = 10000;
+  const drifts = {
+    buddhism: [0,-20,-35,-50,-40,-55,-70,-60,-80,-90,-75,-100,-85,-110,-95,-120],
+    hinduism: [0,15,10,-5,20,5,-10,10,25,30,15,35,20,40,25,45],
+    taoism: [0,-30,-55,-70,-60,-80,-95,-85,-105,-120,-100,-130,-110,-140,-115,-150],
+    islam: [0,40,65,80,95,110,120,135,150,160,175,185,200,210,220,235],
+    protestant: [0,25,40,55,45,60,70,85,75,90,100,110,95,115,105,120],
+    pastafarianism: [0,-45,-70,-100,-80,-110,-130,-120,-150,-160,-140,-170,-155,-180,-165,-190],
+    catholicism: [0,30,50,70,55,75,90,80,100,110,90,120,105,130,110,140],
+    shinto: [0,-25,-45,-60,-50,-65,-80,-70,-90,-100,-85,-115,-95,-120,-100,-130],
+    secular: [0,10,40,80,15,60,105,25,75,120,20,45,95,55,95,50]
+  };
+  const byReligion = {};
+  for (const id of ids) {
+    const d = drifts[id] || [];
+    byReligion[id] = d.map((v) => base + v);
+  }
+  return { round: 15, scenario: 'balanced', capturedAt: '2026-01-01T00:00:00Z', milestones: [], betting: { total: 0, won: 0, streak: 0 }, byReligion, isSeed: true };
+}
+
 function loadGhostRunData() {
   if (typeof localStorage === 'undefined') {
-    return null;
+    return buildSeedGhostRun();
   }
   try {
     const raw = localStorage.getItem(GHOST_STORAGE_KEY);
     if (!raw) {
-      return null;
+      return buildSeedGhostRun();
     }
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== 'object' || !parsed.byReligion) {
-      return null;
+      return buildSeedGhostRun();
     }
     return parsed;
   } catch (_err) {
-    return null;
+    return buildSeedGhostRun();
   }
 }
 
@@ -1017,6 +1039,27 @@ function renderHistoryChart(state) {
     ctx.setLineDash([]);
   }
 
+  // Draw event markers as vertical lines on the timeline
+  if (Array.isArray(state.eventHistory)) {
+    const currentRound = Number(state.round || 0);
+    const startRound = Math.max(0, currentRound - maxLen);
+    ctx.save();
+    ctx.globalAlpha = 0.22;
+    ctx.lineWidth = 1;
+    for (const ev of state.eventHistory) {
+      const evRound = Number(ev.round || 0);
+      if (evRound < startRound) continue;
+      const idx = evRound - startRound;
+      const x = pad.l + (idx / Math.max(maxLen - 1, 1)) * plotW;
+      ctx.strokeStyle = ev.id === 'global_crisis' ? '#b3223f' : '#6366f1';
+      ctx.beginPath();
+      ctx.moveTo(x, pad.t);
+      ctx.lineTo(x, pad.t + plotH);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
   // Draw each religion's line
   for (let ri = 0; ri < state.religions.length; ri++) {
     const religion = state.religions[ri];
@@ -1043,6 +1086,40 @@ function renderHistoryChart(state) {
     ctx.fill();
   }
   ctx.globalAlpha = 1;
+
+  if (!historyChartEl._tooltipBound) {
+    historyChartEl._tooltipBound = true;
+    const tooltip = document.createElement('div');
+    tooltip.className = 'chart-tooltip';
+    tooltip.hidden = true;
+    (historyChartEl.parentElement || document.body).appendChild(tooltip);
+
+    historyChartEl.addEventListener('mousemove', (e) => {
+      const rect = historyChartEl.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const chartW = rect.width;
+      const progress = (mx - 6) / (chartW - 12);
+      if (progress < 0 || progress > 1 || !liveState?.religions) {
+        tooltip.hidden = true;
+        return;
+      }
+      const hists = liveState.religions.map((r) => (r.history || []).slice(-40));
+      const len = Math.max(...hists.map((h) => h.length));
+      const idx = Math.min(len - 1, Math.max(0, Math.round(progress * (len - 1))));
+      const round = Math.max(0, (liveState.round || 0) - len + 1 + idx);
+      const lines = liveState.religions
+        .map((r, ri) => {
+          const val = hists[ri][idx];
+          return val !== undefined ? `<span style="color:${r.color}">${i18n.religionName(r.id, r.name)}: ${i18n.number(val)}</span>` : '';
+        })
+        .filter(Boolean);
+      tooltip.innerHTML = `<strong>R${round}</strong><br/>${lines.join('<br/>')}`;
+      tooltip.hidden = false;
+      tooltip.style.left = `${Math.min(mx + 8, chartW - 130)}px`;
+      tooltip.style.top = '-4px';
+    });
+    historyChartEl.addEventListener('mouseleave', () => { tooltip.hidden = true; });
+  }
 }
 
 // ─── Racing Bar Chart ─────────────────────────────────────────────
@@ -1122,6 +1199,42 @@ function renderEventFeed(state) {
       </article>`;
     })
     .join('');
+}
+
+function renderJudgmentFeed(state) {
+  const feedEl = document.getElementById('judgmentFeed');
+  if (!feedEl) return;
+  const records = Array.isArray(state.judgmentRecords) ? state.judgmentRecords.slice(-12).reverse() : [];
+  if (!records.length) {
+    feedEl.innerHTML = `<div class="muted" style="font-size:0.8rem;padding:6px">${
+      i18n.locale === 'zh-CN' ? '暂无审判记录' : i18n.locale === 'ja' ? '審判記録なし' : 'No judgment records yet'
+    }</div>`;
+    return;
+  }
+  const religionById = new Map((state.religions || []).map((r) => [r.id, r]));
+  feedEl.innerHTML = records.map((rec) => {
+    const fromR = religionById.get(rec.religionId);
+    const toR = religionById.get(rec.targetId);
+    const fromName = fromR ? i18n.religionName(fromR.id, fromR.name) : (rec.religionName || rec.religionId);
+    const toName = toR ? i18n.religionName(toR.id, toR.name) : (rec.targetName || rec.targetId);
+    const fromColor = fromR?.color || '#888';
+    const reason = rec.reasonDetail?.reason || '';
+    const factors = (rec.reasonDetail?.factors || []).map((f) => f.label || f.key).join(', ');
+    return `<article class="judgment-item">
+      <div class="judgment-header">
+        <span class="judgment-badge" style="background:${fromColor}"></span>
+        <strong>${escapeHtml(fromName)}</strong>
+        <span class="muted">&rarr;</span>
+        <strong>${escapeHtml(toName)}</strong>
+        <span class="judgment-round muted">R${rec.round}</span>
+      </div>
+      <div class="judgment-detail muted">
+        ${i18n.locale === 'zh-CN' ? '拦截' : i18n.locale === 'ja' ? '遮断' : 'Blocked'}: ${i18n.number(rec.blocked)}
+        ${reason ? ` · ${escapeHtml(reason)}` : ''}
+        ${factors ? `<br/>${escapeHtml(factors)}` : ''}
+      </div>
+    </article>`;
+  }).join('');
 }
 
 function computeGhostGap(state) {
@@ -1371,6 +1484,7 @@ function initializeRunSystems() {
   gameRun.deckHand = deckPack.hand;
   gameRun.deckDiscard = deckPack.discard;
   gameRun.cardsUsed = 0;
+  gameRun.sustainedEffects = [];
   gameRun.uiLogs = [];
   gameRun.intelBriefs = [];
   selectedIntelBriefId = '';
@@ -1930,13 +2044,28 @@ async function playDeckCard(cardId) {
   }
 
   intelPoints -= card.cost;
+  let effectiveDeltas = { ...card.deltas };
+  let conditionMet = false;
+  if (card.condition && liveState?.socialSignals) {
+    const sigVal = Number(liveState.socialSignals[card.condition.signal] || 0);
+    conditionMet = card.condition.compare === 'gt' ? sigVal > card.condition.threshold : sigVal < card.condition.threshold;
+    if (conditionMet) {
+      for (const k of Object.keys(effectiveDeltas)) {
+        effectiveDeltas[k] *= (card.condition.multiplier || 2);
+      }
+    }
+  }
+  if (card.sustained && card.sustained > 1) {
+    if (!Array.isArray(gameRun.sustainedEffects)) gameRun.sustainedEffects = [];
+    gameRun.sustainedEffects.push({ deltas: { ...card.deltas }, roundsLeft: card.sustained - 1, cardId: card.id });
+  }
   const done = await applySignalDeltas(
-    card.deltas,
+    effectiveDeltas,
     i18n.locale === 'zh-CN'
-      ? `已打出策略卡：${localizedText(card.title, card.id)}`
+      ? `已打出策略卡：${localizedText(card.title, card.id)}${conditionMet ? '（条件触发！）' : ''}${card.sustained ? `（持续 ${card.sustained} 轮）` : ''}`
       : i18n.locale === 'ja'
-        ? `戦略カード使用：${localizedText(card.title, card.id)}`
-        : `Card played: ${localizedText(card.title, card.id)}`
+        ? `戦略カード使用：${localizedText(card.title, card.id)}${conditionMet ? '（条件発動！）' : ''}${card.sustained ? `（${card.sustained}ラウンド持続）` : ''}`
+        : `Card played: ${localizedText(card.title, card.id)}${conditionMet ? ' (condition triggered!)' : ''}${card.sustained ? ` (sustained ${card.sustained} rounds)` : ''}`
   );
   if (!done) {
     intelPoints += card.cost;
@@ -2529,6 +2658,14 @@ function renderBossCrisisPanel(state) {
       }
       <br />${bossRuleDescription(Number(boss.phase || 1))}
     </div>
+    ${boss.active && boss.phaseProgress?.conditions
+      ? `<div class="boss-crisis-progress">${boss.phaseProgress.conditions.map((c) => {
+          const icon = c.met ? '&#9679;' : '&#9675;';
+          const label = i18n.t(`signal.${c.key}`) !== `signal.${c.key}` ? i18n.t(`signal.${c.key}`) : c.key;
+          return `<span class="boss-condition ${c.met ? 'met' : 'unmet'}" title="${c.key} ${c.target}">${icon} ${label}: ${c.current} ${c.target}</span>`;
+        }).join('')}</div>`
+      : ''
+    }
     ${
       latestLog
         ? `<div class="boss-crisis-log">${
@@ -4084,7 +4221,13 @@ function renderMapHud(state) {
       }</div>
     </article>
     <article class="hud-chip">
-      <div class="hud-label">${i18n.locale === 'zh-CN' ? '对比上局' : i18n.locale === 'ja' ? '前回比較' : 'Vs Ghost'}</div>
+      <div class="hud-label" title="${
+        i18n.locale === 'zh-CN'
+          ? 'Ghost 是你上一局的影子数据。对比当前第一宗教信众数与上局同时刻的差距。'
+          : i18n.locale === 'ja'
+            ? 'ゴーストは前回のランの影。トップ宗教の信徒数を前回同ラウンドと比較します。'
+            : 'Ghost is a shadow of your previous run. Compares your top religion\'s followers to the same point in your last run.'
+      }">${i18n.locale === 'zh-CN' ? '对比上局' : i18n.locale === 'ja' ? '前回比較' : 'Vs Ghost'}</div>
       <div class="hud-value">${
         ghostGap === null
           ? i18n.t('common.none')
@@ -4185,6 +4328,15 @@ function renderAll(state) {
   }
 
   if (state.round > lastProcessedRound) {
+    intelPoints += 1;
+    if (Array.isArray(gameRun.sustainedEffects)) {
+      const pending = gameRun.sustainedEffects.filter((e) => e.roundsLeft > 0);
+      for (const effect of pending) {
+        applySignalDeltas(effect.deltas, `Sustained card effect (${effect.cardId})`);
+        effect.roundsLeft -= 1;
+      }
+      gameRun.sustainedEffects = gameRun.sustainedEffects.filter((e) => e.roundsLeft > 0);
+    }
     updateCorridorCombos(state);
     queueDecisionFromState(state);
     spawnNarrativeDecision(state);
@@ -4240,6 +4392,7 @@ function renderAll(state) {
   renderHistoryChart(state);
   renderRaceChart(state);
   renderEventFeed(state);
+  renderJudgmentFeed(state);
   renderSignalSliders(state);
   renderGameplayHud();
   renderEventDecisionCard();

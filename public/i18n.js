@@ -50,7 +50,8 @@ const DICTIONARY = {
       gameLab: 'Game Lab',
       subtabAssimilation: 'Assimilation',
       subtabRegions: 'Regions',
-      subtabEvents: 'Events'
+      subtabEvents: 'Events',
+      subtabJudgment: 'Judgment'
     },
     modal: {
       traits: 'Trait Radar',
@@ -245,7 +246,8 @@ const DICTIONARY = {
       gameLab: '游戏实验室',
       subtabAssimilation: '同化链路',
       subtabRegions: '区域格局',
-      subtabEvents: '突发事件'
+      subtabEvents: '突发事件',
+      subtabJudgment: '宗教审判'
     },
     modal: {
       traits: '特质雷达',
@@ -440,7 +442,8 @@ const DICTIONARY = {
       gameLab: 'ゲームラボ',
       subtabAssimilation: '同化',
       subtabRegions: '地域',
-      subtabEvents: 'イベント'
+      subtabEvents: 'イベント',
+      subtabJudgment: '宗教審判'
     },
     modal: {
       traits: '特性レーダー',

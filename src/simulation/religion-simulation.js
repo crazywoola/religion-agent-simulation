@@ -71,6 +71,7 @@ class ReligionSimulation {
         metrics,
         traits,
         governance: normalizeGovernance(seed.governance, governanceFallback),
+        passive: seed.passive || null,
         regionalAffinity: seed.regionalAffinity
       };
     });
@@ -290,6 +291,39 @@ class ReligionSimulation {
     };
   }
 
+  bossPhaseProgress(state, phase) {
+    const signals = state.socialSignals || {};
+    const regions = state.regions || [];
+    const stableRegions = regions.filter((r) => Number(r.competitionIndex || 0) < 0.68).length;
+    const contestedRegions = regions.filter((r) => Number(r.competitionIndex || 0) > 0.76).length;
+    const metrics = state.roundMetrics || {};
+
+    if (phase === 1) {
+      return {
+        conditions: [
+          { key: 'socialFragmentation', target: '< 0.74', current: +(signals.socialFragmentation || 0).toFixed(3), met: signals.socialFragmentation < 0.74 },
+          { key: 'institutionalTrust', target: '> 0.36', current: +(signals.institutionalTrust || 0).toFixed(3), met: signals.institutionalTrust > 0.36 }
+        ]
+      };
+    }
+    if (phase === 2) {
+      return {
+        conditions: [
+          { key: 'stableRegions', target: '>= 4', current: stableRegions, met: stableRegions >= 4 },
+          { key: 'contestedRegions', target: '<= 2', current: contestedRegions, met: contestedRegions <= 2 },
+          { key: 'mediaPolarization', target: '< 0.80', current: +(signals.mediaPolarization || 0).toFixed(3), met: signals.mediaPolarization < 0.8 }
+        ]
+      };
+    }
+    return {
+      conditions: [
+        { key: 'judgmentRatio', target: '< 0.50', current: +(metrics.judgmentRatio || 0).toFixed(3), met: Number(metrics.judgmentRatio || 0) < 0.5 },
+        { key: 'legalPluralism', target: '> 0.44', current: +(signals.legalPluralism || 0).toFixed(3), met: signals.legalPluralism > 0.44 },
+        { key: 'socialFragmentation', target: '< 0.78', current: +(signals.socialFragmentation || 0).toFixed(3), met: signals.socialFragmentation < 0.78 }
+      ]
+    };
+  }
+
   triggerBossCrisis(state) {
     const boss = this.ensureBossState(state);
     boss.active = true;
@@ -382,8 +416,8 @@ class ReligionSimulation {
   applyEvents(state) {
     const cfg = this.config.events;
     this._decayActiveEvents(state);
+    const fired = [];
     if (cfg?.enabled && state.round % cfg.checkEveryNRounds === 0) {
-      const fired = [];
       for (const eventDef of cfg.pool) {
         if (fired.length >= cfg.maxPerCheck) break;
         if (Math.random() < eventDef.prob) {
@@ -408,7 +442,55 @@ class ReligionSimulation {
       }
     }
 
+    this._applyEventReligionCoupling(state, fired);
     this._applyActiveEventShocks(state);
+  }
+
+  _applyEventReligionCoupling(state, firedEvents) {
+    const EVENT_TRAIT_MAP = {
+      digital_revival:  { trait: 'digitalMission', boost: 0.06 },
+      youth_awakening:  { trait: 'youthAppeal',    boost: 0.05 },
+      religious_scandal: { trait: 'communityService', boost: 0.04 },
+      climate_anxiety:  { trait: 'communityService', boost: 0.04 },
+      ai_doctrine_leak: { trait: 'digitalMission', boost: 0.04 },
+      algorithmic_echo_burst: { trait: 'digitalMission', boost: 0.03 },
+      interfaith_education_reform: { trait: 'intellectualDialog', boost: 0.05 },
+      grassroots_relief_network: { trait: 'communityService', boost: 0.05 },
+      polarization_spike: { trait: 'identityBond', boost: 0.04 }
+    };
+    for (const ev of firedEvents) {
+      const mapping = EVENT_TRAIT_MAP[ev.id];
+      if (!mapping) continue;
+      for (const agent of state.agents) {
+        const traitValue = clamp(Number(agent.traits?.[mapping.trait] || 0), 0, 1);
+        if (traitValue > 0.5) {
+          const bonus = mapping.boost * (traitValue - 0.5) * 2;
+          if (!agent.territoryBonus) agent.territoryBonus = {};
+          agent.territoryBonus.outreachBoost = clamp(
+            Number(agent.territoryBonus.outreachBoost || 0) + bonus, 0, 0.15
+          );
+        }
+      }
+    }
+  }
+
+  applyReligionPassives(state) {
+    const sorted = [...state.agents].sort((a, b) => b.followers - a.followers);
+    const dominantId = sorted[0]?.id;
+    for (const agent of state.agents) {
+      if (!agent.passive || !agent.passive.signal) continue;
+      const share = agent.followers / Math.max(1, this.totalFollowers);
+      if (share < 0.08) continue;
+      const strength = agent.id === dominantId ? 1.5 : 1;
+      const key = agent.passive.signal;
+      if (key in state.socialSignals) {
+        state.socialSignals[key] = clamp(
+          Number(state.socialSignals[key] || 0.5) + agent.passive.effect * strength * share * 8,
+          0.1,
+          0.98
+        );
+      }
+    }
   }
 
   _applyActiveEventShocks(state) {
@@ -783,9 +865,13 @@ class ReligionSimulation {
       strategy.defensiveFocus * churn.defensiveFocus +
       strategy.fatigue * churn.fatigue;
 
+    // Underdog bonus: religions below 15% share churn less, scaling with how far below they are
+    const shareRatio = agent.followers / Math.max(1, this.totalFollowers);
+    const underdogChurnReduction = shareRatio < 0.15 ? clamp((0.15 - shareRatio) * 1.8, 0, 0.25) : 0;
+
     // exitBarrier reduces follower churn rate (higher barrier = harder to leave = less churn)
     const barrierReduction =
-      1 - clamp(Number(agent.exitBarrier || 0), 0, 0.9) * (this.config.exitBarrierWeight || 0.68);
+      1 - clamp(Number(agent.exitBarrier || 0), 0, 0.9) * (this.config.exitBarrierWeight || 0.68) - underdogChurnReduction;
     const inertiaBrake = 1 - clamp(Number(strategy.inertia || 0), 0.1, 0.94) * 0.18;
     const cohesionBrake = 1 - clamp(Number(strategy.cohesion || 0), 0.1, 0.99) * 0.22;
     const governance = agent.governance || normalizeGovernance();
@@ -939,6 +1025,12 @@ class ReligionSimulation {
       1
     );
 
+    // Underdog bonus: religions below 12% share get a pull score boost
+    const sourceShare = source.followers / Math.max(1, this.totalFollowers);
+    const underdogPullBoost = sourceShare < 0.12
+      ? clamp(1 + (0.12 - sourceShare) * 3.5, 1, 1.35)
+      : 1;
+
     return (
       outreachStrength *
       susceptibility *
@@ -957,6 +1049,7 @@ class ReligionSimulation {
       mobilityFactor *
       territoryAdvantage *
       targetTerritoryDefense *
+      underdogPullBoost *
       randomIn(0.93, 1.07)
     );
   }
@@ -1787,6 +1880,7 @@ class ReligionSimulation {
     // Random event system
     this.applyEvents(state);
     this.adaptAgentStrategies(state.agents, state.socialSignals);
+    this.applyReligionPassives(state);
     for (const agent of state.agents) {
       agent.strategyFocus = this.strategyFocusSummary(agent.strategy);
     }
@@ -1953,6 +2047,7 @@ class ReligionSimulation {
         metrics: agent.metrics,
         traits: agent.traits,
         governance: agent.governance,
+        passive: agent.passive || null,
         territoryBonus: agent.territoryBonus || {},
         dominantRegionId: agent.dominantRegionId || null,
         lastAction: agent.lastAction,
@@ -1967,7 +2062,14 @@ class ReligionSimulation {
       logs: state.logs.slice(-160),
       activeEvents: state.activeEvents || [],
       eventHistory: (state.eventHistory || []).slice(-40),
-      bossCrisis: state.bossCrisis || null
+      bossCrisis: state.bossCrisis
+        ? {
+            ...state.bossCrisis,
+            phaseProgress: state.bossCrisis.active
+              ? this.bossPhaseProgress(state, state.bossCrisis.phase)
+              : null
+          }
+        : null
     };
   }
 }
