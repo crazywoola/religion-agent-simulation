@@ -2377,6 +2377,67 @@ select:focus {
   text-align: center;
 }
 
+/* ── Deck preset selection ────────────────────── */
+.deck-preset-section {
+  margin-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 16px;
+}
+
+.deck-preset-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #e2e8f0;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.deck-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.deck-preset-card {
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 12px 10px;
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.deck-preset-card:hover {
+  border-color: rgba(251, 191, 36, 0.5);
+  background: rgba(251, 191, 36, 0.08);
+  transform: translateY(-1px);
+}
+
+.deck-preset-icon { font-size: 1.8rem; }
+
+.deck-preset-name {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.deck-preset-desc {
+  font-size: 0.62rem;
+  color: #94a3b8;
+  line-height: 1.35;
+}
+
+.deck-preset-count {
+  font-size: 0.58rem;
+  color: #fbbf24;
+  margin-top: 2px;
+}
+
 /* ── Guide book modal ─────────────────────────── */
 .guide-modal-overlay {
   position: fixed;

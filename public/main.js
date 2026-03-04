@@ -11,6 +11,7 @@ import {
 } from '/data/game-lab-config.js';
 import { NARRATIVE_CHAIN_LIBRARY, DECISION_OPTION_LIBRARY } from '/data/narrative-chains.js';
 import { CHARACTER_ROLE_LIBRARY, RELIGION_CHARACTER_POOL } from '/data/character-roles.js';
+import { STRATEGY_DECK_PRESETS } from '/data/strategy-decks.js';
 
 const startBtn = document.getElementById('startBtn');
 const stopBtn = document.getElementById('stopBtn');
@@ -849,6 +850,9 @@ function showCharacterSelect() {
     const grid = document.getElementById('characterSelectGrid');
     const titleEl = document.getElementById('characterSelectTitle');
     const subtitleEl = document.getElementById('characterSelectSubtitle');
+    const deckSection = document.getElementById('deckPresetSection');
+    const deckGrid = document.getElementById('deckPresetGrid');
+    const deckTitle = document.getElementById('deckPresetTitle');
     if (!modal || !grid) { resolve(null); return; }
 
     titleEl.textContent = i18n.locale === 'zh-CN' ? '选择你的角色' : i18n.locale === 'ja' ? 'キャラクター選択' : 'Choose Your Character';
@@ -859,6 +863,7 @@ function showCharacterSelect() {
         : 'Each character has a unique religion, role, starter deck, and win objective.';
 
     characterCandidates = generateCharacterCandidates(5);
+    if (deckSection) deckSection.hidden = true;
 
     grid.innerHTML = characterCandidates.map((c, idx) => {
       const roleLabel = localizedText(c.role.label, c.role.id);
@@ -880,17 +885,62 @@ function showCharacterSelect() {
     modal.hidden = false;
     syncBodyLock();
 
-    const handler = (e) => {
+    const charHandler = (e) => {
       const btn = e.target.closest('[data-char-idx]');
       if (!btn) return;
       const idx = Number(btn.dataset.charIdx);
       selectedCharacter = characterCandidates[idx] || null;
-      modal.hidden = true;
-      syncBodyLock();
-      grid.removeEventListener('click', handler);
-      resolve(selectedCharacter);
+      grid.removeEventListener('click', charHandler);
+
+      if (deckSection && deckGrid && deckTitle) {
+        deckTitle.textContent = i18n.locale === 'zh-CN' ? '选择策略卡组（或随机）' : i18n.locale === 'ja' ? '戦略デッキを選択（またはランダム）' : 'Choose Strategy Deck (or Random)';
+        deckSection.hidden = false;
+
+        const randomLabel = i18n.locale === 'zh-CN' ? '随机抽取 36 张' : i18n.locale === 'ja' ? 'ランダム36枚' : 'Random 36 Cards';
+        const randomDesc = i18n.locale === 'zh-CN' ? '从 108 张卡池中随机抽取' : i18n.locale === 'ja' ? '108枚のカードプールからランダム' : 'Randomly draw from the 108-card pool';
+        deckGrid.innerHTML = `
+          <button class="deck-preset-card" type="button" data-deck-id="random">
+            <div class="deck-preset-icon">🎲</div>
+            <div class="deck-preset-name">${randomLabel}</div>
+            <div class="deck-preset-desc">${randomDesc}</div>
+          </button>
+        ` + STRATEGY_DECK_PRESETS.map((d) => {
+          const name = localizedText(d.label, d.id);
+          const desc = localizedText(d.description, '');
+          return `
+            <button class="deck-preset-card" type="button" data-deck-id="${d.id}">
+              <div class="deck-preset-icon">${d.icon}</div>
+              <div class="deck-preset-name">${name}</div>
+              <div class="deck-preset-desc">${desc}</div>
+              <div class="deck-preset-count">${d.cards.length} cards · ${d.difficulty}</div>
+            </button>
+          `;
+        }).join('');
+
+        const deckHandler = (e2) => {
+          const dbtn = e2.target.closest('[data-deck-id]');
+          if (!dbtn) return;
+          const deckId = dbtn.dataset.deckId;
+          if (deckId !== 'random') {
+            const preset = STRATEGY_DECK_PRESETS.find((p) => p.id === deckId);
+            if (preset) {
+              selectedCharacter.deckPreset = preset;
+            }
+          }
+          deckGrid.removeEventListener('click', deckHandler);
+          modal.hidden = true;
+          syncBodyLock();
+          resolve(selectedCharacter);
+        };
+        deckGrid.addEventListener('click', deckHandler);
+        deckSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        modal.hidden = true;
+        syncBodyLock();
+        resolve(selectedCharacter);
+      }
     };
-    grid.addEventListener('click', handler);
+    grid.addEventListener('click', charHandler);
   });
 }
 
@@ -1630,7 +1680,8 @@ function initializeRunSystems() {
     progress: 0,
     valueText: '0'
   }));
-  const charCards = gameRun.character?.role?.preferredCards || null;
+  const presetCards = gameRun.character?.deckPreset?.cards || null;
+  const charCards = presetCards || gameRun.character?.role?.preferredCards || null;
   const deckPack = buildDeck(seedBase + 41, charCards);
   const secretAgenda = chooseSecretAgenda(seedBase + 79);
   gameRun.objectives = selectedObjectives;
