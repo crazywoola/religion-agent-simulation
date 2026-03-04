@@ -2517,6 +2517,23 @@ select:focus {
   margin-top: 2px;
 }
 
+.deck-role-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 5px;
+}
+
+.deck-role-chip {
+  font-size: 0.55rem;
+  background: rgba(99, 102, 241, 0.18);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  border-radius: 4px;
+  padding: 1px 4px;
+  color: #a5b4fc;
+  white-space: nowrap;
+}
+
 /* ── Guide book modal ─────────────────────────── */
 .guide-modal-overlay {
   position: fixed;
@@ -2868,6 +2885,21 @@ select:focus {
 .guide-card-chip-more {
   background: rgba(220, 210, 190, 0.8);
   color: #6a5838;
+}
+
+.guide-card-chip-role {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.3);
+  color: #a5b4fc;
+}
+
+.guide-strategy-card-roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 5px;
+  padding-top: 5px;
+  border-top: 1px solid rgba(255,255,255,0.07);
 }
 
 .guide-card-pagination {

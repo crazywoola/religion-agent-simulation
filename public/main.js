@@ -620,6 +620,10 @@ function renderGuideSection(section) {
     const cardsHtml = pagePresets.map((preset) => {
       const name = localizedText(preset.label, preset.id);
       const desc = localizedText(preset.description, '');
+      const roleChipsHtml = (preset.recommendedFor || []).map(rid => {
+        const r = CHARACTER_ROLE_LIBRARY.find(x => x.id === rid);
+        return r ? `<span class="guide-card-chip guide-card-chip-role">${r.icon} ${escapeHtml(localizedText(r.label, r.id))}</span>` : '';
+      }).join('');
       return `<div class="guide-strategy-card">
         <div class="guide-strategy-card-head">
           <span class="guide-strategy-card-icon">${preset.icon || '🃏'}</span>
@@ -628,6 +632,7 @@ function renderGuideSection(section) {
         </div>
         <div class="guide-strategy-card-desc">${escapeHtml(desc)}</div>
         <div class="guide-strategy-card-cards">${(preset.cards || []).slice(0, 6).map((c) => `<span class="guide-card-chip">${escapeHtml(c.replace(/_/g, ' '))}</span>`).join('')}${(preset.cards || []).length > 6 ? `<span class="guide-card-chip guide-card-chip-more">+${preset.cards.length - 6}</span>` : ''}</div>
+        ${roleChipsHtml ? `<div class="guide-strategy-card-roles">${roleChipsHtml}</div>` : ''}
       </div>`;
     }).join('');
     const prevDisabled = clampedPage <= 0 ? 'disabled' : '';
@@ -1000,12 +1005,17 @@ function showCharacterSelect() {
         ` + STRATEGY_DECK_PRESETS.map((d) => {
           const name = localizedText(d.label, d.id);
           const desc = localizedText(d.description, '');
+          const roleChips = (d.recommendedFor || []).map(rid => {
+            const r = CHARACTER_ROLE_LIBRARY.find(x => x.id === rid);
+            return r ? `<span class="deck-role-chip">${r.icon} ${localizedText(r.label, r.id)}</span>` : '';
+          }).join('');
           return `
             <button class="deck-preset-card" type="button" data-deck-id="${d.id}">
               <div class="deck-preset-icon">${d.icon}</div>
               <div class="deck-preset-name">${name}</div>
               <div class="deck-preset-desc">${desc}</div>
               <div class="deck-preset-count">${d.cards.length} cards · ${d.difficulty}</div>
+              ${roleChips ? `<div class="deck-role-chips">${roleChips}</div>` : ''}
             </button>
           `;
         }).join('');

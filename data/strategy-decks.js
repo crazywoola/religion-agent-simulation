@@ -12,6 +12,7 @@ export const STRATEGY_DECK_PRESETS = [
     },
     icon: '🛡️',
     difficulty: 'normal',
+    recommendedFor: ['guardian', 'warden', 'inquisitor', 'architect', 'shepherd', 'inquisitor_minor'],
     cards: [
       'trust_grant', 'calm_media', 'ethics_audit', 'narrative_shield', 'community_watch',
       'trust_fund', 'peace_accord', 'governance_reform', 'healing_circle', 'elder_council',
@@ -28,6 +29,7 @@ export const STRATEGY_DECK_PRESETS = [
     },
     icon: '⚡',
     difficulty: 'hard',
+    recommendedFor: ['warlord', 'zealot', 'evangelist', 'commander', 'pioneer', 'missionary'],
     cards: [
       'youth_festival', 'viral_campaign', 'media_blitz', 'street_preaching', 'conversion_sprint',
       'tent_revival', 'outreach_surge', 'diaspora_rally', 'campus_mission', 'digital_crusade',
@@ -44,6 +46,7 @@ export const STRATEGY_DECK_PRESETS = [
     },
     icon: '🕊️',
     difficulty: 'normal',
+    recommendedFor: ['diplomat', 'diplomat_senior', 'peacemaker', 'envoy', 'healer_king', 'confessor'],
     cards: [
       'bridge_dialogue', 'civic_mediation_lab', 'interfaith_council', 'peace_accord', 'ceasefire_pact',
       'conflict_resolution', 'mediation_summit', 'amnesty_program', 'cultural_festival', 'prayer_vigil',
@@ -60,6 +63,7 @@ export const STRATEGY_DECK_PRESETS = [
     },
     icon: '💻',
     difficulty: 'normal',
+    recommendedFor: ['technomancer', 'visionary', 'heretik', 'oracle_tech', 'evangelist'],
     cards: [
       'open_data_pulpit', 'podcast_network', 'viral_campaign', 'prayer_app', 'media_blitz',
       'campus_mission', 'digital_fast', 'digital_crusade', 'digital_empire', 'media_network',
@@ -76,6 +80,7 @@ export const STRATEGY_DECK_PRESETS = [
     },
     icon: '⚔️',
     difficulty: 'expert',
+    recommendedFor: ['warlord', 'templar', 'zealot', 'martyr', 'avenger', 'commander'],
     cards: [
       'holy_war', 'holy_alliance', 'martyrdom_narrative', 'schism_exploit', 'underground_network',
       'identity_surge', 'polarization_weapon', 'regime_change', 'diaspora_rally', 'tent_revival',
@@ -92,6 +97,7 @@ export const STRATEGY_DECK_PRESETS = [
     },
     icon: '🏥',
     difficulty: 'normal',
+    recommendedFor: ['healer', 'medic', 'merchant', 'saint', 'confessor', 'reformer'],
     cards: [
       'solidarity_surge', 'charity_blitz', 'economic_mission', 'food_bank', 'relief_network',
       'water_sharing', 'trust_fund', 'social_enterprise', 'grassroots_network', 'economic_network',
@@ -108,6 +114,7 @@ export const STRATEGY_DECK_PRESETS = [
     },
     icon: '🎓',
     difficulty: 'normal',
+    recommendedFor: ['scholar', 'architect', 'deacon', 'sage', 'healer_king', 'chronicler', 'scribe'],
     cards: [
       'bridge_dialogue', 'open_data_pulpit', 'ethics_audit', 'scholarship_fund', 'education_offensive',
       'faith_academy', 'interfaith_council', 'memorial_project', 'heritage_preservation', 'due_process_reform',
@@ -124,6 +131,7 @@ export const STRATEGY_DECK_PRESETS = [
     },
     icon: '🕵️',
     difficulty: 'hard',
+    recommendedFor: ['spy', 'oracle', 'strategist', 'inquisitor', 'rebel'],
     cards: [
       'counter_intelligence', 'sabotage', 'schism_exploit', 'underground_network', 'propaganda_wave',
       'silent_diplomacy', 'narrative_shield', 'digital_fast', 'regime_change', 'monitoring_mission',
@@ -140,6 +148,7 @@ export const STRATEGY_DECK_PRESETS = [
     },
     icon: '✨',
     difficulty: 'normal',
+    recommendedFor: ['mystic', 'monk', 'hermit', 'ascetic', 'pilgrim', 'curator'],
     cards: [
       'meaning_retreat', 'ritual_renewal', 'prayer_vigil', 'heritage_preservation', 'pilgrimage_route',
       'night_vigil', 'tent_revival', 'cultural_festival', 'anxiety_response', 'meaning_crisis',
@@ -156,6 +165,7 @@ export const STRATEGY_DECK_PRESETS = [
     },
     icon: '🔥',
     difficulty: 'normal',
+    recommendedFor: ['evangelist', 'bard', 'artist', 'rebel', 'populist', 'zealot'],
     cards: [
       'youth_festival', 'campus_mission', 'music_worship', 'prayer_app', 'interfaith_sport',
       'youth_dialogue', 'mentorship_program', 'education_offensive', 'viral_campaign', 'digital_crusade',
@@ -172,6 +182,7 @@ export const STRATEGY_DECK_PRESETS = [
     },
     icon: '⚖️',
     difficulty: 'normal',
+    recommendedFor: ['judge', 'diplomat', 'liberator', 'inquisitor', 'reformer', 'healer_king'],
     cards: [
       'legal_aid_caravan', 'due_process_reform', 'judicial_oversight', 'transparency_act', 'amnesty_program',
       'social_contract', 'pluralism_shield', 'regulation_relief', 'ethics_audit', 'sanctuary_city',
@@ -188,6 +199,7 @@ export const STRATEGY_DECK_PRESETS = [
     },
     icon: '🌊',
     difficulty: 'hard',
+    recommendedFor: ['pilgrim', 'nomad', 'missionary', 'pioneer', 'wanderer', 'envoy'],
     cards: [
       'migration_corridor', 'diaspora_rally', 'exile_network', 'outreach_surge', 'frontier_mission',
       'sanctuary_city', 'street_preaching', 'pilgrimage_route', 'migration_surge', 'conversion_sprint',
@@ -204,6 +216,7 @@ export const STRATEGY_DECK_PRESETS = [
     },
     icon: '🚨',
     difficulty: 'expert',
+    recommendedFor: ['alchemist', 'oracle', 'reformer', 'strategist', 'prophet', 'witch'],
     cards: [
       'crisis_pivot', 'solidarity_surge', 'trust_restoration', 'identity_bridge', 'regulation_relief',
       'anxiety_response', 'fragmentation_repair', 'youth_dialogue', 'pluralism_shield', 'digital_fast',
@@ -220,6 +233,7 @@ export const STRATEGY_DECK_PRESETS = [
     },
     icon: '🕰️',
     difficulty: 'hard',
+    recommendedFor: ['merchant', 'builder', 'architect', 'scholar', 'diplomat', 'strategist', 'elder'],
     cards: [
       'silent_diplomacy', 'grassroots_network', 'peace_process', 'mentorship_program', 'healing_circle',
       'governance_reform', 'cultural_exchange', 'monitoring_mission', 'scholarship_fund', 'revival_tour',
@@ -236,6 +250,7 @@ export const STRATEGY_DECK_PRESETS = [
     },
     icon: '📣',
     difficulty: 'hard',
+    recommendedFor: ['populist', 'zealot', 'martyr', 'bard', 'warlord', 'rebel'],
     cards: [
       'tent_revival', 'martyrdom_narrative', 'apocalypse_preaching', 'music_worship', 'prosperity_gospel',
       'holy_alliance', 'diaspora_rally', 'identity_surge', 'night_vigil', 'faith_tax',
@@ -252,6 +267,7 @@ export const STRATEGY_DECK_PRESETS = [
     },
     icon: '🎯',
     difficulty: 'normal',
+    recommendedFor: ['diplomat', 'reformer', 'sage', 'scholar', 'nomad', 'alchemist'],
     cards: [
       'bridge_dialogue', 'trust_grant', 'youth_festival', 'calm_media', 'migration_corridor',
       'crisis_pivot', 'solidarity_surge', 'silent_diplomacy', 'digital_fast', 'ethics_audit',
@@ -268,6 +284,7 @@ export const STRATEGY_DECK_PRESETS = [
     },
     icon: '🌿',
     difficulty: 'normal',
+    recommendedFor: ['mystic', 'artist', 'monk', 'hermit', 'healer', 'saint', 'matriarch'],
     cards: [
       'eco_stewardship', 'meaning_retreat', 'water_sharing', 'cultural_festival', 'community_watch',
       'ritual_renewal', 'healing_circle', 'grassroots_network', 'anxiety_response', 'solidarity_surge',
@@ -284,6 +301,7 @@ export const STRATEGY_DECK_PRESETS = [
     },
     icon: '👑',
     difficulty: 'expert',
+    recommendedFor: ['templar', 'warlord', 'inquisitor', 'commander', 'warden', 'zealot'],
     cards: [
       'faith_tax', 'holy_alliance', 'regime_change', 'underground_network', 'counter_secular',
       'identity_surge', 'holy_war', 'education_offensive', 'training_pipeline', 'media_network',
@@ -300,6 +318,7 @@ export const STRATEGY_DECK_PRESETS = [
     },
     icon: '❤️',
     difficulty: 'normal',
+    recommendedFor: ['healer', 'medic', 'saint', 'confessor', 'diplomat', 'peacemaker'],
     cards: [
       'food_bank', 'relief_network', 'water_sharing', 'sanctuary_city', 'amnesty_program',
       'healing_circle', 'emotional_release', 'deradicalization', 'memorial_project', 'conflict_resolution',
@@ -316,6 +335,7 @@ export const STRATEGY_DECK_PRESETS = [
     },
     icon: '🃏',
     difficulty: 'expert',
+    recommendedFor: ['rebel', 'heretik', 'alchemist', 'spy', 'nomad', 'avenger', 'witch'],
     cards: [
       'holy_war', 'propaganda_wave', 'sabotage', 'schism_exploit', 'apocalypse_preaching',
       'media_blitz', 'regime_change', 'resource_raid', 'polarization_weapon', 'prosperity_gospel',
