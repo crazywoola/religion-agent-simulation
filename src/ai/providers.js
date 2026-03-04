@@ -14,8 +14,8 @@ export const AI_PROVIDER_PRESETS = {
     defaultBaseUrl: 'https://api.moonshot.cn/v1',
     defaultModel: 'kimi-k2-turbo-preview',
     apiKeyEnvKeys: ['MOONSHOT_API_KEY', 'KIMI_API_KEY', 'AI_API_KEY'],
-    baseUrlEnvKeys: ['MOONSHOT_API_BASE', 'KIMI_API_BASE'],
-    modelEnvKeys: ['MOONSHOT_MODEL', 'KIMI_MODEL']
+    baseUrlEnvKeys: ['MOONSHOT_API_BASE', 'KIMI_API_BASE', 'AI_API_BASE'],
+    modelEnvKeys: ['MOONSHOT_MODEL', 'KIMI_MODEL', 'AI_MODEL']
   }
 };
 
