@@ -1,6 +1,14 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { SUPPORTED_LOCALES, createI18n, getLocaleLabel, getPreferredLocale, normalizeLocale } from './i18n.js';
+import {
+  ACHIEVEMENT_LIBRARY,
+  BET_OPTION_LIBRARY,
+  DECK_CARD_LIBRARY,
+  GAME_LAB_TAB_LIBRARY,
+  OBJECTIVE_LIBRARY,
+  SECRET_AGENDA_LIBRARY
+} from '/data/game-lab-config.js';
 
 const startBtn = document.getElementById('startBtn');
 const stopBtn = document.getElementById('stopBtn');
@@ -51,6 +59,9 @@ const raceChartTitleEl = document.getElementById('raceChartTitle');
 const screenshotBtnEl = document.getElementById('screenshotBtn');
 const comboBadgeEl = document.getElementById('comboBadge');
 const intelBadgeEl = document.getElementById('intelBadge');
+const intelDropdownEl = document.getElementById('intelDropdown');
+const intelDropdownListEl = document.getElementById('intelDropdownList');
+const intelDropdownContentEl = document.getElementById('intelDropdownContent');
 const intelUnlockBtnEl = document.getElementById('intelUnlockBtn');
 const eventDecisionCardEl = document.getElementById('eventDecisionCard');
 const timingBurstCardEl = document.getElementById('timingBurstCard');
@@ -63,6 +74,7 @@ const clearDataBtnEl = document.getElementById('clearDataBtn');
 const gameLabTitleEl = document.getElementById('gameLabTitle');
 const gameLabPanelEl = document.getElementById('gameLabPanel');
 const gameLabBodyEl = document.getElementById('gameLabBody');
+const gameLabTabsEl = document.getElementById('gameLabTabs');
 const gameLabToggleBtnEl = document.getElementById('gameLabToggleBtn');
 const starBadgeEl = document.getElementById('starBadge');
 const dailyChallengeToggleEl = document.getElementById('dailyChallengeToggle');
@@ -137,9 +149,13 @@ let activeBossPanel = null;
 let runTelemetry = [];
 let guideChapterIndex = 0;
 let gameLabCollapsed = false;
+let activeGameLabTab = 'mission';
 let runStorageDbPromise = null;
 let runStorageStats = { runs: 0, snapshots: 0, available: typeof indexedDB !== 'undefined' };
 let lastPersistedSnapshotRound = -1;
+let intelDropdownOpen = false;
+let selectedIntelBriefId = '';
+let intelBriefSeq = 0;
 
 const META_STORAGE_KEY = 'religion_sim_meta_v2';
 const DAILY_CHALLENGE_KEY_PREFIX = 'religion_sim_daily_';
@@ -156,135 +172,12 @@ const REGION_CHAIN_GRAPH = {
   east_asia: ['south_asia', 'middle_east_africa', 'global_online'],
   global_online: ['north_america', 'east_asia']
 };
-
-const DECK_CARD_LIBRARY = [
-  {
-    id: 'bridge_dialogue',
-    title: { en: 'Bridge Dialogue', 'zh-CN': '跨域对话', ja: '越境対話' },
-    desc: {
-      en: '+Pluralism, -Polarization',
-      'zh-CN': '+法律多元，-舆论极化',
-      ja: '法的多元 + / 分極化 -'
-    },
-    cost: 4,
-    deltas: { legalPluralism: 0.06, mediaPolarization: -0.05 }
-  },
-  {
-    id: 'trust_grant',
-    title: { en: 'Trust Grant', 'zh-CN': '信任补助', ja: '信頼助成' },
-    desc: {
-      en: '+Trust, -Fragmentation',
-      'zh-CN': '+制度信任，-社会碎片化',
-      ja: '制度信頼 + / 社会分断 -'
-    },
-    cost: 5,
-    deltas: { institutionalTrust: 0.07, socialFragmentation: -0.04 }
-  },
-  {
-    id: 'youth_festival',
-    title: { en: 'Youth Festival', 'zh-CN': '青年节拍', ja: 'ユース祭典' },
-    desc: {
-      en: '+Youth, +Digital, +Volatility',
-      'zh-CN': '+青年压力，+数字化，+波动',
-      ja: '若年圧力 + / デジタル化 + / 変動 +'
-    },
-    cost: 4,
-    deltas: { youthPressure: 0.06, digitalization: 0.05, socialFragmentation: 0.02 }
-  },
-  {
-    id: 'ethics_audit',
-    title: { en: 'Ethics Audit', 'zh-CN': '伦理审计', ja: '倫理監査' },
-    desc: {
-      en: '-Judgment pressure, +Due space',
-      'zh-CN': '-审判压力，+公共空间',
-      ja: '審判圧力 - / 公共空間 +'
-    },
-    cost: 6,
-    deltas: { stateRegulation: -0.04, legalPluralism: 0.04, mediaPolarization: -0.02 }
-  },
-  {
-    id: 'migration_corridor',
-    title: { en: 'Migration Corridor', 'zh-CN': '迁徙走廊', ja: '移動コリドー' },
-    desc: {
-      en: '+Mobility, +Integration',
-      'zh-CN': '+迁移流动，+社会融合',
-      ja: '流動性 + / 社会統合 +'
-    },
-    cost: 5,
-    deltas: { migration: 0.06, socialFragmentation: -0.03, legalPluralism: 0.03 }
-  },
-  {
-    id: 'calm_media',
-    title: { en: 'Calm Media', 'zh-CN': '媒体冷却', ja: 'メディア冷却' },
-    desc: {
-      en: '-Polarization, -Identity heat',
-      'zh-CN': '-舆论极化，-身份冲突',
-      ja: '分極化 - / アイデンティティ対立 -'
-    },
-    cost: 4,
-    deltas: { mediaPolarization: -0.06, identityPolitics: -0.04 }
-  }
-];
-
-const SECRET_AGENDA_LIBRARY = [
-  {
-    id: 'combo_director',
-    label: { en: 'Combo Director', 'zh-CN': '连锁导演', ja: 'コンボ演出家' },
-    description: {
-      en: 'Reach Combo streak 4+ once before round 14.',
-      'zh-CN': '第 14 轮前至少触发一次 4 连击。',
-      ja: 'ラウンド14までにコンボ4以上を1回達成。'
-    },
-    reward: 8
-  },
-  {
-    id: 'quiet_court',
-    label: { en: 'Quiet Court', 'zh-CN': '静默法庭', ja: '静かな法廷' },
-    description: {
-      en: 'Keep judgment ratio under 30% at round 10+.',
-      'zh-CN': '第 10 轮后保持审判比低于 30%。',
-      ja: 'ラウンド10以降で審判比率30%未満を維持。'
-    },
-    reward: 10
-  },
-  {
-    id: 'ghost_slayer',
-    label: { en: 'Ghost Slayer', 'zh-CN': '影子猎手', ja: 'ゴースト撃破' },
-    description: {
-      en: 'Lead the ghost comparison by +800 at round 12+.',
-      'zh-CN': '第 12 轮后 Ghost 对照领先 +800。',
-      ja: 'ラウンド12以降でゴースト比 +800 を達成。'
-    },
-    reward: 9
-  }
-];
-
-const OBJECTIVE_LIBRARY = [
-  {
-    id: 'round_advance',
-    label: { en: 'Reach round 12', 'zh-CN': '到达第 12 轮', ja: 'ラウンド12到達' }
-  },
-  {
-    id: 'stability_window',
-    label: {
-      en: 'Keep fragmentation below 78%',
-      'zh-CN': '社会碎片化低于 78%',
-      ja: '社会分断を 78% 未満に維持'
-    }
-  },
-  {
-    id: 'region_chain',
-    label: { en: 'Build a region chain of 3+', 'zh-CN': '形成 3 连区域控制链', ja: '地域連鎖 3 以上' }
-  }
-];
-
-const ACHIEVEMENT_LIBRARY = [
-  { id: 'combo_king', label: { en: 'Combo King', 'zh-CN': '连击之王', ja: 'コンボ王' } },
-  { id: 'raid_stable', label: { en: 'Raid Stabilizer', 'zh-CN': '危机稳态者', ja: '危機安定者' } },
-  { id: 'oracle', label: { en: 'Bet Oracle', 'zh-CN': '预判先知', ja: '予測の賢者' } },
-  { id: 'deck_scholar', label: { en: 'Deck Scholar', 'zh-CN': '卡组学者', ja: 'デッキ学者' } },
-  { id: 'iron_legend', label: { en: 'Iron Legend', 'zh-CN': '铁人传说', ja: '鉄人伝説' } }
-];
+const BET_OPTION_MAP = new Map(BET_OPTION_LIBRARY.map((item) => [item.id, item]));
+const GAME_LAB_PANEL_ID_MAP = {
+  mission: 'gameLabPanelMission',
+  strategy: 'gameLabPanelStrategy',
+  meta: 'gameLabPanelMeta'
+};
 
 const NARRATIVE_CHAIN_LIBRARY = {
   religious_scandal: {
@@ -1031,6 +924,62 @@ function setGameLabCollapsed(collapsed) {
   }
 }
 
+function setGameLabTab(tabId) {
+  const tabs = Array.isArray(GAME_LAB_TAB_LIBRARY) ? GAME_LAB_TAB_LIBRARY : [];
+  if (!tabs.length) {
+    return;
+  }
+  const fallback = tabs[0].id;
+  const next = tabs.some((item) => item.id === tabId) ? tabId : fallback;
+  activeGameLabTab = next;
+
+  if (gameLabTabsEl) {
+    for (const btn of gameLabTabsEl.querySelectorAll('[data-game-lab-tab]')) {
+      const isActive = btn.dataset.gameLabTab === next;
+      btn.classList.toggle('is-active', isActive);
+      btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    }
+  }
+
+  const panels = gameLabBodyEl
+    ? gameLabBodyEl.querySelectorAll('[data-game-lab-panel]')
+    : document.querySelectorAll('[data-game-lab-panel]');
+  for (const panel of panels) {
+    const isActive = panel.dataset.gameLabPanel === next;
+    panel.classList.toggle('active', isActive);
+    panel.hidden = !isActive;
+  }
+}
+
+function renderGameLabTabs() {
+  if (!gameLabTabsEl) {
+    return;
+  }
+  const tabs = Array.isArray(GAME_LAB_TAB_LIBRARY) ? GAME_LAB_TAB_LIBRARY : [];
+  if (!tabs.length) {
+    gameLabTabsEl.innerHTML = '';
+    return;
+  }
+  if (!tabs.some((item) => item.id === activeGameLabTab)) {
+    activeGameLabTab = tabs[0].id;
+  }
+  gameLabTabsEl.innerHTML = tabs
+    .map((tab) => {
+      const isActive = tab.id === activeGameLabTab;
+      const panelId = GAME_LAB_PANEL_ID_MAP[tab.id] || '';
+      return `<button class="game-lab-tab-btn ${isActive ? 'is-active' : ''}" type="button" data-game-lab-tab="${tab.id}" role="tab" aria-selected="${isActive ? 'true' : 'false'}" ${
+        panelId ? `aria-controls="${panelId}"` : ''
+      }>${escapeHtml(localizedText(tab.label, tab.id))}</button>`;
+    })
+    .join('');
+  for (const btn of gameLabTabsEl.querySelectorAll('[data-game-lab-tab]')) {
+    btn.addEventListener('click', () => {
+      setGameLabTab(btn.dataset.gameLabTab || '');
+    });
+  }
+  setGameLabTab(activeGameLabTab);
+}
+
 function renderRunStorageStats() {
   if (!storageStatsEl) {
     return;
@@ -1367,6 +1316,8 @@ function createEmptyGameRun() {
     deckHand: [],
     deckDiscard: [],
     cardsUsed: 0,
+    uiLogs: [],
+    intelBriefs: [],
     narrativeQueue: [],
     narrativeStep: 0,
     achievementsNew: [],
@@ -1640,6 +1591,8 @@ function applyStaticI18n() {
   if (guideModalEl && !guideModalEl.hidden) {
     renderGuideBook();
   }
+  renderGameLabTabs();
+  renderIntelDropdown();
   setGameLabCollapsed(gameLabCollapsed);
   renderRunStorageStats();
 }
@@ -1794,13 +1747,14 @@ function renderEventFeed(state) {
   eventFeedEl.innerHTML = recentHistory
     .map((ev) => {
       const isActive = activeStartRounds.has(`${ev.id}_${ev.round}`);
+      const isGlobalCrisis = ev.id === 'global_crisis';
       const color = EVENT_COLORS[ev.id] || '#607d8b';
       const label = i18n.t(`event.${ev.id}`);
       const shockText = Object.entries(ev.shock || {})
         .slice(0, 2)
         .map(([k, v]) => `${i18n.t(`signal.${k}`)} ${v > 0 ? '+' : ''}${(v * 100).toFixed(0)}%`)
         .join(' · ');
-      return `<article class="event-item ${isActive ? 'is-active' : ''}" style="--event-color:${color}">
+      return `<article class="event-item ${isActive ? 'is-active' : ''} ${isGlobalCrisis ? 'is-global-crisis' : ''}" style="--event-color:${color}">
         <div class="event-header">
           <span class="event-badge" style="background:${color}">${isActive ? '🔴' : '◉'}</span>
           <strong>${label}</strong>
@@ -1836,26 +1790,158 @@ function setStatusHint(message) {
   statusEl.textContent = message;
 }
 
-function resolveBetOptionLabel(option) {
-  if (option === 'dominant_hold') {
-    return i18n.locale === 'zh-CN'
-      ? '主导宗教保持领先'
-      : i18n.locale === 'ja'
-        ? '優勢宗教が首位維持'
-        : 'Dominant religion keeps lead';
+function intelSourceLabel(source) {
+  if (source === 'forecast') {
+    return i18n.locale === 'zh-CN' ? '预测' : i18n.locale === 'ja' ? '予測' : 'Forecast';
   }
-  if (option === 'fragmentation_drop') {
-    return i18n.locale === 'zh-CN'
-      ? '碎片化下降'
-      : i18n.locale === 'ja'
-        ? '分断率が低下'
-        : 'Fragmentation drops';
+  if (source === 'event') {
+    return i18n.locale === 'zh-CN' ? '事件' : i18n.locale === 'ja' ? 'イベント' : 'Event';
   }
+  if (source === 'combo') {
+    return i18n.locale === 'zh-CN' ? '连锁' : i18n.locale === 'ja' ? '連鎖' : 'Combo';
+  }
+  if (source === 'objective') {
+    return i18n.locale === 'zh-CN' ? '议程' : i18n.locale === 'ja' ? '議題' : 'Agenda';
+  }
+  if (source === 'bet') {
+    return i18n.locale === 'zh-CN' ? '下注' : i18n.locale === 'ja' ? '賭け' : 'Bet';
+  }
+  if (source === 'perk') {
+    return i18n.locale === 'zh-CN' ? '增益' : i18n.locale === 'ja' ? '特典' : 'Perk';
+  }
+  return i18n.locale === 'zh-CN' ? '系统' : i18n.locale === 'ja' ? 'システム' : 'System';
+}
+
+function intelEmptyText() {
   return i18n.locale === 'zh-CN'
-    ? '活跃链路增长'
+    ? '暂无情报记录。推进回合或解锁预测后会出现情报条目。'
     : i18n.locale === 'ja'
-      ? 'アクティブ線が増加'
-      : 'Active lines increase';
+      ? '情報記録はまだありません。ラウンド進行か予測解放で追加されます。'
+      : 'No intel records yet. Advance rounds or unlock forecast to collect intel.';
+}
+
+function intelSelectHintText() {
+  return i18n.locale === 'zh-CN'
+    ? '点击上方条目查看情报内容。'
+    : i18n.locale === 'ja'
+      ? '上の項目をクリックすると詳細が表示されます。'
+      : 'Click an item above to view intel details.';
+}
+
+function setIntelDropdownOpen(open) {
+  intelDropdownOpen = Boolean(open);
+  if (intelDropdownEl) {
+    intelDropdownEl.hidden = !intelDropdownOpen;
+  }
+  if (intelBadgeEl) {
+    intelBadgeEl.setAttribute('aria-expanded', intelDropdownOpen ? 'true' : 'false');
+  }
+  if (intelDropdownOpen) {
+    renderIntelDropdown();
+  }
+}
+
+function appendIntelBrief(entry = {}) {
+  if (!Array.isArray(gameRun.intelBriefs)) {
+    gameRun.intelBriefs = [];
+  }
+  const createdAt = new Date().toISOString();
+  const brief = {
+    id: `intel_${Date.now()}_${intelBriefSeq++}`,
+    round: Number(entry.round ?? liveState?.round ?? 0),
+    time: createdAt,
+    source: entry.source || 'system',
+    title: String(entry.title || ''),
+    summary: String(entry.summary || ''),
+    content: String(entry.content || entry.summary || ''),
+    reward: Number(entry.reward || 0),
+    cost: Number(entry.cost || 0)
+  };
+  gameRun.intelBriefs.unshift(brief);
+  if (gameRun.intelBriefs.length > 140) {
+    gameRun.intelBriefs = gameRun.intelBriefs.slice(0, 140);
+  }
+  if (!selectedIntelBriefId || !intelDropdownOpen) {
+    selectedIntelBriefId = brief.id;
+  }
+  renderIntelDropdown();
+}
+
+function renderIntelDropdown() {
+  if (!intelDropdownEl || !intelDropdownListEl || !intelDropdownContentEl) {
+    return;
+  }
+  if (!intelDropdownOpen) {
+    intelDropdownEl.hidden = true;
+    return;
+  }
+
+  intelDropdownEl.hidden = false;
+  const briefs = Array.isArray(gameRun.intelBriefs) ? gameRun.intelBriefs : [];
+  if (!briefs.length) {
+    intelDropdownListEl.innerHTML = `<div class="intel-empty">${escapeHtml(intelEmptyText())}</div>`;
+    intelDropdownContentEl.innerHTML = `<div class="intel-empty">${escapeHtml(intelSelectHintText())}</div>`;
+    return;
+  }
+
+  if (!selectedIntelBriefId || !briefs.some((item) => item.id === selectedIntelBriefId)) {
+    selectedIntelBriefId = briefs[0].id;
+  }
+  const activeBrief = briefs.find((item) => item.id === selectedIntelBriefId) || briefs[0];
+  const visibleBriefs = briefs.slice(0, 16);
+
+  intelDropdownListEl.innerHTML = visibleBriefs
+    .map((item) => {
+      const isActive = item.id === activeBrief.id;
+      const metaText = `R${Number(item.round || 0)} · ${i18n.time(item.time)}`;
+      return `
+        <button class="intel-item-btn ${isActive ? 'is-active' : ''}" type="button" data-intel-id="${item.id}">
+          <span class="intel-item-meta">${escapeHtml(intelSourceLabel(item.source))} · ${escapeHtml(metaText)}</span>
+          <span class="intel-item-title">${escapeHtml(item.title || (i18n.locale === 'zh-CN' ? '未命名情报' : i18n.locale === 'ja' ? '無題の情報' : 'Untitled Intel'))}</span>
+        </button>
+      `;
+    })
+    .join('');
+
+  const amountText =
+    activeBrief.reward > 0
+      ? (i18n.locale === 'zh-CN'
+          ? `+${activeBrief.reward} 情报`
+          : i18n.locale === 'ja'
+            ? `情報 +${activeBrief.reward}`
+            : `+${activeBrief.reward} intel`)
+      : activeBrief.cost > 0
+        ? (i18n.locale === 'zh-CN'
+            ? `-${activeBrief.cost} 情报`
+            : i18n.locale === 'ja'
+              ? `情報 -${activeBrief.cost}`
+              : `-${activeBrief.cost} intel`)
+        : '';
+
+  intelDropdownContentEl.innerHTML = `
+    <div class="intel-detail-head">
+      <strong>${escapeHtml(activeBrief.title || (i18n.locale === 'zh-CN' ? '未命名情报' : i18n.locale === 'ja' ? '無題の情報' : 'Untitled Intel'))}</strong>
+      <span>${escapeHtml(i18n.time(activeBrief.time))}</span>
+    </div>
+    ${activeBrief.summary ? `<div class="intel-detail-summary">${escapeHtml(activeBrief.summary)}</div>` : ''}
+    <div class="intel-detail-content">${escapeHtml(activeBrief.content || intelSelectHintText())}</div>
+    ${amountText ? `<div class="intel-detail-amount">${escapeHtml(amountText)}</div>` : ''}
+  `;
+
+  for (const btn of intelDropdownListEl.querySelectorAll('[data-intel-id]')) {
+    btn.addEventListener('click', () => {
+      selectedIntelBriefId = btn.dataset.intelId || '';
+      renderIntelDropdown();
+    });
+  }
+}
+
+function resolveBetOptionLabel(option) {
+  const item = BET_OPTION_MAP.get(option);
+  if (item?.label) {
+    return localizedText(item.label, option);
+  }
+  return option;
 }
 
 function evaluateRegionChain(state) {
@@ -1915,6 +2001,10 @@ function initializeRunSystems() {
   gameRun.deckHand = deckPack.hand;
   gameRun.deckDiscard = deckPack.discard;
   gameRun.cardsUsed = 0;
+  gameRun.uiLogs = [];
+  gameRun.intelBriefs = [];
+  selectedIntelBriefId = '';
+  intelDropdownOpen = false;
   gameRun.pendingBetChoice = null;
   gameRun.activeBet = null;
   gameRun.betStats = { total: 0, won: 0, streak: 0 };
@@ -1924,6 +2014,29 @@ function initializeRunSystems() {
   gameRun.lastBossRuleRound = -1;
   chainRewardState = { ownerId: null, chainLength: 1, multiplier: 1, lastAwardRound: -1 };
   runTelemetry = [];
+}
+
+function appendGameplayLog(entry = {}) {
+  if (!Array.isArray(gameRun.uiLogs)) {
+    gameRun.uiLogs = [];
+  }
+  const time = new Date().toISOString();
+  const logEntry = {
+    round: Number(entry.round ?? liveState?.round ?? 0),
+    time,
+    type: entry.type || 'mission',
+    source: entry.source || 'gameplay',
+    name: entry.name || '',
+    nameKey: entry.nameKey || '',
+    action: entry.action || '',
+    delta: Number(entry.delta || 0),
+    transferIn: Number(entry.transferIn || 0),
+    transferOut: Number(entry.transferOut || 0)
+  };
+  gameRun.uiLogs.push(logEntry);
+  if (gameRun.uiLogs.length > 240) {
+    gameRun.uiLogs = gameRun.uiLogs.slice(-240);
+  }
 }
 
 function awardAchievement(achievementId) {
@@ -1966,12 +2079,32 @@ function evaluateObjectivesAndAgenda(state) {
       gameRun.secretAgenda.claimed = true;
       gameRun.secretRevealed = true;
       intelPoints += gameRun.secretAgenda.reward;
-      setStatusHint(
+      const agendaLabel = localizedText(gameRun.secretAgenda.label, gameRun.secretAgenda.id);
+      const agendaMessage =
         i18n.locale === 'zh-CN'
           ? `秘密议程完成：+${gameRun.secretAgenda.reward} 情报`
           : i18n.locale === 'ja'
             ? `秘密議題達成：情報 +${gameRun.secretAgenda.reward}`
-            : `Secret agenda completed: +${gameRun.secretAgenda.reward} intel`
+            : `Secret agenda completed: +${gameRun.secretAgenda.reward} intel`;
+      appendIntelBrief({
+        source: 'objective',
+        title:
+          i18n.locale === 'zh-CN'
+            ? `秘密议程：${agendaLabel}`
+            : i18n.locale === 'ja'
+              ? `秘密議題: ${agendaLabel}`
+              : `Secret agenda: ${agendaLabel}`,
+        summary: agendaMessage,
+        content:
+          i18n.locale === 'zh-CN'
+            ? `${agendaLabel} 达成，获得额外情报奖励。`
+            : i18n.locale === 'ja'
+              ? `${agendaLabel} を達成し、追加の情報報酬を獲得。`
+              : `${agendaLabel} completed. Extra intel reward granted.`,
+        reward: gameRun.secretAgenda.reward
+      });
+      setStatusHint(
+        agendaMessage
       );
     }
   }
@@ -1999,6 +2132,28 @@ function resolveActiveBet(state) {
     const reward = Math.round(bet.cost * 2.1);
     intelPoints += reward;
     comboScore += Math.round(4 * chainRewardState.multiplier);
+    appendIntelBrief({
+      source: 'bet',
+      title:
+        i18n.locale === 'zh-CN'
+          ? `下注成功：${resolveBetOptionLabel(bet.option)}`
+          : i18n.locale === 'ja'
+            ? `賭け成功: ${resolveBetOptionLabel(bet.option)}`
+            : `Bet won: ${resolveBetOptionLabel(bet.option)}`,
+      summary:
+        i18n.locale === 'zh-CN'
+          ? `结算奖励 +${reward} 情报`
+          : i18n.locale === 'ja'
+            ? `清算報酬 情報 +${reward}`
+            : `Settlement reward +${reward} intel`,
+      content:
+        i18n.locale === 'zh-CN'
+          ? `风险下注命中，奖励 ${reward} 情报。`
+          : i18n.locale === 'ja'
+            ? `リスクベット成功。情報報酬 ${reward}。`
+            : `Risk bet resolved successfully. Intel reward: ${reward}.`,
+      reward
+    });
     setStatusHint(
       i18n.locale === 'zh-CN'
         ? `下注成功：${resolveBetOptionLabel(bet.option)}，奖励 ${reward} 情报`
@@ -2008,6 +2163,27 @@ function resolveActiveBet(state) {
     );
   } else {
     gameRun.betStats.streak = 0;
+    appendIntelBrief({
+      source: 'bet',
+      title:
+        i18n.locale === 'zh-CN'
+          ? `下注失败：${resolveBetOptionLabel(bet.option)}`
+          : i18n.locale === 'ja'
+            ? `賭け失敗: ${resolveBetOptionLabel(bet.option)}`
+            : `Bet lost: ${resolveBetOptionLabel(bet.option)}`,
+      summary:
+        i18n.locale === 'zh-CN'
+          ? '本次未获得情报奖励。'
+          : i18n.locale === 'ja'
+            ? '今回の情報報酬はありません。'
+            : 'No intel reward from this settlement.',
+      content:
+        i18n.locale === 'zh-CN'
+          ? '下注目标未满足，建议结合区域连锁与社会信号再评估。'
+          : i18n.locale === 'ja'
+            ? '賭け条件を満たせませんでした。地域連鎖と社会シグナルを再評価してください。'
+            : 'Bet condition not met. Re-evaluate region chains and social signals before next attempt.'
+    });
     setStatusHint(
       i18n.locale === 'zh-CN'
         ? `下注失败：${resolveBetOptionLabel(bet.option)}`
@@ -2268,6 +2444,14 @@ function renderBetBoard(state) {
   const active = gameRun.activeBet;
   const canPlace = !active && state?.round > 0;
   const selected = gameRun.pendingBetChoice;
+  const focusOption = BET_OPTION_MAP.get(active?.option || selected || BET_OPTION_LIBRARY[0]?.id);
+  const focusDescription = localizedText(focusOption?.description, '');
+  const optionsHtml = BET_OPTION_LIBRARY.map((item) => {
+    const isActive = selected === item.id;
+    const label = localizedText(item.short, item.id);
+    const detail = localizedText(item.description, '');
+    return `<button class="bet-option-btn ${isActive ? 'is-active' : ''}" data-bet-option="${item.id}" type="button" title="${escapeHtml(detail)}">${escapeHtml(label)}</button>`;
+  }).join('');
   betBoardEl.innerHTML = `
     <div class="game-board-title">${title}</div>
     ${
@@ -2277,14 +2461,13 @@ function renderBetBoard(state) {
             <span class="objective-progress">R${active.resolveRound}</span>
           </div>`
         : `<div class="bet-actions">
-            <button class="bet-option-btn ${selected === 'dominant_hold' ? 'is-active' : ''}" data-bet-option="dominant_hold" type="button">${i18n.locale === 'zh-CN' ? '守擂' : i18n.locale === 'ja' ? '防衛' : 'Hold'}</button>
-            <button class="bet-option-btn ${selected === 'fragmentation_drop' ? 'is-active' : ''}" data-bet-option="fragmentation_drop" type="button">${i18n.locale === 'zh-CN' ? '降噪' : i18n.locale === 'ja' ? '低下' : 'Drop'}</button>
-            <button class="bet-option-btn ${selected === 'lines_growth' ? 'is-active' : ''}" data-bet-option="lines_growth" type="button">${i18n.locale === 'zh-CN' ? '扩链' : i18n.locale === 'ja' ? '増線' : 'Grow'}</button>
+            ${optionsHtml}
           </div>
           <button class="bet-confirm-btn" data-bet-confirm="1" type="button" ${canPlace ? '' : 'disabled'}>
             ${i18n.locale === 'zh-CN' ? `下注 (${cost})` : i18n.locale === 'ja' ? `賭け (${cost})` : `Place Bet (${cost})`}
           </button>`
     }
+    <div class="game-board-empty bet-option-note">${escapeHtml(focusDescription)}</div>
   `;
   for (const btn of betBoardEl.querySelectorAll('[data-bet-option]')) {
     btn.addEventListener('click', () => {
@@ -2334,31 +2517,48 @@ async function playDeckCard(cardId) {
   if (!liveState || !cardId) {
     return;
   }
-  if (activeBossPanel?.active && Number(activeBossPanel.phase || 1) === 1) {
-    setStatusHint(
-      i18n.locale === 'zh-CN'
-        ? 'Boss Phase 1：策略卡被封锁'
-        : i18n.locale === 'ja'
-          ? 'Boss Phase 1: 戦略カード使用不可'
-          : 'Boss Phase 1: strategy cards are locked'
-    );
-    return;
-  }
   const cardIndex = gameRun.deckHand.findIndex((item) => item.id === cardId);
   if (cardIndex < 0) {
     return;
   }
   const card = gameRun.deckHand[cardIndex];
-  if (intelPoints < card.cost) {
-    setStatusHint(
+
+  if (activeBossPanel?.active && Number(activeBossPanel.phase || 1) === 1) {
+    const lockedMessage =
       i18n.locale === 'zh-CN'
-        ? `情报不足（需要 ${card.cost}）`
+        ? `策略卡 ${localizedText(card.title, card.id)} 被 Boss Phase 1 规则封锁`
         : i18n.locale === 'ja'
-          ? `情報不足（必要 ${card.cost}）`
-          : `Not enough intel (need ${card.cost})`
-    );
+          ? `戦略カード ${localizedText(card.title, card.id)} は Boss Phase 1 で封鎖中`
+          : `Strategy card ${localizedText(card.title, card.id)} is locked in Boss Phase 1`;
+    setStatusHint(lockedMessage);
+    appendGameplayLog({
+      source: 'deck',
+      type: 'mission',
+      nameKey: 'log.deck',
+      action: lockedMessage
+    });
+    if (liveState) renderLogs(liveState);
     return;
   }
+
+  if (intelPoints < card.cost) {
+    const noIntelMessage =
+      i18n.locale === 'zh-CN'
+        ? `策略卡 ${localizedText(card.title, card.id)} 使用失败：情报不足（需要 ${card.cost}）`
+        : i18n.locale === 'ja'
+          ? `戦略カード ${localizedText(card.title, card.id)} の使用失敗：情報不足（必要 ${card.cost}）`
+          : `Failed to play ${localizedText(card.title, card.id)}: not enough intel (need ${card.cost})`;
+    setStatusHint(noIntelMessage);
+    appendGameplayLog({
+      source: 'deck',
+      type: 'mission',
+      nameKey: 'log.deck',
+      action: noIntelMessage
+    });
+    if (liveState) renderLogs(liveState);
+    return;
+  }
+
   intelPoints -= card.cost;
   const done = await applySignalDeltas(
     card.deltas,
@@ -2370,8 +2570,22 @@ async function playDeckCard(cardId) {
   );
   if (!done) {
     intelPoints += card.cost;
+    const failedMessage =
+      i18n.locale === 'zh-CN'
+        ? `策略卡 ${localizedText(card.title, card.id)} 使用失败：信号同步异常`
+        : i18n.locale === 'ja'
+          ? `戦略カード ${localizedText(card.title, card.id)} の使用失敗：シグナル同期エラー`
+          : `Failed to play ${localizedText(card.title, card.id)}: signal sync error`;
+    appendGameplayLog({
+      source: 'deck',
+      type: 'mission',
+      nameKey: 'log.deck',
+      action: failedMessage
+    });
+    if (liveState) renderLogs(liveState);
     return;
   }
+
   gameRun.cardsUsed += 1;
   gameRun.deckHand.splice(cardIndex, 1);
   gameRun.deckDiscard.push(card);
@@ -2379,8 +2593,38 @@ async function playDeckCard(cardId) {
   if (replacement) {
     gameRun.deckHand.push(replacement);
   }
+  appendGameplayLog({
+    source: 'deck',
+    type: 'mission',
+    nameKey: 'log.deck',
+    action:
+      i18n.locale === 'zh-CN'
+        ? `打出策略卡 ${localizedText(card.title, card.id)}（消耗 ${card.cost} Intel）`
+        : i18n.locale === 'ja'
+          ? `戦略カード ${localizedText(card.title, card.id)} を使用（情報 ${card.cost} 消費）`
+          : `Played strategy card ${localizedText(card.title, card.id)} (cost ${card.cost} intel)`
+  });
   renderDeckBoard();
   renderGameplayHud();
+  if (liveState) renderLogs(liveState);
+}
+
+function renderDeckEffectChips(card) {
+  const entries = Object.entries(card?.deltas || {});
+  if (!entries.length) {
+    return `<span class="deck-effect-chip">${
+      i18n.locale === 'zh-CN' ? '无信号变化' : i18n.locale === 'ja' ? 'シグナル変化なし' : 'No signal delta'
+    }</span>`;
+  }
+  return entries
+    .map(([key, value]) => {
+      const delta = Number(value || 0);
+      const isNegative = delta < 0;
+      const signalText = i18n.t(`signal.${key}`);
+      const pctText = `${delta >= 0 ? '+' : '-'}${Math.round(Math.abs(delta) * 100)}%`;
+      return `<span class="deck-effect-chip ${isNegative ? 'is-neg' : ''}">${escapeHtml(signalText)} ${escapeHtml(pctText)}</span>`;
+    })
+    .join('');
 }
 
 function renderDeckBoard() {
@@ -2389,8 +2633,27 @@ function renderDeckBoard() {
   }
   const title =
     i18n.locale === 'zh-CN' ? '策略卡组' : i18n.locale === 'ja' ? '戦略デッキ' : 'Strategy Deck';
+  const handLabel = i18n.locale === 'zh-CN' ? '手牌' : i18n.locale === 'ja' ? '手札' : 'Hand';
+  const drawLabel = i18n.locale === 'zh-CN' ? '牌库' : i18n.locale === 'ja' ? '山札' : 'Draw';
+  const discardLabel = i18n.locale === 'zh-CN' ? '弃牌' : i18n.locale === 'ja' ? '捨て札' : 'Discard';
+  const timingLabel = i18n.locale === 'zh-CN' ? '时机' : i18n.locale === 'ja' ? 'タイミング' : 'Timing';
+  const tipLabel = i18n.locale === 'zh-CN' ? '建议' : i18n.locale === 'ja' ? 'ヒント' : 'Tip';
+  const costSuffix = i18n.locale === 'zh-CN' ? 'Intel' : i18n.locale === 'ja' ? '情報' : 'Intel';
+  const boardHint =
+    i18n.locale === 'zh-CN'
+      ? '点击卡牌可立即施放，效果会直接作用于社会信号。'
+      : i18n.locale === 'ja'
+        ? 'カードをクリックすると即時発動し、社会シグナルへ直接反映されます。'
+        : 'Click a card to deploy instantly and apply direct social-signal effects.';
+
   deckBoardEl.innerHTML = `
     <div class="game-board-title">${title}</div>
+    <div class="deck-board-meta">
+      <span class="deck-meta-chip">${handLabel} ${gameRun.deckHand.length}</span>
+      <span class="deck-meta-chip">${drawLabel} ${gameRun.deck.length}</span>
+      <span class="deck-meta-chip">${discardLabel} ${gameRun.deckDiscard.length}</span>
+    </div>
+    <div class="game-board-empty">${boardHint}</div>
     <div class="deck-hand">
       ${
         gameRun.deckHand.length
@@ -2398,8 +2661,19 @@ function renderDeckBoard() {
               .map(
                 (card) => `
             <button class="deck-card-btn" type="button" data-card-id="${card.id}">
-              ${localizedText(card.title, card.id)}
-              <small>${localizedText(card.desc, '')} · ${card.cost}</small>
+              <div class="deck-card-head">
+                <span class="deck-card-rarity">${escapeHtml(localizedText(card.rarity, i18n.locale === 'zh-CN' ? '战略' : i18n.locale === 'ja' ? '戦略' : 'Strategic'))}</span>
+                <span class="deck-card-cost">${card.cost} ${costSuffix}</span>
+              </div>
+              <div class="deck-card-title">${escapeHtml(localizedText(card.title, card.id))}</div>
+              <div class="deck-card-archetype">${escapeHtml(localizedText(card.archetype, ''))}</div>
+              <div class="deck-card-desc">${escapeHtml(localizedText(card.desc, ''))}</div>
+              <div class="deck-card-detail">${escapeHtml(localizedText(card.detail, ''))}</div>
+              <div class="deck-effect-row">${renderDeckEffectChips(card)}</div>
+              <div class="deck-card-foot">
+                <span class="deck-card-hint">${timingLabel}: ${escapeHtml(localizedText(card.timing, i18n.locale === 'zh-CN' ? '即时生效' : i18n.locale === 'ja' ? '即時発動' : 'Immediate'))}</span>
+                <span class="deck-card-tip">${tipLabel}: ${escapeHtml(localizedText(card.tip, ''))}</span>
+              </div>
             </button>
           `
               )
@@ -2618,11 +2892,14 @@ function renderEventDecisionCard() {
     return;
   }
   if (!pendingDecision) {
+    eventDecisionCardEl.classList.remove('is-global-crisis');
     eventDecisionCardEl.hidden = true;
     eventDecisionCardEl.innerHTML = '';
     return;
   }
 
+  const isGlobalCrisisDecision = pendingDecision.eventId === 'global_crisis';
+  eventDecisionCardEl.classList.toggle('is-global-crisis', isGlobalCrisisDecision);
   eventDecisionCardEl.hidden = false;
   eventDecisionCardEl.innerHTML = `
     <div class="event-decision-title">${pendingDecision.title}</div>
@@ -2670,6 +2947,23 @@ function renderEventDecisionCard() {
       );
       if (done) {
         intelPoints += 2;
+        appendIntelBrief({
+          source: 'event',
+          title:
+            i18n.locale === 'zh-CN'
+              ? `事件策略：${localizedText(option.label, option.id)}`
+              : i18n.locale === 'ja'
+                ? `イベント戦略: ${localizedText(option.label, option.id)}`
+                : `Event strategy: ${localizedText(option.label, option.id)}`,
+          summary:
+            i18n.locale === 'zh-CN'
+              ? '抉择已执行，获得 +2 情报。'
+              : i18n.locale === 'ja'
+                ? '選択を実行し、情報 +2 を獲得。'
+                : 'Decision executed, gained +2 intel.',
+          content: localizedText(option.desc, ''),
+          reward: 2
+        });
         if (!pendingDecision?.isNarrative) {
           queueNarrativeFollowup(pendingDecision.eventId);
         }
@@ -2725,6 +3019,35 @@ async function triggerTimingBurst() {
   if (done) {
     intelPoints += critical ? 6 : 3;
     comboScore += critical ? 12 : 5;
+    const reward = critical ? 6 : 3;
+    appendIntelBrief({
+      source: 'event',
+      title:
+        i18n.locale === 'zh-CN'
+          ? critical
+            ? '节奏干预：暴击'
+            : '节奏干预：命中'
+          : i18n.locale === 'ja'
+            ? critical
+              ? 'タイミング介入: クリティカル'
+              : 'タイミング介入: ヒット'
+            : critical
+              ? 'Timing intervention: critical'
+              : 'Timing intervention: hit',
+      summary:
+        i18n.locale === 'zh-CN'
+          ? `获得 +${reward} 情报`
+          : i18n.locale === 'ja'
+            ? `情報 +${reward} を獲得`
+            : `Gained +${reward} intel`,
+      content:
+        i18n.locale === 'zh-CN'
+          ? '突发事件窗口干预成功，社会信号已按精度修正。'
+          : i18n.locale === 'ja'
+            ? '突発イベント窓で介入成功。社会シグナルを精度に応じて補正。'
+            : 'Burst timing intervention succeeded, social signals adjusted by precision.',
+      reward
+    });
   }
   burstState.resolved = true;
   lastBurstRound = liveState?.round ?? lastBurstRound;
@@ -2808,6 +3131,7 @@ function renderBossCrisisPanel(state) {
   const boss = state?.bossCrisis || null;
   activeBossPanel = boss;
   if (!boss || (!boss.active && !Array.isArray(boss.log))) {
+    bossCrisisPanelEl.classList.remove('is-global-crisis');
     bossCrisisPanelEl.hidden = true;
     bossCrisisPanelEl.innerHTML = '';
     return;
@@ -2853,6 +3177,7 @@ function renderBossCrisisPanel(state) {
         : ''
     }
   `;
+  bossCrisisPanelEl.classList.add('is-global-crisis');
 }
 
 function renderGameplayHud() {
@@ -2873,7 +3198,14 @@ function renderGameplayHud() {
         : i18n.locale === 'ja'
           ? `情報 ${Math.floor(intelPoints)}`
           : `Intel ${Math.floor(intelPoints)}`;
+    intelBadgeEl.title =
+      i18n.locale === 'zh-CN'
+        ? '点击查看情报列表'
+        : i18n.locale === 'ja'
+          ? 'クリックして情報一覧を表示'
+          : 'Click to open intel list';
   }
+  renderIntelDropdown();
   if (intelUnlockBtnEl) {
     const hiddenForecastCount = forecastLinks.filter((item) => !forecastReveal.get(item.key)).length;
     const cost = currentForecastUnlockCost();
@@ -2922,8 +3254,39 @@ function unlockNextForecast() {
     }
     return;
   }
+  const unlocked = hidden[0];
   intelPoints -= cost;
-  forecastReveal.set(hidden[0].key, true);
+  forecastReveal.set(unlocked.key, true);
+  const factorText = Array.isArray(unlocked.reasonFactors)
+    ? unlocked.reasonFactors
+        .slice(0, 3)
+        .map((item) => (typeof item === 'string' ? item : item?.label || item?.key))
+        .filter(Boolean)
+        .join(' / ')
+    : '';
+  const routeLabel = `${unlocked.fromName || unlocked.fromId || '?'} -> ${unlocked.toName || unlocked.toId || '?'}`;
+  appendIntelBrief({
+    source: 'forecast',
+    title:
+      i18n.locale === 'zh-CN'
+        ? `预测解锁：${routeLabel}`
+        : i18n.locale === 'ja'
+          ? `予測解放: ${routeLabel}`
+          : `Forecast unlocked: ${routeLabel}`,
+    summary:
+      i18n.locale === 'zh-CN'
+        ? `消耗 ${cost} 情报 · 置信度 ${formatPercent(unlocked.confidence || 0, 0)}`
+        : i18n.locale === 'ja'
+          ? `情報 ${cost} 消費 · 信頼度 ${formatPercent(unlocked.confidence || 0, 0)}`
+          : `Spent ${cost} intel · confidence ${formatPercent(unlocked.confidence || 0, 0)}`,
+    content:
+      i18n.locale === 'zh-CN'
+        ? `预测走廊：${routeLabel}\n预计规模：${i18n.number(Math.round(unlocked.amount || 0))}\n主因：${unlocked.reason || 'N/A'}${factorText ? `\n因子：${factorText}` : ''}`
+        : i18n.locale === 'ja'
+          ? `予測回廊: ${routeLabel}\n推定規模: ${i18n.number(Math.round(unlocked.amount || 0))}\n主因: ${unlocked.reason || 'N/A'}${factorText ? `\n因子: ${factorText}` : ''}`
+          : `Forecast corridor: ${routeLabel}\nEstimated volume: ${i18n.number(Math.round(unlocked.amount || 0))}\nPrimary reason: ${unlocked.reason || 'N/A'}${factorText ? `\nFactors: ${factorText}` : ''}`,
+    cost
+  });
   updateForecastLinks(liveState, true);
   renderGameplayHud();
 }
@@ -4096,7 +4459,14 @@ function updateForecastLinks(state, force = false) {
     forecastLinks.push({
       key,
       confidence,
-      revealed
+      revealed,
+      fromId: transfer.fromId,
+      toId: transfer.toId,
+      fromName: transfer.from || transfer.fromName || transfer.fromId,
+      toName: transfer.to || transfer.toName || transfer.toId,
+      amount: Number(transfer.amount || 0),
+      reason: transfer.reason || '',
+      reasonFactors: Array.isArray(transfer.reasonFactors) ? transfer.reasonFactors : []
     });
   }
   lastForecastRound = state.round;
@@ -4371,10 +4741,21 @@ function renderMapHud(state) {
 
 function renderLogs(state) {
   const religionById = new Map(state.religions.map((religion) => [religion.id, religion]));
+  const gameplayLogs = Array.isArray(gameRun.uiLogs) ? gameRun.uiLogs : [];
+  const mergedLogs = [...state.logs, ...gameplayLogs].sort((a, b) => {
+    const roundA = Number(a.round || 0);
+    const roundB = Number(b.round || 0);
+    if (roundA !== roundB) {
+      return roundA - roundB;
+    }
+    const timeA = Date.parse(a.time || '') || 0;
+    const timeB = Date.parse(b.time || '') || 0;
+    return timeA - timeB;
+  });
   const filtered =
     activeLogFilter === 'all'
-      ? state.logs
-      : state.logs.filter((log) => (log.type || 'mission') === activeLogFilter);
+      ? mergedLogs
+      : mergedLogs.filter((log) => (log.type || 'mission') === activeLogFilter);
   const recent = filtered.slice(-24).reverse();
 
   if (!recent.length) {
@@ -4385,9 +4766,12 @@ function renderLogs(state) {
   logListEl.innerHTML = recent
     .map((log) => {
       const religion = log.religionId ? religionById.get(log.religionId) : null;
+      const displayName = log.nameKey ? i18n.t(log.nameKey) : (log.name || '');
       const religionName = religion
         ? religionDisplay(religion)
-        : `${religionEmojiById(log.religionId)} ${log.name || ''}`.trim();
+        : log.religionId
+          ? `${religionEmojiById(log.religionId)} ${displayName}`.trim()
+          : displayName;
       const title = i18n.t('log.header', {
         round: log.round,
         time: i18n.time(log.time),
@@ -4395,6 +4779,7 @@ function renderLogs(state) {
       });
       const delta = formatSigned(log.delta);
       const isJudgment = log.type === 'judgment';
+      const isDeck = log.source === 'deck';
       const net = isJudgment
         ? `${i18n.t('log.judgment')} · ${i18n.number(log.judgment?.blocked || log.transferOut || 0)}`
         : i18n.t('log.net', {
@@ -4403,9 +4788,9 @@ function renderLogs(state) {
             outflow: log.transferOut
           });
       return `
-      <article class="log-item ${isJudgment ? 'is-judgment' : ''}">
+      <article class="log-item ${isJudgment ? 'is-judgment' : ''} ${isDeck ? 'is-deck' : ''}">
         <div class="log-meta">${title}</div>
-        <div>${isJudgment ? `<span class="log-tag">${i18n.t('log.judgment')}</span>` : ''}${log.action}</div>
+        <div>${isJudgment ? `<span class="log-tag">${i18n.t('log.judgment')}</span>` : ''}${isDeck ? `<span class="log-tag log-tag-deck">${i18n.t('log.deck')}</span>` : ''}${log.action}</div>
         <div class="log-meta">${net}</div>
       </article>
     `;
@@ -4767,6 +5152,7 @@ function drawCanvasEventFx(time) {
   const globalCrisis = getEventPower('global_crisis');
   if (globalCrisis > 0) {
     ctx.save();
+    ctx.globalAlpha = 0.72;
     ctx.globalCompositeOperation = 'multiply';
     const storm = ctx.createRadialGradient(
       width * 0.5,
@@ -4776,12 +5162,12 @@ function drawCanvasEventFx(time) {
       height * 0.52,
       Math.max(width, height) * 0.78
     );
-    storm.addColorStop(0, colorToRgba('#4d1b2d', 0.12 + globalCrisis * 0.18));
-    storm.addColorStop(1, colorToRgba('#130c16', 0.2 + globalCrisis * 0.24));
+    storm.addColorStop(0, colorToRgba('#4d1b2d', 0.06 + globalCrisis * 0.1));
+    storm.addColorStop(1, colorToRgba('#130c16', 0.1 + globalCrisis * 0.12));
     ctx.fillStyle = storm;
     ctx.fillRect(0, 0, width, height);
     ctx.globalCompositeOperation = 'lighter';
-    ctx.strokeStyle = colorToRgba('#ff6283', 0.22 + globalCrisis * 0.2);
+    ctx.strokeStyle = colorToRgba('#ff6283', 0.12 + globalCrisis * 0.12);
     ctx.lineWidth = 2 + globalCrisis * 2;
     for (let i = 0; i < 5; i += 1) {
       const radius = 44 + i * 28 + ((time * 60 + i * 38) % 28);
@@ -4944,6 +5330,7 @@ async function startSimulation() {
   lastProcessedRound = -1;
   lastForecastRound = -1;
   handledDecisionEvents.clear();
+  setIntelDropdownOpen(false);
   clearForecastLinks();
 
   const snapshot = await postJson('/api/simulation/start', {
@@ -4965,6 +5352,28 @@ async function startSimulation() {
 
   if (metaProgress?.perks?.starterIntel) {
     intelPoints += 6;
+    appendIntelBrief({
+      source: 'perk',
+      title:
+        i18n.locale === 'zh-CN'
+          ? '开局增益：情报补给'
+          : i18n.locale === 'ja'
+            ? '開始特典: 情報補給'
+            : 'Start perk: intel supply',
+      summary:
+        i18n.locale === 'zh-CN'
+          ? '研究增益触发，获得 +6 情报。'
+          : i18n.locale === 'ja'
+            ? '研究特典が発動し、情報 +6 を獲得。'
+            : 'Research perk activated, gained +6 intel.',
+      content:
+        i18n.locale === 'zh-CN'
+          ? '来源：Meta 研究 - Starter Intel。'
+          : i18n.locale === 'ja'
+            ? '出所: Meta 研究 - Starter Intel。'
+            : 'Source: Meta research - Starter Intel.',
+      reward: 6
+    });
   }
   stopBtn.disabled = Boolean(gameRun.ironman);
   renderAll(snapshot);
@@ -5159,6 +5568,10 @@ if (guideModalEl) {
 }
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
+    if (intelDropdownOpen) {
+      setIntelDropdownOpen(false);
+      return;
+    }
     if (guideModalEl && !guideModalEl.hidden) {
       closeGuideBook();
       return;
@@ -5184,6 +5597,22 @@ if (intelUnlockBtnEl) {
     unlockNextForecast();
   });
 }
+if (intelBadgeEl) {
+  intelBadgeEl.addEventListener('click', (e) => {
+    e.stopPropagation();
+    setIntelDropdownOpen(!intelDropdownOpen);
+  });
+}
+if (intelDropdownEl) {
+  intelDropdownEl.addEventListener('click', (e) => {
+    e.stopPropagation();
+  });
+}
+document.addEventListener('click', () => {
+  if (intelDropdownOpen) {
+    setIntelDropdownOpen(false);
+  }
+});
 
 // ── Signal reset ───────────────────────────────────────────────────
 if (signalResetBtnEl) {
@@ -5249,6 +5678,7 @@ let bannerTimeout = null;
 
 function showEventBanner(ev) {
   if (!eventBannerEl) return;
+  const isGlobalCrisis = ev.id === 'global_crisis';
   const color = EVENT_COLORS[ev.id] || '#607d8b';
   const label = i18n.t(`event.${ev.id}`);
   const shockText = Object.entries(ev.shock || {})
@@ -5256,7 +5686,10 @@ function showEventBanner(ev) {
     .map(([k, v]) => `${i18n.t(`signal.${k}`)} ${v > 0 ? '+' : ''}${(v * 100).toFixed(0)}%`)
     .join('  ');
 
-  eventBannerEl.style.background = `linear-gradient(135deg, ${color}, color-mix(in srgb, ${color} 70%, #1a1a2e 30%))`;
+  eventBannerEl.classList.toggle('is-global-crisis', isGlobalCrisis);
+  eventBannerEl.style.background = isGlobalCrisis
+    ? `linear-gradient(135deg, color-mix(in srgb, ${color} 74%, transparent 26%), color-mix(in srgb, ${color} 52%, #1a1a2e 48%))`
+    : `linear-gradient(135deg, ${color}, color-mix(in srgb, ${color} 70%, #1a1a2e 30%))`;
   eventBannerEl.innerHTML = `<div class="event-banner-label">${label}</div><div class="event-banner-shock">${shockText}</div>`;
   eventBannerEl.hidden = false;
   eventBannerEl.style.animation = 'none';

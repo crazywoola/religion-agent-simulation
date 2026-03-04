@@ -158,6 +158,7 @@ const DICTIONARY = {
       header: 'Round {round} · {time} · {name}',
       net: 'Net: {delta} (In {inflow} / Out {outflow})',
       judgment: 'Judgment Record',
+      deck: 'Strategy Deck',
       empty: 'No logs for current filter'
     },
     logFilter: {
@@ -333,7 +334,7 @@ const DICTIONARY = {
     signal: {
       digitalization: '数字化',
       economicStress: '经济压力',
-      migration: '迁移流动',
+      migration: '人口迁移',
       institutionalTrust: '制度信任',
       identityPolitics: '身份政治',
       youthPressure: '青年压力',
@@ -348,6 +349,7 @@ const DICTIONARY = {
       header: '第 {round} 轮 · {time} · {name}',
       net: '净变化：{delta}（流入 {inflow} / 流出 {outflow}）',
       judgment: '宗教审判记录',
+      deck: '策略卡组',
       empty: '当前筛选条件下暂无日志'
     },
     logFilter: {
@@ -523,7 +525,7 @@ const DICTIONARY = {
     signal: {
       digitalization: 'デジタル化',
       economicStress: '経済ストレス',
-      migration: '移動・流入',
+      migration: '人口移動',
       institutionalTrust: '制度信頼',
       identityPolitics: 'アイデンティティ政治',
       youthPressure: '若年層圧力',
@@ -538,6 +540,7 @@ const DICTIONARY = {
       header: 'ラウンド {round} · {time} · {name}',
       net: '純変化：{delta}（流入 {inflow} / 流出 {outflow}）',
       judgment: '宗教審判ログ',
+      deck: '戦略デッキ',
       empty: '現在のフィルターにログがありません'
     },
     logFilter: {

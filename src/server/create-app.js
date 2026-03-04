@@ -14,6 +14,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PUBLIC_DIR = path.resolve(__dirname, '../../public');
 const THREE_VENDOR_DIR = path.resolve(__dirname, '../../node_modules/three');
+const DATA_DIR = path.resolve(__dirname, '../../data');
 
 export function createApp() {
   const app = express();
@@ -22,6 +23,7 @@ export function createApp() {
 
   app.use(express.json());
   app.use('/vendor/three', express.static(THREE_VENDOR_DIR));
+  app.use('/data', express.static(DATA_DIR));
   app.use(express.static(PUBLIC_DIR));
 
   app.get('/api/health', (_req, res) => {

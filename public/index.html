@@ -109,7 +109,22 @@
         </div>
         <div id="gameplayHud" class="gameplay-hud">
           <div id="comboBadge" class="gameplay-chip">Combo ×0</div>
-          <div id="intelBadge" class="gameplay-chip">Intel 0</div>
+          <div class="intel-popover">
+            <button
+              id="intelBadge"
+              class="gameplay-chip intel-badge-btn"
+              type="button"
+              aria-haspopup="listbox"
+              aria-expanded="false"
+              aria-controls="intelDropdown"
+            >
+              Intel 0
+            </button>
+            <div id="intelDropdown" class="intel-dropdown" hidden>
+              <div id="intelDropdownList" class="intel-dropdown-list"></div>
+              <div id="intelDropdownContent" class="intel-dropdown-content"></div>
+            </div>
+          </div>
           <button id="intelUnlockBtn" class="intel-unlock-btn" type="button">Unlock Forecast</button>
         </div>
         <!-- Screenshot button -->
@@ -143,22 +158,37 @@
           </div>
         </div>
         <div id="gameLabBody" class="game-lab-body">
-          <div class="game-lab-switches">
-            <label class="switch game-switch">
-              <input id="dailyChallengeToggle" type="checkbox" />
-              <span id="dailyChallengeLabel">Daily Challenge</span>
-            </label>
-            <label class="switch game-switch">
-              <input id="ironmanToggle" type="checkbox" />
-              <span id="ironmanLabel">Ironman</span>
-            </label>
+          <div id="gameLabTabs" class="game-lab-tabs" role="tablist"></div>
+          <div class="game-lab-tab-panels">
+            <section id="gameLabPanelMission" class="game-lab-tab-panel active" data-game-lab-panel="mission" role="tabpanel">
+              <div class="game-lab-mission-grid">
+                <div class="game-lab-switches">
+                  <label class="switch game-switch">
+                    <input id="dailyChallengeToggle" type="checkbox" />
+                    <span id="dailyChallengeLabel">Daily Challenge</span>
+                  </label>
+                  <label class="switch game-switch">
+                    <input id="ironmanToggle" type="checkbox" />
+                    <span id="ironmanLabel">Ironman</span>
+                  </label>
+                </div>
+                <div id="objectiveBoard" class="game-board objective-board"></div>
+                <div id="secretAgendaBoard" class="game-board secret-agenda-board"></div>
+                <div id="chainRewardBoard" class="game-board chain-board"></div>
+              </div>
+            </section>
+            <section id="gameLabPanelStrategy" class="game-lab-tab-panel" data-game-lab-panel="strategy" role="tabpanel">
+              <div class="game-lab-strategy-grid">
+                <div id="betBoard" class="game-board bet-board"></div>
+                <div id="deckBoard" class="game-board deck-board"></div>
+              </div>
+            </section>
+            <section id="gameLabPanelMeta" class="game-lab-tab-panel" data-game-lab-panel="meta" role="tabpanel">
+              <div class="game-lab-meta-grid">
+                <div id="metaBoard" class="game-board meta-board"></div>
+              </div>
+            </section>
           </div>
-          <div id="objectiveBoard" class="game-board objective-board"></div>
-          <div id="secretAgendaBoard" class="game-board secret-agenda-board"></div>
-          <div id="chainRewardBoard" class="game-board chain-board"></div>
-          <div id="betBoard" class="game-board bet-board"></div>
-          <div id="deckBoard" class="game-board deck-board"></div>
-          <div id="metaBoard" class="game-board meta-board"></div>
         </div>
       </section>
     </div>
