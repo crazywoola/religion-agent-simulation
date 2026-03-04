@@ -2663,6 +2663,7 @@ app.get('/api/health', (_req, res) => {
     now: new Date().toISOString(),
     provider: openaiClient.provider,
     providerLabel: openaiClient.providerLabel,
+    model: openaiClient.model,
     availableProviders: listAvailableProviders(),
     aiConfigured: Boolean(openaiClient.apiKey),
     openaiConfigured: Boolean(process.env.OPENAI_API_KEY),

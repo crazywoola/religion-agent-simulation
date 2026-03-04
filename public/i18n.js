@@ -18,12 +18,16 @@ const DICTIONARY = {
       scenario: 'Scenario',
       provider: 'AI Provider',
       logFilter: 'Log Filter',
-      speed: 'Speed',
       screenshot: 'Screenshot',
       exportReport: 'Export AI Analysis Report',
       generatingReport: 'AI is generating report...',
       reportFailed: 'Report generation failed',
+      drawerToggle: 'Insights & Logs',
       signalReset: 'Reset Signals'
+    },
+    drawer: {
+      insights: 'Insights',
+      logs: 'Logs'
     },
     section: {
       religions: 'Religion Profiles',
@@ -189,12 +193,16 @@ const DICTIONARY = {
       scenario: '场景',
       provider: 'AI 提供商',
       logFilter: '日志筛选',
-      speed: '速度',
       screenshot: '截图',
       exportReport: '导出 AI 分析报告',
       generatingReport: 'AI 正在生成报告...',
       reportFailed: '报告生成失败',
+      drawerToggle: '洞察与日志',
       signalReset: '重置信号'
+    },
+    drawer: {
+      insights: '洞察',
+      logs: '日志'
     },
     section: {
       religions: '宗教信息',
@@ -360,12 +368,16 @@ const DICTIONARY = {
       scenario: 'シナリオ',
       provider: 'AI プロバイダ',
       logFilter: 'ログフィルター',
-      speed: '速度',
       screenshot: 'スクリーンショット',
       exportReport: 'AI分析レポートをエクスポート',
       generatingReport: 'AIがレポートを生成中...',
       reportFailed: 'レポート生成に失敗しました',
+      drawerToggle: 'インサイトとログ',
       signalReset: 'シグナルリセット'
+    },
+    drawer: {
+      insights: 'インサイト',
+      logs: 'ログ'
     },
     section: {
       religions: '宗教プロファイル',

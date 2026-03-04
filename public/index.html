@@ -28,11 +28,6 @@
           <div class="btn-row">
             <button id="startBtn">Start Simulation</button>
             <button id="stopBtn" disabled>Pause</button>
-            <div class="speed-group">
-              <button class="speed-btn active" data-speed="1">1×</button>
-              <button class="speed-btn" data-speed="3">3×</button>
-              <button class="speed-btn" data-speed="10">10×</button>
-            </div>
           </div>
           <label>
             <span id="languageLabel">Language</span>
@@ -53,10 +48,7 @@
           </label>
           <label>
             <span id="providerLabel">AI Provider</span>
-            <select id="providerSelect">
-              <option value="openai">OpenAI</option>
-              <option value="moonshot">Moonshot / Kimi</option>
-            </select>
+            <span id="providerDisplay" class="provider-display">—</span>
           </label>
           <label>
             <span id="tickLabel">Tick Interval (ms)</span>
@@ -89,8 +81,6 @@
         <h2 id="raceChartTitle">Ranking</h2>
         <div id="raceChart" class="race-chart"></div>
 
-        <h2 id="religionSectionTitle">Religion Profiles</h2>
-        <div id="religionCards" class="religion-cards"></div>
       </aside>
 
       <!-- ===== CENTER STAGE ===== -->
@@ -104,33 +94,54 @@
         <button id="screenshotBtn" class="screenshot-btn" title="Screenshot">📷</button>
         <!-- Report export button -->
         <button id="reportBtn" class="report-btn" title="Export AI Report">📄</button>
+        <!-- Drawer toggle button -->
+        <button id="drawerToggleBtn" class="drawer-toggle-btn" title="Insights & Logs">📊</button>
       </main>
 
-      <!-- ===== RIGHT PANEL ===== -->
+      <!-- ===== RIGHT PANEL (Religion Cards only) ===== -->
       <aside class="panel right">
-        <h2 id="insightSectionTitle">Map Insights</h2>
-        <div id="insightBoard" class="insight-board"></div>
+        <h2 id="religionSectionTitle">Religion Profiles</h2>
+        <div id="religionCards" class="religion-cards"></div>
+      </aside>
+    </div>
 
-        <!-- Breaking Events Feed -->
-        <h2 id="eventSectionTitle">Breaking Events</h2>
-        <div id="eventFeed" class="event-feed"></div>
+    <!-- ===== DRAWER (Insights + Logs) ===== -->
+    <div id="drawerOverlay" class="drawer-overlay" hidden>
+      <aside class="drawer">
+        <div class="drawer-header">
+          <div class="drawer-tabs">
+            <button class="drawer-tab active" data-tab="insights" id="drawerTabInsights">Insights</button>
+            <button class="drawer-tab" data-tab="logs" id="drawerTabLogs">Logs</button>
+          </div>
+          <button id="drawerClose" class="drawer-close-btn">✕</button>
+        </div>
+        <div class="drawer-body">
+          <div class="drawer-tab-panel active" data-panel="insights">
+            <h2 id="insightSectionTitle">Map Insights</h2>
+            <div id="insightBoard" class="insight-board"></div>
 
-        <h2 id="regionSectionTitle">Regional Landscape</h2>
-        <div id="regionBoard" class="region-board"></div>
+            <h2 id="eventSectionTitle">Breaking Events</h2>
+            <div id="eventFeed" class="event-feed"></div>
 
-        <h2 id="transferSectionTitle">Key Assimilation Links</h2>
-        <div id="transferBoard" class="transfer-board"></div>
+            <h2 id="regionSectionTitle">Regional Landscape</h2>
+            <div id="regionBoard" class="region-board"></div>
 
-        <h2 id="logSectionTitle">Mission Logs</h2>
-        <label class="log-filter-control">
-          <span id="logFilterLabel">Log Filter</span>
-          <select id="logFilterSelect">
-            <option value="all">All</option>
-            <option value="mission">Mission</option>
-            <option value="judgment">Judgment</option>
-          </select>
-        </label>
-        <div id="logList" class="log-list"></div>
+            <h2 id="transferSectionTitle">Key Assimilation Links</h2>
+            <div id="transferBoard" class="transfer-board"></div>
+          </div>
+          <div class="drawer-tab-panel" data-panel="logs">
+            <h2 id="logSectionTitle">Mission Logs</h2>
+            <label class="log-filter-control">
+              <span id="logFilterLabel">Log Filter</span>
+              <select id="logFilterSelect">
+                <option value="all">All</option>
+                <option value="mission">Mission</option>
+                <option value="judgment">Judgment</option>
+              </select>
+            </label>
+            <div id="logList" class="log-list"></div>
+          </div>
+        </div>
       </aside>
     </div>
 

@@ -6,7 +6,7 @@ const startBtn = document.getElementById('startBtn');
 const stopBtn = document.getElementById('stopBtn');
 const tickInput = document.getElementById('tickInput');
 const openaiToggle = document.getElementById('openaiToggle');
-const providerSelect = document.getElementById('providerSelect');
+const providerDisplayEl = document.getElementById('providerDisplay');
 const languageSelect = document.getElementById('languageSelect');
 const scenarioSelect = document.getElementById('scenarioSelect');
 const logFilterSelect = document.getElementById('logFilterSelect');
@@ -67,8 +67,6 @@ const savedLocale =
   typeof localStorage !== 'undefined' ? localStorage.getItem('app_locale') : null;
 const savedScenario =
   typeof localStorage !== 'undefined' ? localStorage.getItem('app_scenario') : null;
-const savedProvider =
-  typeof localStorage !== 'undefined' ? localStorage.getItem('app_provider') : null;
 const i18n = createI18n(savedLocale || getPreferredLocale());
 
 let tickTimer = null;
@@ -78,7 +76,6 @@ let antClock = 0;
 let currentLocale = i18n.locale;
 let regionNodeLocale = i18n.locale;
 let activeLogFilter = 'all';
-let speedMultiplier = 1;
 let signalSliderDebounce = null;
 let currentModalReligionId = null;
 
@@ -161,6 +158,12 @@ function applyStaticI18n() {
   if (screenshotBtnEl) screenshotBtnEl.title = i18n.t('controls.screenshot');
   const reportBtnEl = document.getElementById('reportBtn');
   if (reportBtnEl) reportBtnEl.title = i18n.t('controls.exportReport');
+  const drawerToggleBtnEl = document.getElementById('drawerToggleBtn');
+  if (drawerToggleBtnEl) drawerToggleBtnEl.title = i18n.t('controls.drawerToggle');
+  const drawerTabInsightsEl = document.getElementById('drawerTabInsights');
+  if (drawerTabInsightsEl) drawerTabInsightsEl.textContent = i18n.t('drawer.insights');
+  const drawerTabLogsEl = document.getElementById('drawerTabLogs');
+  if (drawerTabLogsEl) drawerTabLogsEl.textContent = i18n.t('drawer.logs');
 
   for (const option of languageSelect.options) {
     option.textContent = getLocaleLabel(option.value);
@@ -169,10 +172,6 @@ function applyStaticI18n() {
 
   for (const option of scenarioSelect.options) {
     option.textContent = scenarioLabel(option.value);
-  }
-
-  for (const option of providerSelect.options) {
-    option.textContent = i18n.t(`provider.${option.value}`);
   }
 
   for (const option of logFilterSelect.options) {
@@ -1397,18 +1396,11 @@ function renderAll(state) {
   if (state.scenario && scenarioSelect.value !== state.scenario) {
     scenarioSelect.value = state.scenario;
   }
-  if (
-    state.provider &&
-    [...providerSelect.options].some((option) => option.value === state.provider) &&
-    providerSelect.value !== state.provider
-  ) {
-    providerSelect.value = state.provider;
-  }
   const invariant = i18n.t(state.invariantOk ? 'status.invariantFixed' : 'status.invariantAbnormal');
   const engine = i18n.t(`engine.${state.transferEngine || 'rule'}`);
   const aiEnabled = Boolean(state.useAI ?? state.useOpenAI);
   const ai = i18n.t(aiEnabled ? 'common.on' : 'common.off');
-  const provider = i18n.t(`provider.${state.provider || providerSelect.value || 'openai'}`);
+  const provider = i18n.t(`provider.${state.provider || 'openai'}`);
   statusEl.textContent = i18n.t('status.running', {
     round: state.round,
     total: i18n.number(state.totalFollowers),
@@ -1536,7 +1528,6 @@ async function startSimulation() {
   const snapshot = await postJson('/api/simulation/start', {
     useAI: openaiToggle.checked,
     useOpenAI: openaiToggle.checked,
-    provider: providerSelect.value,
     locale: i18n.locale,
     scenario: scenarioSelect.value
   });
@@ -1562,8 +1553,7 @@ function stopLoop() {
 
 function startLoop() {
   stopLoop();
-  const baseDelay = Number(tickInput.value) || 5000;
-  const delay = Math.max(400, Math.round(baseDelay / speedMultiplier));
+  const delay = Math.max(400, Number(tickInput.value) || 5000);
 
   tickTimer = setInterval(async () => {
     try {
@@ -1613,31 +1603,12 @@ scenarioSelect.addEventListener('change', (event) => {
   }
 });
 
-providerSelect.addEventListener('change', (event) => {
-  if (typeof localStorage !== 'undefined') {
-    localStorage.setItem('app_provider', event.target.value);
-  }
-});
-
 logFilterSelect.addEventListener('change', (event) => {
   activeLogFilter = event.target.value || 'all';
   if (liveState) {
     renderLogs(liveState);
   }
 });
-
-// ── Speed buttons ──────────────────────────────────────────────────
-for (const btn of document.querySelectorAll('.speed-btn')) {
-  btn.addEventListener('click', () => {
-    speedMultiplier = Number(btn.dataset.speed) || 1;
-    document.querySelectorAll('.speed-btn').forEach((b) => b.classList.remove('active'));
-    btn.classList.add('active');
-    if (tickTimer) {
-      // Restart loop with new speed
-      startLoop();
-    }
-  });
-}
 
 // ── Modal close ────────────────────────────────────────────────────
 if (modalCloseEl) modalCloseEl.addEventListener('click', closeReligionModal);
@@ -1647,7 +1618,11 @@ if (modalEl) {
   });
 }
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && modalEl && !modalEl.hidden) closeReligionModal();
+  if (e.key === 'Escape') {
+    if (modalEl && !modalEl.hidden) closeReligionModal();
+    const overlay = document.getElementById('drawerOverlay');
+    if (overlay && !overlay.hidden) overlay.hidden = true;
+  }
 });
 
 // ── Screenshot ─────────────────────────────────────────────────────
@@ -1670,9 +1645,49 @@ if (signalResetBtnEl) {
 if (savedScenario && [...scenarioSelect.options].some((option) => option.value === savedScenario)) {
   scenarioSelect.value = savedScenario;
 }
-if (savedProvider && [...providerSelect.options].some((option) => option.value === savedProvider)) {
-  providerSelect.value = savedProvider;
+
+// ── Drawer (Insights & Logs) ──────────────────────────────────────
+const drawerOverlayEl = document.getElementById('drawerOverlay');
+const drawerCloseEl = document.getElementById('drawerClose');
+const drawerToggleBtnEl = document.getElementById('drawerToggleBtn');
+
+function openDrawer() {
+  if (drawerOverlayEl) drawerOverlayEl.hidden = false;
 }
+function closeDrawer() {
+  if (drawerOverlayEl) drawerOverlayEl.hidden = true;
+}
+function toggleDrawer() {
+  if (drawerOverlayEl) drawerOverlayEl.hidden = !drawerOverlayEl.hidden;
+}
+
+if (drawerToggleBtnEl) drawerToggleBtnEl.addEventListener('click', toggleDrawer);
+if (drawerCloseEl) drawerCloseEl.addEventListener('click', closeDrawer);
+if (drawerOverlayEl) {
+  drawerOverlayEl.addEventListener('click', (e) => {
+    if (e.target === drawerOverlayEl) closeDrawer();
+  });
+}
+
+for (const tab of document.querySelectorAll('.drawer-tab')) {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.drawer-tab').forEach((t) => t.classList.remove('active'));
+    document.querySelectorAll('.drawer-tab-panel').forEach((p) => p.classList.remove('active'));
+    tab.classList.add('active');
+    const panel = document.querySelector(`.drawer-tab-panel[data-panel="${tab.dataset.tab}"]`);
+    if (panel) panel.classList.add('active');
+  });
+}
+
+// ── Fetch provider info from server ───────────────────────────────
+fetch('/api/health')
+  .then((r) => r.json())
+  .then((data) => {
+    if (providerDisplayEl && data.providerLabel) {
+      providerDisplayEl.textContent = `${data.providerLabel} / ${data.model || '—'}`;
+    }
+  })
+  .catch(() => {});
 
 setLocale(i18n.locale, false);
 statusEl.textContent = i18n.t('status.notStarted');
