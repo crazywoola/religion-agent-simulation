@@ -71,6 +71,10 @@ const DICTIONARY = {
       pluralism_wave: 'Pluralism Wave',
       climate_anxiety: 'Climate Anxiety',
       institutional_reform: 'Institutional Reform',
+      ai_doctrine_leak: 'AI Doctrine Leak',
+      grassroots_relief_network: 'Grassroots Relief Network',
+      interfaith_education_reform: 'Interfaith Education Reform',
+      algorithmic_echo_burst: 'Algorithmic Echo Burst',
       global_crisis: 'Global Crisis'
     },
     status: {
@@ -262,6 +266,10 @@ const DICTIONARY = {
       pluralism_wave: '多元化浪潮',
       climate_anxiety: '气候焦虑',
       institutional_reform: '制度改革',
+      ai_doctrine_leak: 'AI 教义泄露',
+      grassroots_relief_network: '基层互助网络',
+      interfaith_education_reform: '跨信仰教育改革',
+      algorithmic_echo_burst: '算法回音室爆发',
       global_crisis: '全球危机'
     },
     status: {
@@ -453,6 +461,10 @@ const DICTIONARY = {
       pluralism_wave: '多元主義の波',
       climate_anxiety: '気候不安',
       institutional_reform: '制度改革',
+      ai_doctrine_leak: 'AI教義リーク',
+      grassroots_relief_network: '草の根支援ネットワーク',
+      interfaith_education_reform: '宗教間教育改革',
+      algorithmic_echo_burst: 'アルゴリズム反響バースト',
       global_crisis: 'グローバル危機'
     },
     status: {
