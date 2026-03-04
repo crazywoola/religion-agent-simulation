@@ -54,6 +54,28 @@ const intelUnlockBtnEl = document.getElementById('intelUnlockBtn');
 const eventDecisionCardEl = document.getElementById('eventDecisionCard');
 const timingBurstCardEl = document.getElementById('timingBurstCard');
 const bossCrisisPanelEl = document.getElementById('bossCrisisPanel');
+const gameLabTitleEl = document.getElementById('gameLabTitle');
+const starBadgeEl = document.getElementById('starBadge');
+const dailyChallengeToggleEl = document.getElementById('dailyChallengeToggle');
+const dailyChallengeLabelEl = document.getElementById('dailyChallengeLabel');
+const ironmanToggleEl = document.getElementById('ironmanToggle');
+const ironmanLabelEl = document.getElementById('ironmanLabel');
+const objectiveBoardEl = document.getElementById('objectiveBoard');
+const secretAgendaBoardEl = document.getElementById('secretAgendaBoard');
+const chainRewardBoardEl = document.getElementById('chainRewardBoard');
+const betBoardEl = document.getElementById('betBoard');
+const deckBoardEl = document.getElementById('deckBoard');
+const metaBoardEl = document.getElementById('metaBoard');
+const guideBtnEl = document.getElementById('guideBtn');
+const guideModalEl = document.getElementById('guideModal');
+const guideTocEl = document.getElementById('guideToc');
+const guidePageEl = document.getElementById('guidePage');
+const guideBookTitleEl = document.getElementById('guideBookTitle');
+const guideBookSubtitleEl = document.getElementById('guideBookSubtitle');
+const guidePrevBtnEl = document.getElementById('guidePrevBtn');
+const guideNextBtnEl = document.getElementById('guideNextBtn');
+const guidePageIndicatorEl = document.getElementById('guidePageIndicator');
+const guideCloseBtnEl = document.getElementById('guideCloseBtn');
 // Modal elements
 const modalEl = document.getElementById('religionModal');
 const modalCloseEl = document.getElementById('modalClose');
@@ -103,6 +125,731 @@ const forecastLinks = [];
 const handledDecisionEvents = new Set();
 let ghostRunData = null;
 let activeBossPanel = null;
+let runTelemetry = [];
+let guideChapterIndex = 0;
+
+const META_STORAGE_KEY = 'religion_sim_meta_v2';
+const DAILY_CHALLENGE_KEY_PREFIX = 'religion_sim_daily_';
+const REGION_CHAIN_GRAPH = {
+  north_america: ['latin_america', 'europe', 'global_online'],
+  latin_america: ['north_america', 'europe'],
+  europe: ['north_america', 'latin_america', 'middle_east_africa', 'south_asia'],
+  middle_east_africa: ['europe', 'south_asia', 'east_asia'],
+  south_asia: ['europe', 'middle_east_africa', 'east_asia'],
+  east_asia: ['south_asia', 'middle_east_africa', 'global_online'],
+  global_online: ['north_america', 'east_asia']
+};
+
+const DECK_CARD_LIBRARY = [
+  {
+    id: 'bridge_dialogue',
+    title: { en: 'Bridge Dialogue', 'zh-CN': '跨域对话', ja: '越境対話' },
+    desc: {
+      en: '+Pluralism, -Polarization',
+      'zh-CN': '+法律多元，-舆论极化',
+      ja: '法的多元 + / 分極化 -'
+    },
+    cost: 4,
+    deltas: { legalPluralism: 0.06, mediaPolarization: -0.05 }
+  },
+  {
+    id: 'trust_grant',
+    title: { en: 'Trust Grant', 'zh-CN': '信任补助', ja: '信頼助成' },
+    desc: {
+      en: '+Trust, -Fragmentation',
+      'zh-CN': '+制度信任，-社会碎片化',
+      ja: '制度信頼 + / 社会分断 -'
+    },
+    cost: 5,
+    deltas: { institutionalTrust: 0.07, socialFragmentation: -0.04 }
+  },
+  {
+    id: 'youth_festival',
+    title: { en: 'Youth Festival', 'zh-CN': '青年节拍', ja: 'ユース祭典' },
+    desc: {
+      en: '+Youth, +Digital, +Volatility',
+      'zh-CN': '+青年压力，+数字化，+波动',
+      ja: '若年圧力 + / デジタル化 + / 変動 +'
+    },
+    cost: 4,
+    deltas: { youthPressure: 0.06, digitalization: 0.05, socialFragmentation: 0.02 }
+  },
+  {
+    id: 'ethics_audit',
+    title: { en: 'Ethics Audit', 'zh-CN': '伦理审计', ja: '倫理監査' },
+    desc: {
+      en: '-Judgment pressure, +Due space',
+      'zh-CN': '-审判压力，+公共空间',
+      ja: '審判圧力 - / 公共空間 +'
+    },
+    cost: 6,
+    deltas: { stateRegulation: -0.04, legalPluralism: 0.04, mediaPolarization: -0.02 }
+  },
+  {
+    id: 'migration_corridor',
+    title: { en: 'Migration Corridor', 'zh-CN': '迁徙走廊', ja: '移動コリドー' },
+    desc: {
+      en: '+Mobility, +Integration',
+      'zh-CN': '+迁移流动，+社会融合',
+      ja: '流動性 + / 社会統合 +'
+    },
+    cost: 5,
+    deltas: { migration: 0.06, socialFragmentation: -0.03, legalPluralism: 0.03 }
+  },
+  {
+    id: 'calm_media',
+    title: { en: 'Calm Media', 'zh-CN': '媒体冷却', ja: 'メディア冷却' },
+    desc: {
+      en: '-Polarization, -Identity heat',
+      'zh-CN': '-舆论极化，-身份冲突',
+      ja: '分極化 - / アイデンティティ対立 -'
+    },
+    cost: 4,
+    deltas: { mediaPolarization: -0.06, identityPolitics: -0.04 }
+  }
+];
+
+const SECRET_AGENDA_LIBRARY = [
+  {
+    id: 'combo_director',
+    label: { en: 'Combo Director', 'zh-CN': '连锁导演', ja: 'コンボ演出家' },
+    description: {
+      en: 'Reach Combo streak 4+ once before round 14.',
+      'zh-CN': '第 14 轮前至少触发一次 4 连击。',
+      ja: 'ラウンド14までにコンボ4以上を1回達成。'
+    },
+    reward: 8
+  },
+  {
+    id: 'quiet_court',
+    label: { en: 'Quiet Court', 'zh-CN': '静默法庭', ja: '静かな法廷' },
+    description: {
+      en: 'Keep judgment ratio under 30% at round 10+.',
+      'zh-CN': '第 10 轮后保持审判比低于 30%。',
+      ja: 'ラウンド10以降で審判比率30%未満を維持。'
+    },
+    reward: 10
+  },
+  {
+    id: 'ghost_slayer',
+    label: { en: 'Ghost Slayer', 'zh-CN': '影子猎手', ja: 'ゴースト撃破' },
+    description: {
+      en: 'Lead the ghost comparison by +800 at round 12+.',
+      'zh-CN': '第 12 轮后 Ghost 对照领先 +800。',
+      ja: 'ラウンド12以降でゴースト比 +800 を達成。'
+    },
+    reward: 9
+  }
+];
+
+const OBJECTIVE_LIBRARY = [
+  {
+    id: 'round_advance',
+    label: { en: 'Reach round 12', 'zh-CN': '到达第 12 轮', ja: 'ラウンド12到達' }
+  },
+  {
+    id: 'stability_window',
+    label: {
+      en: 'Keep fragmentation below 78%',
+      'zh-CN': '社会碎片化低于 78%',
+      ja: '社会分断を 78% 未満に維持'
+    }
+  },
+  {
+    id: 'region_chain',
+    label: { en: 'Build a region chain of 3+', 'zh-CN': '形成 3 连区域控制链', ja: '地域連鎖 3 以上' }
+  }
+];
+
+const ACHIEVEMENT_LIBRARY = [
+  { id: 'combo_king', label: { en: 'Combo King', 'zh-CN': '连击之王', ja: 'コンボ王' } },
+  { id: 'raid_stable', label: { en: 'Raid Stabilizer', 'zh-CN': '危机稳态者', ja: '危機安定者' } },
+  { id: 'oracle', label: { en: 'Bet Oracle', 'zh-CN': '预判先知', ja: '予測の賢者' } },
+  { id: 'deck_scholar', label: { en: 'Deck Scholar', 'zh-CN': '卡组学者', ja: 'デッキ学者' } },
+  { id: 'iron_legend', label: { en: 'Iron Legend', 'zh-CN': '铁人传说', ja: '鉄人伝説' } }
+];
+
+const NARRATIVE_CHAIN_LIBRARY = {
+  religious_scandal: {
+    delay: 2,
+    title: { en: 'Aftershock Hearing', 'zh-CN': '余震听证', ja: '余震ヒアリング' },
+    options: [
+      {
+        id: 'community_council',
+        label: { en: 'Community Council', 'zh-CN': '社区议会', ja: 'コミュニティ評議会' },
+        desc: {
+          en: 'Open plural dialogues to reduce long-tail trust erosion.',
+          'zh-CN': '开放多元对话，降低长期信任流失。',
+          ja: '多元対話を開き、長期的な信頼低下を抑制。'
+        },
+        deltas: { legalPluralism: 0.05, institutionalTrust: 0.04, mediaPolarization: -0.03 }
+      },
+      {
+        id: 'strict_compliance',
+        label: { en: 'Strict Compliance', 'zh-CN': '刚性合规', ja: '厳格コンプライアンス' },
+        desc: {
+          en: 'Fast stabilization with stronger regulation costs.',
+          'zh-CN': '快速止损，但监管成本上升。',
+          ja: '即時安定化するが規制コスト増。'
+        },
+        deltas: { stateRegulation: 0.06, institutionalTrust: 0.02, legalPluralism: -0.04 }
+      }
+    ]
+  },
+  migration_wave: {
+    delay: 1,
+    title: { en: 'Corridor Referendum', 'zh-CN': '走廊公投', ja: '回廊レファレンダム' },
+    options: [
+      {
+        id: 'open_corridors',
+        label: { en: 'Open Corridors', 'zh-CN': '开放走廊', ja: '回廊開放' },
+        desc: {
+          en: 'Improve integration and digital collaboration.',
+          'zh-CN': '提升融合与数字协作。',
+          ja: '統合とデジタル協働を強化。'
+        },
+        deltas: { migration: 0.05, legalPluralism: 0.04, socialFragmentation: -0.04 }
+      },
+      {
+        id: 'quota_lock',
+        label: { en: 'Quota Lock', 'zh-CN': '配额锁定', ja: '枠固定' },
+        desc: {
+          en: 'Reduce migration volatility but increase identity tensions.',
+          'zh-CN': '降低迁移波动，但提高身份紧张。',
+          ja: '移動変動は抑えるが、アイデンティティ対立が増加。'
+        },
+        deltas: { migration: -0.06, identityPolitics: 0.05, stateRegulation: 0.03 }
+      }
+    ]
+  }
+};
+
+const GUIDE_BOOK = {
+  en: {
+    title: 'Simulation Field Guide',
+    subtitle: 'Operations, systems, and parameters explained.',
+    prev: '← Prev',
+    next: 'Next →',
+    chapters: [
+      {
+        id: 'quick_start',
+        label: '1. Quick Start',
+        intro: 'A standard run starts from round 0 and advances automatically by tick interval.',
+        sections: [
+          {
+            title: 'Round Loop',
+            kind: 'list',
+            items: [
+              'Press Start to initialize religions, regions, and strategy states.',
+              'Each tick applies social-signal drift, events, transfer plans, and judgments.',
+              'UI boards refresh with latest round snapshot and gameplay overlays.'
+            ]
+          },
+          {
+            title: 'Control Panel Operations',
+            kind: 'table',
+            headers: ['Control', 'Type', 'Range', 'Explanation'],
+            rows: [
+              ['Start', 'Action', 'One-shot', 'Start/reset a run and begin loop.'],
+              ['Pause', 'Action', 'One-shot', 'Stop loop and settle run score (except Ironman).'],
+              ['Tick Interval', 'Number', '800-10000 ms', 'Controls simulation speed.'],
+              ['Use AI', 'Toggle', 'On/Off', 'Enable/disable AI contribution in transfer/action generation.'],
+              ['Scenario', 'Enum', '4 presets', 'Sets baseline social-signal targets.'],
+              ['Language', 'Enum', 'en / zh-CN / ja', 'Runtime locale switching.'],
+              ['Signal Sliders', 'Float', '0.10-0.98', 'Manual one-round signal overrides.']
+            ]
+          }
+        ]
+      },
+      {
+        id: 'systems',
+        label: '2. Simulation Systems',
+        intro: 'The model combines rule dynamics, optional AI structure, and governance constraints.',
+        sections: [
+          {
+            title: 'Core Systems',
+            kind: 'table',
+            headers: ['System', 'Type', 'Updated', 'What it means'],
+            rows: [
+              ['Transfer Engine', 'Rule/AI/Hybrid', 'Per round', 'Source of assimilation corridor proposals.'],
+              ['Religious Judgment', 'Governance filter', 'Per round', 'Blocks part of transfer flow.'],
+              ['Event Shock', 'Stochastic + boss', 'Every N rounds', 'Perturbs social signals and decisions.'],
+              ['Region Control', 'Territory model', 'Per round', 'Determines ownership, contest status, streak.'],
+              ['Boss Crisis', 'Multi-phase raid', 'Triggered conditions', 'Adds phase objectives + hard rules.'],
+              ['Ant Links', 'Visual corridor graph', 'Per round', 'Route intensity/speed/friction on map.']
+            ]
+          },
+          {
+            title: 'Reading Tips',
+            kind: 'list',
+            items: [
+              'Check roundMetrics.judgmentRatio to see institutional pressure.',
+              'Compare totalFlow with ghost milestones for quality pacing.',
+              'Use regionControl streak + contested flag to detect front-line instability.'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'gameplay',
+        label: '3. Gameplay Layer',
+        intro: 'Game systems reward planning, timing, and risk management on top of simulation.',
+        sections: [
+          {
+            title: 'Mechanics',
+            kind: 'table',
+            headers: ['Mechanic', 'Type', 'Cost / Trigger', 'Result'],
+            rows: [
+              ['Combo Corridor', 'Passive score', 'High-flow links in sequence', 'Builds combo and Intel gain.'],
+              ['Intel', 'Resource', 'From rounds/combo/events', 'Used by forecast unlock, cards, and bets.'],
+              ['Forecast Unlock', 'Action', 'Dynamic Intel cost', 'Reveal hidden forecast corridors.'],
+              ['Risk Bet', 'Action', '5 Intel, resolves after 3 rounds', 'High return if prediction is correct.'],
+              ['Strategy Deck', 'Action card', 'Card-specific Intel cost', 'Immediate signal delta effects.'],
+              ['Secret Agenda', 'Hidden mission', 'Auto-evaluated', 'Bonus Intel when fulfilled.'],
+              ['Stage Goals', 'Objective set', 'Per run', 'Up to 3 stars for run evaluation.'],
+              ['Achievements', 'Meta unlock', 'Condition-based', 'Permanent profile badges.']
+            ]
+          }
+        ]
+      },
+      {
+        id: 'parameters',
+        label: '4. Parameter Reference',
+        intro: 'Most values are normalized for easy tuning and interpretation.',
+        sections: [
+          {
+            title: 'Important Parameters',
+            kind: 'table',
+            headers: ['Parameter', 'Type', 'Range / Formula', 'Effect'],
+            rows: [
+              ['socialSignals.*', 'Float', '0.10-0.98', 'Directly changes transfer and judgment dynamics.'],
+              ['chainMultiplier', 'Float', '1 + (chainLength-1)*0.08', 'Scales combo/intel gains from chain system.'],
+              ['forecastCost', 'Integer', 'max(7, 12 - perk + ironmanTax)', 'Intel required for each forecast reveal.'],
+              ['dailyMultiplier', 'Float', '1.25-1.45 (seeded)', 'Run score multiplier in Daily Challenge.'],
+              ['ironmanCap', 'Integer', '24 rounds', 'Auto-settle boundary in Ironman mode.'],
+              ['betResolveRound', 'Integer', 'startRound + 3', 'Round index when a bet settles.']
+            ]
+          },
+          {
+            title: 'Snapshot Fields to Watch',
+            kind: 'table',
+            headers: ['Field', 'Type', 'Interpretation'],
+            rows: [
+              ['roundMetrics.totalFlow', 'Integer', 'Total successful transfer amount this round.'],
+              ['roundMetrics.judgmentRatio', 'Float', 'Share of flow blocked by judgments.'],
+              ['structureOutput.antLinks[].friction', 'Float', 'Route resistance between regions.'],
+              ['regionControl[].control', 'Float', 'Current ownership strength in region.'],
+              ['bossCrisis.phase/roundsLeft', 'Integer', 'Boss raid stage progression and timer.']
+            ]
+          }
+        ]
+      },
+      {
+        id: 'advanced_modes',
+        label: '5. Advanced Modes',
+        intro: 'Modes change strategy constraints and scoring expectations.',
+        sections: [
+          {
+            title: 'Mode Explanations',
+            kind: 'list',
+            items: [
+              'Daily Challenge: deterministic seed (scenario + signal patch + multiplier).',
+              'Ironman: no manual pause loop, stricter pressure and automatic settlement.',
+              'Ghost Comparison: compare current run against previous archived run.'
+            ]
+          },
+          {
+            title: 'Boss Raid Phase Rules',
+            kind: 'table',
+            headers: ['Phase', 'Locked Operation', 'Strategic implication'],
+            rows: [
+              ['Phase 1', 'Strategy cards disabled', 'Rely on baseline systems and event choices.'],
+              ['Phase 2', 'Forecast unlock disabled', 'Use observed corridors instead of revealed forecasts.'],
+              ['Phase 3', 'Extra pressure each round', 'Stability resources become critical.']
+            ]
+          }
+        ]
+      },
+      {
+        id: 'export_api',
+        label: '6. Export & API',
+        intro: 'The app supports visual capture and report export with simulation endpoints.',
+        sections: [
+          {
+            title: 'Actions',
+            kind: 'table',
+            headers: ['Action', 'Type', 'Output'],
+            rows: [
+              ['Screenshot button', 'Canvas export', 'PNG file named by round.'],
+              ['Report button', 'Server export', 'Academic-style PDF report.'],
+              ['Guide book', 'In-app docs', 'Operational and parameter explanations.']
+            ]
+          },
+          {
+            title: 'Main API Endpoints',
+            kind: 'table',
+            headers: ['Endpoint', 'Method', 'Purpose'],
+            rows: [
+              ['/api/simulation/start', 'POST', 'Initialize or reset simulation state.'],
+              ['/api/simulation/tick', 'POST', 'Advance one round.'],
+              ['/api/simulation/state', 'GET', 'Get current snapshot.'],
+              ['/api/simulation/signals', 'POST', 'Apply manual signal overrides.'],
+              ['/api/simulation/report', 'POST', 'Generate PDF report.']
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  'zh-CN': {
+    title: '模拟作战手册',
+    subtitle: '覆盖操作、系统与参数的完整说明。',
+    prev: '← 上一页',
+    next: '下一页 →',
+    chapters: [
+      {
+        id: 'quick_start',
+        label: '1. 快速开始',
+        intro: '标准对局从第 0 轮开始，按照轮询间隔自动推进。',
+        sections: [
+          {
+            title: '回合循环',
+            kind: 'list',
+            items: [
+              '点击 Start 初始化宗教、区域和策略状态。',
+              '每一轮依次处理信号漂移、事件冲击、转化计划与宗教审判。',
+              '所有面板会基于最新快照同步刷新。'
+            ]
+          },
+          {
+            title: '控制区操作说明',
+            kind: 'table',
+            headers: ['控件', '类型', '范围', '解释'],
+            rows: [
+              ['Start', '操作按钮', '单次触发', '启动/重置对局并进入循环。'],
+              ['Pause', '操作按钮', '单次触发', '停止循环并结算当前局（铁人模式除外）。'],
+              ['Tick Interval', '数值参数', '800-10000 ms', '控制模拟推进速度。'],
+              ['Use AI', '布尔开关', 'On/Off', '是否启用 AI 对转化与行动生成的贡献。'],
+              ['Scenario', '枚举', '4 个预设', '设定社会信号的场景基线。'],
+              ['Language', '枚举', 'en / zh-CN / ja', '运行时切换界面语言。'],
+              ['信号滑条', '浮点参数', '0.10-0.98', '对下一轮信号进行手动覆盖。']
+            ]
+          }
+        ]
+      },
+      {
+        id: 'systems',
+        label: '2. 模拟系统',
+        intro: '模型融合规则驱动、可选 AI 结构与制度治理约束。',
+        sections: [
+          {
+            title: '核心系统类型',
+            kind: 'table',
+            headers: ['系统', '类型', '更新频率', '含义'],
+            rows: [
+              ['转化引擎', 'Rule/AI/Hybrid', '每轮', '决定同化走廊的来源。'],
+              ['宗教审判', '治理过滤', '每轮', '按制度条件拦截部分转化流。'],
+              ['事件冲击', '随机 + Boss', '每 N 轮', '扰动社会信号并触发决策。'],
+              ['区域控制', '领地模型', '每轮', '输出归属、争夺态与连控信息。'],
+              ['Boss 危机', '多阶段 Raid', '条件触发', '引入阶段目标和硬规则。'],
+              ['蚂蚁线链路', '可视图结构', '每轮', '地图上展示强度/速度/摩擦。']
+            ]
+          },
+          {
+            title: '阅读建议',
+            kind: 'list',
+            items: [
+              '先看 roundMetrics.judgmentRatio 判断制度压力。',
+              '用 totalFlow 与 Ghost 里程碑对比节奏质量。',
+              '结合 regionControl.streak 与 contested 识别前线风险。'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'gameplay',
+        label: '3. 玩法系统',
+        intro: '玩法层在模拟基础上加入节奏、风险与资源管理。',
+        sections: [
+          {
+            title: '玩法机制与效果',
+            kind: 'table',
+            headers: ['机制', '类型', '成本/触发', '效果'],
+            rows: [
+              ['连锁走廊', '被动计分', '高流量链路连续命中', '提升连击并增加情报收益。'],
+              ['情报 Intel', '资源', '回合/连击/事件获得', '用于预测解锁、卡牌与下注。'],
+              ['预测解锁', '主动操作', '动态 Intel 消耗', '揭示隐藏预测链路。'],
+              ['风险下注', '主动操作', '5 Intel，3 轮后结算', '命中可获得高收益。'],
+              ['策略卡组', '主动卡牌', '按卡牌消耗 Intel', '立即改变信号参数。'],
+              ['秘密议程', '隐藏任务', '自动判定', '达成后奖励额外情报。'],
+              ['关卡目标', '目标集', '每局', '最多 3 星，用于局内评级。'],
+              ['成就', '元进度', '条件解锁', '永久保留称号与记录。']
+            ]
+          }
+        ]
+      },
+      {
+        id: 'parameters',
+        label: '4. 参数说明',
+        intro: '大部分参数归一化，便于理解和调参。',
+        sections: [
+          {
+            title: '关键参数',
+            kind: 'table',
+            headers: ['参数', '类型', '范围 / 公式', '影响'],
+            rows: [
+              ['socialSignals.*', '浮点', '0.10-0.98', '直接影响转化与审判强度。'],
+              ['chainMultiplier', '浮点', '1 + (chainLength-1)*0.08', '放大连锁体系的连击/情报收益。'],
+              ['forecastCost', '整数', 'max(7, 12 - perk + ironmanTax)', '每次解锁预测所需情报。'],
+              ['dailyMultiplier', '浮点', '1.25-1.45（种子确定）', '每日挑战局分数倍率。'],
+              ['ironmanCap', '整数', '24 轮', '铁人模式自动结算上限。'],
+              ['betResolveRound', '整数', 'startRound + 3', '下注结算回合。']
+            ]
+          },
+          {
+            title: '建议重点观察字段',
+            kind: 'table',
+            headers: ['字段', '类型', '解释'],
+            rows: [
+              ['roundMetrics.totalFlow', '整数', '本轮成功转化总量。'],
+              ['roundMetrics.judgmentRatio', '浮点', '本轮被审判拦截的流量占比。'],
+              ['structureOutput.antLinks[].friction', '浮点', '区域间迁移路径摩擦。'],
+              ['regionControl[].control', '浮点', '区域控制强度。'],
+              ['bossCrisis.phase/roundsLeft', '整数', 'Boss 阶段进度与剩余回合。']
+            ]
+          }
+        ]
+      },
+      {
+        id: 'advanced_modes',
+        label: '5. 高阶模式',
+        intro: '高阶模式会改变约束条件和评分策略。',
+        sections: [
+          {
+            title: '模式说明',
+            kind: 'list',
+            items: [
+              '每日挑战：固定随机种子（场景 + 信号补丁 + 倍率）。',
+              '铁人模式：不允许手动暂停、压力更高、自动结算。',
+              'Ghost 对照：和上一局归档快照做阶段对比。'
+            ]
+          },
+          {
+            title: 'Boss 阶段规则',
+            kind: 'table',
+            headers: ['阶段', '封锁操作', '策略含义'],
+            rows: [
+              ['Phase 1', '禁用策略卡', '依靠基础系统和事件抉择过渡。'],
+              ['Phase 2', '禁用预测解锁', '依赖实时观测链路而非提前揭示。'],
+              ['Phase 3', '每轮追加压制', '稳定性资源和节奏控制更关键。']
+            ]
+          }
+        ]
+      },
+      {
+        id: 'export_api',
+        label: '6. 导出与接口',
+        intro: '项目支持画面导出、报告生成和完整的模拟 API。',
+        sections: [
+          {
+            title: '导出能力',
+            kind: 'table',
+            headers: ['操作', '类型', '输出'],
+            rows: [
+              ['截图按钮', 'Canvas 导出', '以回合命名的 PNG 文件。'],
+              ['报告按钮', '服务端导出', '学术风格 PDF 报告。'],
+              ['指南手册', '内置文档', '操作、类型、参数解释。']
+            ]
+          },
+          {
+            title: '主要 API',
+            kind: 'table',
+            headers: ['接口', '方法', '用途'],
+            rows: [
+              ['/api/simulation/start', 'POST', '初始化或重置模拟。'],
+              ['/api/simulation/tick', 'POST', '推进 1 轮。'],
+              ['/api/simulation/state', 'GET', '获取当前快照。'],
+              ['/api/simulation/signals', 'POST', '应用手动信号覆盖。'],
+              ['/api/simulation/report', 'POST', '生成 PDF 报告。']
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  ja: {
+    title: 'シミュレーション攻略書',
+    subtitle: '操作・システム・パラメータを多言語で解説。',
+    prev: '← 前へ',
+    next: '次へ →',
+    chapters: [
+      {
+        id: 'quick_start',
+        label: '1. クイックスタート',
+        intro: '通常ランはラウンド 0 から開始し、ティック間隔で自動進行します。',
+        sections: [
+          {
+            title: 'ラウンド進行',
+            kind: 'list',
+            items: [
+              'Start で宗教・地域・戦略状態を初期化。',
+              '各ラウンドでシグナル変動、イベント、転化計画、審判を適用。',
+              '全ボードは最新スナップショットで再描画されます。'
+            ]
+          },
+          {
+            title: '操作パネル',
+            kind: 'table',
+            headers: ['操作', 'タイプ', '範囲', '説明'],
+            rows: [
+              ['Start', 'アクション', '単発', 'ラン開始/リセット。'],
+              ['Pause', 'アクション', '単発', 'ループ停止とラン精算（Ironman除く）。'],
+              ['Tick Interval', '数値', '800-10000 ms', '進行速度を制御。'],
+              ['Use AI', 'トグル', 'On/Off', 'AI寄与の有効/無効。'],
+              ['Scenario', '列挙', '4プリセット', '社会シグナルの基準値を設定。'],
+              ['Language', '列挙', 'en / zh-CN / ja', '実行中にUI言語切替。'],
+              ['シグナルスライダー', '浮動小数', '0.10-0.98', '次ラウンド用の手動上書き。']
+            ]
+          }
+        ]
+      },
+      {
+        id: 'systems',
+        label: '2. シミュレーション構造',
+        intro: 'ルール計算、AI構造、制度フィルタを組み合わせたモデルです。',
+        sections: [
+          {
+            title: '主要システム',
+            kind: 'table',
+            headers: ['システム', 'タイプ', '更新', '意味'],
+            rows: [
+              ['転化エンジン', 'Rule/AI/Hybrid', '毎ラウンド', '同化回廊の提案源。'],
+              ['宗教審判', 'ガバナンスフィルタ', '毎ラウンド', '転化流量の一部を遮断。'],
+              ['イベント衝撃', '確率 + Boss', 'Nラウンド毎', 'シグナル揺らぎと意思決定を発生。'],
+              ['地域支配', '領域モデル', '毎ラウンド', '所有者・競合・連続支配を出力。'],
+              ['Boss危機', '多段レイド', '条件トリガー', '段階目標と強制ルールを追加。'],
+              ['アントリンク', '可視化グラフ', '毎ラウンド', '強度/速度/摩擦の地図表示。']
+            ]
+          }
+        ]
+      },
+      {
+        id: 'gameplay',
+        label: '3. ゲームプレイ層',
+        intro: 'シミュレーション上にタイミング・リスク・資源管理を重ねます。',
+        sections: [
+          {
+            title: '主要メカニクス',
+            kind: 'table',
+            headers: ['要素', 'タイプ', 'コスト/条件', '効果'],
+            rows: [
+              ['コンボ回廊', '受動', '高流量リンク連続', 'コンボと情報獲得が増加。'],
+              ['情報 Intel', '資源', 'ラウンド/イベント/コンボ', '予測解放・カード・賭けで使用。'],
+              ['予測解放', '能動', '動的Intelコスト', '隠れ予測リンクを表示。'],
+              ['リスクベット', '能動', '5 Intel・3ラウンド後精算', '命中で高リターン。'],
+              ['戦略デッキ', 'カード', 'カード別Intelコスト', 'シグナルへ即時反映。'],
+              ['秘密議題', '隠しミッション', '自動判定', '達成時に追加報酬。'],
+              ['ステージ目標', '目標セット', '各ラン', '最大3スター評価。'],
+              ['実績', 'メタ進行', '条件解除', '恒久バッジを保存。']
+            ]
+          }
+        ]
+      },
+      {
+        id: 'parameters',
+        label: '4. パラメータ解説',
+        intro: '主要パラメータは正規化され、比較しやすく設計されています。',
+        sections: [
+          {
+            title: '重要パラメータ',
+            kind: 'table',
+            headers: ['パラメータ', '型', '範囲 / 式', '影響'],
+            rows: [
+              ['socialSignals.*', 'Float', '0.10-0.98', '転化と審判の強度を直接変更。'],
+              ['chainMultiplier', 'Float', '1 + (chainLength-1)*0.08', '連鎖による報酬倍率。'],
+              ['forecastCost', 'Integer', 'max(7, 12 - perk + ironmanTax)', '予測解放ごとの必要情報量。'],
+              ['dailyMultiplier', 'Float', '1.25-1.45（seed固定）', 'デイリーのスコア倍率。'],
+              ['ironmanCap', 'Integer', '24', 'Ironman 自動精算上限。'],
+              ['betResolveRound', 'Integer', 'startRound + 3', '賭けの精算ラウンド。']
+            ]
+          },
+          {
+            title: '監視推奨フィールド',
+            kind: 'table',
+            headers: ['フィールド', '型', '解釈'],
+            rows: [
+              ['roundMetrics.totalFlow', 'Integer', '当ラウンド成功転化量。'],
+              ['roundMetrics.judgmentRatio', 'Float', '審判で遮断された比率。'],
+              ['structureOutput.antLinks[].friction', 'Float', '地域間経路摩擦。'],
+              ['regionControl[].control', 'Float', '地域支配強度。'],
+              ['bossCrisis.phase/roundsLeft', 'Integer', 'Boss 段階と残ターン。']
+            ]
+          }
+        ]
+      },
+      {
+        id: 'advanced_modes',
+        label: '5. 上級モード',
+        intro: 'モードにより制約と得点設計が変わります。',
+        sections: [
+          {
+            title: 'モード説明',
+            kind: 'list',
+            items: [
+              'デイリーチャレンジ：固定seedで条件再現可能。',
+              'Ironman：手動停止不可、圧力強化、自動精算。',
+              'Ghost比較：前回ランとの里程標比較。'
+            ]
+          },
+          {
+            title: 'Boss フェーズルール',
+            kind: 'table',
+            headers: ['フェーズ', '制限操作', '戦術含意'],
+            rows: [
+              ['Phase 1', '戦略カード禁止', '基礎システム運用が中心。'],
+              ['Phase 2', '予測解放禁止', '観測ベースで判断する必要。'],
+              ['Phase 3', '毎ラウンド追加圧力', '安定化資源の管理が重要。']
+            ]
+          }
+        ]
+      },
+      {
+        id: 'export_api',
+        label: '6. 出力とAPI',
+        intro: '画面出力とレポート生成、主要APIをサポートします。',
+        sections: [
+          {
+            title: '出力機能',
+            kind: 'table',
+            headers: ['操作', 'タイプ', '出力'],
+            rows: [
+              ['スクリーンショット', 'Canvas出力', 'ラウンド名付き PNG。'],
+              ['レポート', 'サーバー生成', '学術スタイル PDF。'],
+              ['ガイドブック', 'アプリ内文書', '操作・型・パラメータ解説。']
+            ]
+          },
+          {
+            title: '主要API',
+            kind: 'table',
+            headers: ['エンドポイント', 'Method', '用途'],
+            rows: [
+              ['/api/simulation/start', 'POST', '初期化/リセット。'],
+              ['/api/simulation/tick', 'POST', '1ラウンド進行。'],
+              ['/api/simulation/state', 'GET', '現在状態取得。'],
+              ['/api/simulation/signals', 'POST', '手動シグナル適用。'],
+              ['/api/simulation/report', 'POST', 'PDF レポート生成。']
+            ]
+          }
+        ]
+      }
+    ]
+  }
+};
+
+let chainRewardState = { ownerId: null, chainLength: 1, multiplier: 1, lastAwardRound: -1 };
+let metaProgress = loadMetaProgress();
+let dailyChallengeProfile = buildDailyChallengeProfile();
+let gameRun = createEmptyGameRun();
 
 const GHOST_STORAGE_KEY = 'religion_sim_ghost_run_v1';
 const DECISION_OPTION_LIBRARY = {
@@ -237,6 +984,287 @@ function localizedText(entry, fallback = '') {
   return entry[i18n.locale] || entry.en || fallback;
 }
 
+function escapeHtml(value) {
+  return String(value || '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function syncBodyLock() {
+  const shouldLock =
+    (modalEl && !modalEl.hidden) ||
+    (guideModalEl && !guideModalEl.hidden);
+  document.body.style.overflow = shouldLock ? 'hidden' : '';
+}
+
+function getGuideBookByLocale() {
+  return GUIDE_BOOK[i18n.locale] || GUIDE_BOOK.en;
+}
+
+function renderGuideSection(section) {
+  const title = `<div class="guide-section-title">${escapeHtml(section.title || '')}</div>`;
+  if (section.kind === 'list') {
+    return `<article class="guide-section">${title}<ul class="guide-list">${(section.items || [])
+      .map((item) => `<li>${escapeHtml(item)}</li>`)
+      .join('')}</ul></article>`;
+  }
+  if (section.kind === 'table') {
+    const headers = Array.isArray(section.headers) ? section.headers : [];
+    const rows = Array.isArray(section.rows) ? section.rows : [];
+    return `<article class="guide-section">${title}<div class="guide-table-wrap"><table class="guide-table"><thead><tr>${headers
+      .map((header) => `<th>${escapeHtml(header)}</th>`)
+      .join('')}</tr></thead><tbody>${rows
+      .map(
+        (row) =>
+          `<tr>${(Array.isArray(row) ? row : []).map((col) => `<td>${escapeHtml(col)}</td>`).join('')}</tr>`
+      )
+      .join('')}</tbody></table></div></article>`;
+  }
+  if (section.kind === 'tags') {
+    return `<article class="guide-section">${title}<div class="guide-tag-row">${(section.items || [])
+      .map((item) => `<span class="guide-tag">${escapeHtml(item)}</span>`)
+      .join('')}</div></article>`;
+  }
+  return `<article class="guide-section">${title}<p>${escapeHtml(section.text || '')}</p></article>`;
+}
+
+function renderGuideBook() {
+  if (!guideModalEl || !guideTocEl || !guidePageEl) {
+    return;
+  }
+  const book = getGuideBookByLocale();
+  const chapters = Array.isArray(book.chapters) ? book.chapters : [];
+  guideChapterIndex = clampValue(guideChapterIndex, 0, Math.max(0, chapters.length - 1));
+  const active = chapters[guideChapterIndex];
+
+  if (guideBookTitleEl) {
+    guideBookTitleEl.textContent = book.title || 'Guide';
+  }
+  if (guideBookSubtitleEl) {
+    guideBookSubtitleEl.textContent = book.subtitle || '';
+  }
+  if (guidePrevBtnEl) {
+    guidePrevBtnEl.textContent = book.prev || 'Prev';
+    guidePrevBtnEl.disabled = guideChapterIndex <= 0;
+  }
+  if (guideNextBtnEl) {
+    guideNextBtnEl.textContent = book.next || 'Next';
+    guideNextBtnEl.disabled = guideChapterIndex >= chapters.length - 1;
+  }
+  if (guidePageIndicatorEl) {
+    guidePageIndicatorEl.textContent = `${guideChapterIndex + 1} / ${Math.max(1, chapters.length)}`;
+  }
+
+  guideTocEl.innerHTML = chapters
+    .map(
+      (chapter, index) =>
+        `<button class="guide-toc-item ${index === guideChapterIndex ? 'is-active' : ''}" data-guide-index="${index}" type="button">${escapeHtml(chapter.label || chapter.id || `Chapter ${index + 1}`)}</button>`
+    )
+    .join('');
+  for (const item of guideTocEl.querySelectorAll('[data-guide-index]')) {
+    item.addEventListener('click', () => {
+      guideChapterIndex = Number(item.dataset.guideIndex || 0);
+      renderGuideBook();
+    });
+  }
+
+  if (!active) {
+    guidePageEl.innerHTML = '<article class="guide-section"><p>-</p></article>';
+    return;
+  }
+
+  guidePageEl.innerHTML = `
+    <h3>${escapeHtml(active.label || '')}</h3>
+    <p>${escapeHtml(active.intro || '')}</p>
+    ${(active.sections || []).map((section) => renderGuideSection(section)).join('')}
+  `;
+}
+
+function openGuideBook(chapterIndex = 0) {
+  if (!guideModalEl) {
+    return;
+  }
+  guideChapterIndex = Number.isFinite(chapterIndex) ? chapterIndex : 0;
+  guideModalEl.hidden = false;
+  renderGuideBook();
+  syncBodyLock();
+}
+
+function closeGuideBook() {
+  if (!guideModalEl) {
+    return;
+  }
+  guideModalEl.hidden = true;
+  syncBodyLock();
+}
+
+function hashString(text) {
+  let hash = 2166136261;
+  for (let i = 0; i < text.length; i += 1) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function seededRandom(seedBase, index = 0) {
+  const x = Math.sin((seedBase + 1) * 12.9898 + index * 78.233) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+function shuffleWithSeed(input, seedBase) {
+  const arr = input.slice();
+  for (let i = arr.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(seededRandom(seedBase, i) * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function createEmptyGameRun() {
+  return {
+    id: '',
+    startedAt: '',
+    endedAt: '',
+    dailyChallenge: false,
+    ironman: false,
+    scoreMultiplier: 1,
+    objectives: [],
+    secretAgenda: null,
+    secretRevealed: false,
+    chainHistory: [],
+    pendingBetChoice: null,
+    activeBet: null,
+    betStats: { total: 0, won: 0, streak: 0 },
+    deck: [],
+    deckHand: [],
+    deckDiscard: [],
+    cardsUsed: 0,
+    narrativeQueue: [],
+    narrativeStep: 0,
+    achievementsNew: [],
+    stars: 0,
+    finalScore: 0,
+    settled: false,
+    lastBossRuleRound: -1
+  };
+}
+
+function loadMetaProgress() {
+  const fallback = {
+    researchPoints: 0,
+    totalRuns: 0,
+    totalStars: 0,
+    highScore: 0,
+    perks: {
+      starterIntel: false,
+      forecastDiscount: false,
+      stabilityShield: false
+    },
+    achievements: {},
+    dailyLeaderboard: {}
+  };
+  if (typeof localStorage === 'undefined') {
+    return fallback;
+  }
+  try {
+    const raw = localStorage.getItem(META_STORAGE_KEY);
+    if (!raw) {
+      return fallback;
+    }
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') {
+      return fallback;
+    }
+    return {
+      ...fallback,
+      ...parsed,
+      perks: { ...fallback.perks, ...(parsed.perks || {}) },
+      achievements: typeof parsed.achievements === 'object' ? parsed.achievements : {},
+      dailyLeaderboard: typeof parsed.dailyLeaderboard === 'object' ? parsed.dailyLeaderboard : {}
+    };
+  } catch (_err) {
+    return fallback;
+  }
+}
+
+function saveMetaProgress() {
+  if (typeof localStorage === 'undefined') {
+    return;
+  }
+  try {
+    localStorage.setItem(META_STORAGE_KEY, JSON.stringify(metaProgress));
+  } catch (_err) {
+    // Ignore quota errors.
+  }
+}
+
+function buildDailyChallengeProfile(now = new Date()) {
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  const key = `${y}-${m}-${d}`;
+  const seed = hashString(`${DAILY_CHALLENGE_KEY_PREFIX}${key}`);
+  const scenarios = ['balanced', 'high_regulation', 'high_secularization', 'high_polarization'];
+  const scenario = scenarios[seed % scenarios.length];
+  const signalPatch = {
+    digitalization: clampValue(0.44 + seededRandom(seed, 1) * 0.28, 0.1, 0.98),
+    socialFragmentation: clampValue(0.45 + seededRandom(seed, 2) * 0.32, 0.1, 0.98),
+    legalPluralism: clampValue(0.36 + seededRandom(seed, 3) * 0.32, 0.1, 0.98),
+    mediaPolarization: clampValue(0.34 + seededRandom(seed, 4) * 0.38, 0.1, 0.98)
+  };
+  return {
+    key,
+    seed,
+    scenario,
+    scoreMultiplier: 1.25 + seededRandom(seed, 5) * 0.2,
+    signalPatch
+  };
+}
+
+function objectiveProgressByType(type, state) {
+  if (!state) {
+    return { done: false, progress: 0, valueText: '0%' };
+  }
+  if (type === 'round_advance') {
+    const p = clampValue(state.round / 12, 0, 1);
+    return { done: state.round >= 12, progress: p, valueText: `${state.round}/12` };
+  }
+  if (type === 'stability_window') {
+    const frag = Number(state.socialSignals?.socialFragmentation || 0);
+    const p = clampValue((0.78 - frag) / 0.3, 0, 1);
+    return { done: frag < 0.78, progress: p, valueText: formatPercent(Math.max(0, 0.78 - frag), 0) };
+  }
+  if (type === 'region_chain') {
+    const chainLength = chainRewardState.chainLength || 1;
+    const p = clampValue(chainLength / 3, 0, 1);
+    return { done: chainLength >= 3, progress: p, valueText: `${chainLength}/3` };
+  }
+  return { done: false, progress: 0, valueText: '0%' };
+}
+
+function chooseSecretAgenda(seedBase) {
+  const index = Math.floor(seededRandom(seedBase, 11) * SECRET_AGENDA_LIBRARY.length) % SECRET_AGENDA_LIBRARY.length;
+  const item = SECRET_AGENDA_LIBRARY[index];
+  return {
+    ...item,
+    done: false,
+    claimed: false
+  };
+}
+
+function buildDeck(seedBase) {
+  const picked = shuffleWithSeed(DECK_CARD_LIBRARY, seedBase).slice(0, 5).map((card) => ({ ...card }));
+  return {
+    deck: picked.slice(3),
+    hand: picked.slice(0, 3),
+    discard: []
+  };
+}
+
 function loadGhostRunData() {
   if (typeof localStorage === 'undefined') {
     return null;
@@ -264,6 +1292,10 @@ function archiveGhostRunFromState(state) {
     round: state.round,
     scenario: state.scenario,
     capturedAt: new Date().toISOString(),
+    milestones: runTelemetry
+      .filter((entry) => entry.round > 0 && entry.round % 4 === 0)
+      .slice(-12),
+    betting: gameRun?.betStats || { total: 0, won: 0, streak: 0 },
     byReligion: Object.fromEntries(
       state.religions.map((religion) => [religion.id, Array.isArray(religion.history) ? religion.history.slice(-160) : []])
     )
@@ -330,6 +1362,17 @@ function applyStaticI18n() {
   }
   if (signalResetBtnEl) signalResetBtnEl.textContent = i18n.t('controls.signalReset');
   if (screenshotBtnEl) screenshotBtnEl.title = i18n.t('controls.screenshot');
+  if (guideBtnEl) guideBtnEl.title = i18n.t('controls.gameGuide');
+  if (guideCloseBtnEl) guideCloseBtnEl.setAttribute('aria-label', i18n.t('modal.close'));
+  if (gameLabTitleEl) {
+    gameLabTitleEl.textContent = i18n.t('section.gameLab');
+  }
+  if (dailyChallengeLabelEl) {
+    dailyChallengeLabelEl.textContent = `${i18n.t('controls.dailyChallenge')} · ${dailyChallengeProfile.key}`;
+  }
+  if (ironmanLabelEl) {
+    ironmanLabelEl.textContent = i18n.t('controls.ironman');
+  }
   const reportBtnEl = document.getElementById('reportBtn');
   if (reportBtnEl) reportBtnEl.title = i18n.t('controls.exportReport');
   if (intelUnlockBtnEl) {
@@ -364,6 +1407,10 @@ function applyStaticI18n() {
 
   for (const option of logFilterSelect.options) {
     option.textContent = i18n.t(`logFilter.${option.value}`);
+  }
+
+  if (guideModalEl && !guideModalEl.hidden) {
+    renderGuideBook();
   }
 }
 
@@ -535,8 +1582,669 @@ function renderEventFeed(state) {
     .join('');
 }
 
+function computeGhostGap(state) {
+  if (!ghostRunData?.byReligion) {
+    return null;
+  }
+  const currentTop = [...(state?.religions || [])].sort((a, b) => b.followers - a.followers)[0];
+  if (!currentTop) {
+    return null;
+  }
+  const ghostSeries = ghostRunData.byReligion[currentTop.id];
+  if (!Array.isArray(ghostSeries) || ghostSeries.length === 0) {
+    return null;
+  }
+  const idx = clampValue(state.round, 0, ghostSeries.length - 1);
+  const ghostVal = Number(ghostSeries[idx] || 0);
+  return currentTop.followers - ghostVal;
+}
+
+function setStatusHint(message) {
+  if (!statusEl || !message) {
+    return;
+  }
+  statusEl.textContent = message;
+}
+
+function resolveBetOptionLabel(option) {
+  if (option === 'dominant_hold') {
+    return i18n.locale === 'zh-CN'
+      ? '主导宗教保持领先'
+      : i18n.locale === 'ja'
+        ? '優勢宗教が首位維持'
+        : 'Dominant religion keeps lead';
+  }
+  if (option === 'fragmentation_drop') {
+    return i18n.locale === 'zh-CN'
+      ? '碎片化下降'
+      : i18n.locale === 'ja'
+        ? '分断率が低下'
+        : 'Fragmentation drops';
+  }
+  return i18n.locale === 'zh-CN'
+    ? '活跃链路增长'
+    : i18n.locale === 'ja'
+      ? 'アクティブ線が増加'
+      : 'Active lines increase';
+}
+
+function evaluateRegionChain(state) {
+  const control = Array.isArray(state?.regionControl) ? state.regionControl : [];
+  const byRegion = new Map(control.map((item) => [item.regionId, item]));
+  const visited = new Set();
+  let best = { ownerId: null, chainLength: 1 };
+
+  function dfs(regionId, ownerId) {
+    const key = `${ownerId}:${regionId}`;
+    if (visited.has(key)) {
+      return 0;
+    }
+    visited.add(key);
+    let size = 1;
+    const neighbors = REGION_CHAIN_GRAPH[regionId] || [];
+    for (const next of neighbors) {
+      const nextControl = byRegion.get(next);
+      if (!nextControl || nextControl.ownerId !== ownerId || Number(nextControl.control || 0) < 0.42) {
+        continue;
+      }
+      size += dfs(next, ownerId);
+    }
+    return size;
+  }
+
+  for (const item of control) {
+    if (!item?.ownerId || Number(item.control || 0) < 0.42) {
+      continue;
+    }
+    const chainLength = dfs(item.regionId, item.ownerId);
+    if (chainLength > best.chainLength) {
+      best = { ownerId: item.ownerId, chainLength };
+    }
+  }
+  best.multiplier = 1 + Math.max(0, best.chainLength - 1) * 0.08;
+  return best;
+}
+
+function initializeRunSystems() {
+  dailyChallengeProfile = buildDailyChallengeProfile();
+  const seedBase = gameRun.dailyChallenge
+    ? dailyChallengeProfile.seed
+    : hashString(`${Date.now()}_${Math.random()}`);
+  const selectedObjectives = OBJECTIVE_LIBRARY.map((item) => ({
+    ...item,
+    done: false,
+    progress: 0,
+    valueText: '0'
+  }));
+  const deckPack = buildDeck(seedBase + 41);
+  const secretAgenda = chooseSecretAgenda(seedBase + 79);
+  gameRun.objectives = selectedObjectives;
+  gameRun.secretAgenda = secretAgenda;
+  gameRun.secretRevealed = false;
+  gameRun.deck = deckPack.deck;
+  gameRun.deckHand = deckPack.hand;
+  gameRun.deckDiscard = deckPack.discard;
+  gameRun.cardsUsed = 0;
+  gameRun.pendingBetChoice = null;
+  gameRun.activeBet = null;
+  gameRun.betStats = { total: 0, won: 0, streak: 0 };
+  gameRun.narrativeQueue = [];
+  gameRun.narrativeStep = 0;
+  gameRun.stars = 0;
+  gameRun.lastBossRuleRound = -1;
+  chainRewardState = { ownerId: null, chainLength: 1, multiplier: 1, lastAwardRound: -1 };
+  runTelemetry = [];
+}
+
+function awardAchievement(achievementId) {
+  if (!achievementId) {
+    return;
+  }
+  if (!metaProgress.achievements[achievementId]) {
+    metaProgress.achievements[achievementId] = {
+      unlockedAt: new Date().toISOString()
+    };
+    gameRun.achievementsNew.push(achievementId);
+    saveMetaProgress();
+  }
+}
+
+function evaluateObjectivesAndAgenda(state) {
+  if (!state || !Array.isArray(gameRun.objectives)) {
+    return;
+  }
+  for (const objective of gameRun.objectives) {
+    const progress = objectiveProgressByType(objective.id, state);
+    objective.done = progress.done;
+    objective.progress = progress.progress;
+    objective.valueText = progress.valueText;
+  }
+  gameRun.stars = gameRun.objectives.filter((item) => item.done).length;
+
+  const ghostGap = computeGhostGap(state);
+  if (gameRun.secretAgenda && !gameRun.secretAgenda.done) {
+    const topCombo = topComboEntry();
+    if (gameRun.secretAgenda.id === 'combo_director') {
+      gameRun.secretAgenda.done = Boolean((topCombo?.streak || 0) >= 4 && state.round <= 14);
+    } else if (gameRun.secretAgenda.id === 'quiet_court') {
+      gameRun.secretAgenda.done =
+        state.round >= 10 && Number(state.roundMetrics?.judgmentRatio || 1) < 0.3;
+    } else if (gameRun.secretAgenda.id === 'ghost_slayer') {
+      gameRun.secretAgenda.done = state.round >= 12 && ghostGap !== null && ghostGap >= 800;
+    }
+    if (gameRun.secretAgenda.done && !gameRun.secretAgenda.claimed) {
+      gameRun.secretAgenda.claimed = true;
+      gameRun.secretRevealed = true;
+      intelPoints += gameRun.secretAgenda.reward;
+      setStatusHint(
+        i18n.locale === 'zh-CN'
+          ? `秘密议程完成：+${gameRun.secretAgenda.reward} 情报`
+          : i18n.locale === 'ja'
+            ? `秘密議題達成：情報 +${gameRun.secretAgenda.reward}`
+            : `Secret agenda completed: +${gameRun.secretAgenda.reward} intel`
+      );
+    }
+  }
+}
+
+function resolveActiveBet(state) {
+  if (!gameRun.activeBet || state.round < gameRun.activeBet.resolveRound) {
+    return;
+  }
+  const bet = gameRun.activeBet;
+  const topReligion = [...state.religions].sort((a, b) => b.followers - a.followers)[0];
+  const activeLines = Array.isArray(state.structureOutput?.antLinks) ? state.structureOutput.antLinks.length : 0;
+  let won = false;
+  if (bet.option === 'dominant_hold') {
+    won = bet.baseline.topReligionId === topReligion?.id;
+  } else if (bet.option === 'fragmentation_drop') {
+    won = Number(state.socialSignals?.socialFragmentation || 1) < bet.baseline.fragmentation;
+  } else if (bet.option === 'lines_growth') {
+    won = activeLines >= bet.baseline.activeLines + 2;
+  }
+  gameRun.betStats.total += 1;
+  if (won) {
+    gameRun.betStats.won += 1;
+    gameRun.betStats.streak += 1;
+    const reward = Math.round(bet.cost * 2.1);
+    intelPoints += reward;
+    comboScore += Math.round(4 * chainRewardState.multiplier);
+    setStatusHint(
+      i18n.locale === 'zh-CN'
+        ? `下注成功：${resolveBetOptionLabel(bet.option)}，奖励 ${reward} 情报`
+        : i18n.locale === 'ja'
+          ? `賭け成功：${resolveBetOptionLabel(bet.option)}、報酬 ${reward} 情報`
+          : `Bet won: ${resolveBetOptionLabel(bet.option)}, reward ${reward} intel`
+    );
+  } else {
+    gameRun.betStats.streak = 0;
+    setStatusHint(
+      i18n.locale === 'zh-CN'
+        ? `下注失败：${resolveBetOptionLabel(bet.option)}`
+        : i18n.locale === 'ja'
+          ? `賭け失敗：${resolveBetOptionLabel(bet.option)}`
+          : `Bet lost: ${resolveBetOptionLabel(bet.option)}`
+    );
+  }
+  gameRun.activeBet = null;
+}
+
+function queueNarrativeFollowup(eventId) {
+  const template = NARRATIVE_CHAIN_LIBRARY[eventId];
+  if (!template || !liveState) {
+    return;
+  }
+  gameRun.narrativeQueue.push({
+    dueRound: liveState.round + template.delay,
+    eventId,
+    title: template.title,
+    options: template.options
+  });
+}
+
+function spawnNarrativeDecision(state) {
+  if (pendingDecision || !Array.isArray(gameRun.narrativeQueue) || gameRun.narrativeQueue.length === 0) {
+    return;
+  }
+  const index = gameRun.narrativeQueue.findIndex((item) => state.round >= item.dueRound);
+  if (index < 0) {
+    return;
+  }
+  const chain = gameRun.narrativeQueue.splice(index, 1)[0];
+  pendingDecision = {
+    key: `narrative_${chain.eventId}_${state.round}_${gameRun.narrativeStep++}`,
+    eventId: chain.eventId,
+    title: localizedText(chain.title, chain.eventId),
+    options: chain.options,
+    isNarrative: true
+  };
+}
+
+function evaluateAchievements(state) {
+  const topCombo = topComboEntry();
+  if ((topCombo?.streak || 0) >= 6) {
+    awardAchievement('combo_king');
+  }
+  if (state?.bossCrisis?.lastOutcome === 'victory') {
+    awardAchievement('raid_stable');
+  }
+  if (gameRun.betStats.streak >= 3) {
+    awardAchievement('oracle');
+  }
+  if (gameRun.cardsUsed >= 3) {
+    awardAchievement('deck_scholar');
+  }
+  if (gameRun.ironman && gameRun.stars >= 3 && state.round >= 12) {
+    awardAchievement('iron_legend');
+  }
+}
+
+function applyBossRaidRules(state) {
+  if (!state?.bossCrisis?.active) {
+    return;
+  }
+  if (state.round <= gameRun.lastBossRuleRound) {
+    return;
+  }
+  gameRun.lastBossRuleRound = state.round;
+  const phase = Number(state.bossCrisis.phase || 1);
+  if (phase === 3) {
+    applySignalDeltas(
+      metaProgress.perks.stabilityShield
+        ? { mediaPolarization: 0.01, socialFragmentation: 0.01, legalPluralism: -0.01 }
+        : { mediaPolarization: 0.02, socialFragmentation: 0.02, legalPluralism: -0.02 },
+      i18n.locale === 'zh-CN'
+        ? 'Boss Phase 3：规则压制生效'
+        : i18n.locale === 'ja'
+          ? 'Boss Phase 3: ルール圧力が発動'
+          : 'Boss Phase 3 rule pressure applied'
+    ).catch(() => {});
+  }
+}
+
+function settleRunProgress(state, reason = 'manual') {
+  if (!state || !state.round || gameRun.settled) {
+    return;
+  }
+  const stars = gameRun.stars || 0;
+  const achievementCount = Object.keys(metaProgress.achievements || {}).length;
+  const baseScore =
+    Math.round(state.round * 14 + comboScore * 1.2 + intelPoints * 2.4 + stars * 110 + gameRun.betStats.won * 35 + gameRun.cardsUsed * 12);
+  const multiplier = (gameRun.ironman ? 1.45 : 1) * (gameRun.dailyChallenge ? gameRun.scoreMultiplier : 1);
+  const finalScore = Math.round(baseScore * multiplier);
+  const researchGain = Math.max(3, Math.floor(finalScore / 140) + stars * 2);
+
+  gameRun.finalScore = finalScore;
+  gameRun.endedAt = new Date().toISOString();
+  gameRun.settled = true;
+
+  metaProgress.totalRuns += 1;
+  metaProgress.totalStars += stars;
+  metaProgress.researchPoints += researchGain;
+  metaProgress.highScore = Math.max(metaProgress.highScore || 0, finalScore);
+
+  if (metaProgress.researchPoints >= 20) metaProgress.perks.starterIntel = true;
+  if (metaProgress.researchPoints >= 45) metaProgress.perks.forecastDiscount = true;
+  if (metaProgress.researchPoints >= 80) metaProgress.perks.stabilityShield = true;
+
+  if (gameRun.dailyChallenge) {
+    const boardKey = dailyChallengeProfile.key;
+    const item = {
+      score: finalScore,
+      stars,
+      round: state.round,
+      at: gameRun.endedAt
+    };
+    const board = Array.isArray(metaProgress.dailyLeaderboard[boardKey])
+      ? metaProgress.dailyLeaderboard[boardKey]
+      : [];
+    board.push(item);
+    board.sort((a, b) => b.score - a.score);
+    metaProgress.dailyLeaderboard[boardKey] = board.slice(0, 5);
+  }
+  saveMetaProgress();
+  renderMetaBoard();
+
+  setStatusHint(
+    i18n.locale === 'zh-CN'
+      ? `本局结算（${reason}）：分数 ${finalScore}，研究点 +${researchGain}`
+      : i18n.locale === 'ja'
+        ? `ラン終了（${reason}）：スコア ${finalScore}、研究点 +${researchGain}`
+        : `Run settled (${reason}): score ${finalScore}, research +${researchGain}`
+  );
+}
+
+function renderObjectiveBoard(state) {
+  if (!objectiveBoardEl) {
+    return;
+  }
+  if (!Array.isArray(gameRun.objectives) || gameRun.objectives.length === 0) {
+    objectiveBoardEl.innerHTML = `<div class="game-board-empty">-</div>`;
+    return;
+  }
+  const title =
+    i18n.locale === 'zh-CN'
+      ? '关卡目标（三星）'
+      : i18n.locale === 'ja'
+        ? 'ステージ目標（3スター）'
+        : 'Stage Goals (3 Stars)';
+  const ghostNote = state && ghostRunData?.milestones?.length
+    ? (() => {
+        const latest = [...ghostRunData.milestones].reverse().find((item) => Number(item.round || 0) <= state.round);
+        if (!latest) {
+          return '';
+        }
+        const flowGap = Number(state.roundMetrics?.totalFlow || 0) - Number(latest.totalFlow || 0);
+        const label =
+          i18n.locale === 'zh-CN'
+            ? `Ghost 里程碑 R${latest.round}: 流量差 ${flowGap >= 0 ? '+' : ''}${Math.round(flowGap)}`
+            : i18n.locale === 'ja'
+              ? `Ghost マイルストーン R${latest.round}: フロー差 ${flowGap >= 0 ? '+' : ''}${Math.round(flowGap)}`
+              : `Ghost milestone R${latest.round}: flow gap ${flowGap >= 0 ? '+' : ''}${Math.round(flowGap)}`;
+        return `<div class="game-board-empty">${label}</div>`;
+      })()
+    : '';
+
+  objectiveBoardEl.innerHTML = `
+    <div class="game-board-title">${title}</div>
+    ${gameRun.objectives
+      .map((item) => {
+        const p = objectiveProgressByType(item.id, state);
+        return `<div class="objective-item ${p.done ? 'is-done' : ''}">
+          <span class="objective-label">${localizedText(item.label, item.id)}</span>
+          <span class="objective-progress">${p.done ? '✓' : p.valueText}</span>
+        </div>`;
+      })
+      .join('')}
+    ${ghostNote}
+  `;
+  if (starBadgeEl) {
+    const stars = gameRun.objectives.filter((item) => objectiveProgressByType(item.id, state).done).length;
+    gameRun.stars = stars;
+    starBadgeEl.textContent = `★ ${stars} / 3`;
+  }
+}
+
+function renderSecretAgendaBoard() {
+  if (!secretAgendaBoardEl) {
+    return;
+  }
+  const title =
+    i18n.locale === 'zh-CN'
+      ? '秘密议程'
+      : i18n.locale === 'ja'
+        ? '秘密議題'
+        : 'Secret Agenda';
+  const agenda = gameRun.secretAgenda;
+  if (!agenda) {
+    secretAgendaBoardEl.innerHTML = `<div class="game-board-title">${title}</div><div class="game-board-empty">-</div>`;
+    return;
+  }
+  const hidden = !gameRun.secretRevealed && !agenda.done;
+  secretAgendaBoardEl.innerHTML = `
+    <div class="game-board-title">${title}</div>
+    <div class="secret-agenda-card ${hidden ? 'is-hidden' : ''}">
+      <strong>${hidden ? '???' : localizedText(agenda.label, agenda.id)}</strong><br />
+      ${hidden ? (i18n.locale === 'zh-CN' ? '满足条件后揭示' : i18n.locale === 'ja' ? '条件達成で開示' : 'Reveal on completion') : localizedText(agenda.description, '')}
+      <br /><small>${i18n.locale === 'zh-CN' ? '奖励' : i18n.locale === 'ja' ? '報酬' : 'Reward'}: +${agenda.reward} Intel</small>
+    </div>
+  `;
+}
+
+function renderChainRewardBoard(state) {
+  if (!chainRewardBoardEl) {
+    return;
+  }
+  const result = evaluateRegionChain(state);
+  chainRewardState.ownerId = result.ownerId;
+  chainRewardState.chainLength = result.chainLength;
+  chainRewardState.multiplier = result.multiplier;
+  if (Number(state?.round || 0) > 0 && result.chainLength >= 3 && chainRewardState.lastAwardRound !== state.round) {
+    intelPoints += Math.max(1, Math.floor((result.chainLength - 2) * 0.8));
+    chainRewardState.lastAwardRound = state.round;
+  }
+
+  const title =
+    i18n.locale === 'zh-CN'
+      ? '区域连锁奖励'
+      : i18n.locale === 'ja'
+        ? '地域連鎖ボーナス'
+        : 'Region Chain Bonus';
+  chainRewardBoardEl.innerHTML = `
+    <div class="game-board-title">${title}</div>
+    <div class="objective-item">
+      <span class="objective-label">${
+        i18n.locale === 'zh-CN'
+          ? `最长控制链 ${result.chainLength}`
+          : i18n.locale === 'ja'
+            ? `最長支配チェーン ${result.chainLength}`
+            : `Longest control chain ${result.chainLength}`
+      }</span>
+      <span class="objective-progress">x${result.multiplier.toFixed(2)}</span>
+    </div>
+    <div class="chain-bar"><div class="chain-bar-fill" style="width:${Math.min(100, result.chainLength * 22)}%"></div></div>
+  `;
+}
+
+function renderBetBoard(state) {
+  if (!betBoardEl) {
+    return;
+  }
+  const title =
+    i18n.locale === 'zh-CN' ? '风险下注' : i18n.locale === 'ja' ? 'リスクベット' : 'Risk Bet';
+  const cost = 5;
+  const active = gameRun.activeBet;
+  const canPlace = !active && state?.round > 0;
+  const selected = gameRun.pendingBetChoice;
+  betBoardEl.innerHTML = `
+    <div class="game-board-title">${title}</div>
+    ${
+      active
+        ? `<div class="objective-item">
+            <span class="objective-label">${resolveBetOptionLabel(active.option)}</span>
+            <span class="objective-progress">R${active.resolveRound}</span>
+          </div>`
+        : `<div class="bet-actions">
+            <button class="bet-option-btn ${selected === 'dominant_hold' ? 'is-active' : ''}" data-bet-option="dominant_hold" type="button">${i18n.locale === 'zh-CN' ? '守擂' : i18n.locale === 'ja' ? '防衛' : 'Hold'}</button>
+            <button class="bet-option-btn ${selected === 'fragmentation_drop' ? 'is-active' : ''}" data-bet-option="fragmentation_drop" type="button">${i18n.locale === 'zh-CN' ? '降噪' : i18n.locale === 'ja' ? '低下' : 'Drop'}</button>
+            <button class="bet-option-btn ${selected === 'lines_growth' ? 'is-active' : ''}" data-bet-option="lines_growth" type="button">${i18n.locale === 'zh-CN' ? '扩链' : i18n.locale === 'ja' ? '増線' : 'Grow'}</button>
+          </div>
+          <button class="bet-confirm-btn" data-bet-confirm="1" type="button" ${canPlace ? '' : 'disabled'}>
+            ${i18n.locale === 'zh-CN' ? `下注 (${cost})` : i18n.locale === 'ja' ? `賭け (${cost})` : `Place Bet (${cost})`}
+          </button>`
+    }
+  `;
+  for (const btn of betBoardEl.querySelectorAll('[data-bet-option]')) {
+    btn.addEventListener('click', () => {
+      gameRun.pendingBetChoice = btn.dataset.betOption;
+      renderBetBoard(state);
+    });
+  }
+  const confirmBtn = betBoardEl.querySelector('[data-bet-confirm]');
+  if (confirmBtn) {
+    confirmBtn.addEventListener('click', () => {
+      const option = gameRun.pendingBetChoice;
+      if (!option || intelPoints < cost || !state) {
+        return;
+      }
+      intelPoints -= cost;
+      const topReligion = [...state.religions].sort((a, b) => b.followers - a.followers)[0];
+      gameRun.activeBet = {
+        option,
+        cost,
+        startRound: state.round,
+        resolveRound: state.round + 3,
+        baseline: {
+          topReligionId: topReligion?.id || null,
+          fragmentation: Number(state.socialSignals?.socialFragmentation || 0.5),
+          activeLines: Array.isArray(state.structureOutput?.antLinks) ? state.structureOutput.antLinks.length : 0
+        }
+      };
+      gameRun.pendingBetChoice = null;
+      renderBetBoard(state);
+      renderGameplayHud();
+    });
+  }
+}
+
+function drawDeckCard() {
+  if (gameRun.deck.length === 0) {
+    if (gameRun.deckDiscard.length === 0) {
+      return null;
+    }
+    gameRun.deck = shuffleWithSeed(gameRun.deckDiscard, hashString(`${Date.now()}_${gameRun.cardsUsed}`));
+    gameRun.deckDiscard = [];
+  }
+  return gameRun.deck.shift() || null;
+}
+
+async function playDeckCard(cardId) {
+  if (!liveState || !cardId) {
+    return;
+  }
+  if (activeBossPanel?.active && Number(activeBossPanel.phase || 1) === 1) {
+    setStatusHint(
+      i18n.locale === 'zh-CN'
+        ? 'Boss Phase 1：策略卡被封锁'
+        : i18n.locale === 'ja'
+          ? 'Boss Phase 1: 戦略カード使用不可'
+          : 'Boss Phase 1: strategy cards are locked'
+    );
+    return;
+  }
+  const cardIndex = gameRun.deckHand.findIndex((item) => item.id === cardId);
+  if (cardIndex < 0) {
+    return;
+  }
+  const card = gameRun.deckHand[cardIndex];
+  if (intelPoints < card.cost) {
+    setStatusHint(
+      i18n.locale === 'zh-CN'
+        ? `情报不足（需要 ${card.cost}）`
+        : i18n.locale === 'ja'
+          ? `情報不足（必要 ${card.cost}）`
+          : `Not enough intel (need ${card.cost})`
+    );
+    return;
+  }
+  intelPoints -= card.cost;
+  const done = await applySignalDeltas(
+    card.deltas,
+    i18n.locale === 'zh-CN'
+      ? `已打出策略卡：${localizedText(card.title, card.id)}`
+      : i18n.locale === 'ja'
+        ? `戦略カード使用：${localizedText(card.title, card.id)}`
+        : `Card played: ${localizedText(card.title, card.id)}`
+  );
+  if (!done) {
+    intelPoints += card.cost;
+    return;
+  }
+  gameRun.cardsUsed += 1;
+  gameRun.deckHand.splice(cardIndex, 1);
+  gameRun.deckDiscard.push(card);
+  const replacement = drawDeckCard();
+  if (replacement) {
+    gameRun.deckHand.push(replacement);
+  }
+  renderDeckBoard();
+  renderGameplayHud();
+}
+
+function renderDeckBoard() {
+  if (!deckBoardEl) {
+    return;
+  }
+  const title =
+    i18n.locale === 'zh-CN' ? '策略卡组' : i18n.locale === 'ja' ? '戦略デッキ' : 'Strategy Deck';
+  deckBoardEl.innerHTML = `
+    <div class="game-board-title">${title}</div>
+    <div class="deck-hand">
+      ${
+        gameRun.deckHand.length
+          ? gameRun.deckHand
+              .map(
+                (card) => `
+            <button class="deck-card-btn" type="button" data-card-id="${card.id}">
+              ${localizedText(card.title, card.id)}
+              <small>${localizedText(card.desc, '')} · ${card.cost}</small>
+            </button>
+          `
+              )
+              .join('')
+          : `<div class="game-board-empty">-</div>`
+      }
+    </div>
+  `;
+  for (const btn of deckBoardEl.querySelectorAll('[data-card-id]')) {
+    btn.addEventListener('click', () => {
+      playDeckCard(btn.dataset.cardId).catch(() => {});
+    });
+  }
+}
+
+function renderMetaBoard() {
+  if (!metaBoardEl) {
+    return;
+  }
+  const title =
+    i18n.locale === 'zh-CN' ? '局外成长' : i18n.locale === 'ja' ? 'メタ進行' : 'Meta Progress';
+  const labels = {
+    research: i18n.locale === 'zh-CN' ? '研究点' : i18n.locale === 'ja' ? '研究点' : 'Research',
+    runs: i18n.locale === 'zh-CN' ? '总局数' : i18n.locale === 'ja' ? '総プレイ' : 'Runs',
+    stars: i18n.locale === 'zh-CN' ? '累计星级' : i18n.locale === 'ja' ? '累計スター' : 'Stars',
+    highScore: i18n.locale === 'zh-CN' ? '最高分' : i18n.locale === 'ja' ? '最高スコア' : 'High Score',
+    perks: i18n.locale === 'zh-CN' ? '已解锁特性' : i18n.locale === 'ja' ? '解放済み特性' : 'Unlocked Perks',
+    dailyTop: i18n.locale === 'zh-CN' ? '今日榜单' : i18n.locale === 'ja' ? '本日の榜' : 'Today Board'
+  };
+  const perkNames = [
+    metaProgress.perks.starterIntel ? (i18n.locale === 'zh-CN' ? '开局情报+6' : i18n.locale === 'ja' ? '開始情報+6' : 'Start Intel +6') : null,
+    metaProgress.perks.forecastDiscount ? (i18n.locale === 'zh-CN' ? '预测解锁费用-2' : i18n.locale === 'ja' ? '予測コスト-2' : 'Forecast Cost -2') : null,
+    metaProgress.perks.stabilityShield ? (i18n.locale === 'zh-CN' ? 'Boss 压制减半' : i18n.locale === 'ja' ? 'Boss 圧力軽減' : 'Boss Pressure Shield') : null
+  ].filter(Boolean);
+  const board = Array.isArray(metaProgress.dailyLeaderboard[dailyChallengeProfile.key])
+    ? metaProgress.dailyLeaderboard[dailyChallengeProfile.key]
+    : [];
+
+  const achievementMap = new Map(ACHIEVEMENT_LIBRARY.map((item) => [item.id, item]));
+  const achievementPills = Object.keys(metaProgress.achievements || {})
+    .map((id) => {
+      const item = achievementMap.get(id);
+      return item ? `<span class="achievement-pill">${localizedText(item.label, id)}</span>` : '';
+    })
+    .join('');
+
+  metaBoardEl.innerHTML = `
+    <div class="game-board-title">${title}</div>
+    <div class="meta-kpis">
+      <div class="meta-chip">${labels.research}: ${i18n.number(metaProgress.researchPoints || 0)}</div>
+      <div class="meta-chip">${labels.runs}: ${i18n.number(metaProgress.totalRuns || 0)}</div>
+      <div class="meta-chip">${labels.stars}: ${i18n.number(metaProgress.totalStars || 0)}</div>
+      <div class="meta-chip">${labels.highScore}: ${i18n.number(metaProgress.highScore || 0)}</div>
+    </div>
+    <div class="game-board-title">${labels.perks}</div>
+    <div class="achievement-list">${
+      perkNames.length ? perkNames.map((name) => `<span class="achievement-pill">${name}</span>`).join('') : '<span class="game-board-empty">-</span>'
+    }</div>
+    <div class="game-board-title">${
+      i18n.locale === 'zh-CN' ? '成就' : i18n.locale === 'ja' ? '実績' : 'Achievements'
+    }</div>
+    <div class="achievement-list">${achievementPills || '<span class="game-board-empty">-</span>'}</div>
+    <div class="game-board-title">${labels.dailyTop} (${dailyChallengeProfile.key})</div>
+    <div class="game-board-empty">${
+      board.length
+        ? board
+            .map((item, idx) => `${idx + 1}. ${i18n.number(item.score)} ★${item.stars}`)
+            .join('<br />')
+        : '-'
+    }</div>
+  `;
+}
+
 function currentForecastUnlockCost() {
-  return 12;
+  const perkDiscount = metaProgress?.perks?.forecastDiscount ? 2 : 0;
+  const ironmanTax = gameRun.ironman ? 1 : 0;
+  return Math.max(7, 12 - perkDiscount + ironmanTax);
 }
 
 function updateCorridorCombos(state) {
@@ -559,9 +2267,9 @@ function updateCorridorCombos(state) {
     const streak = prev && prev.lastRound === state.round - 1 ? prev.streak + 1 : 1;
     const level = Math.min(6, 1 + Math.floor((streak - 1) / 2));
     const boost = 1 + Math.min(0.46, streak * 0.06);
-    const gained = 3 + streak * 2;
+    const gained = Math.round((3 + streak * 2) * chainRewardState.multiplier);
     comboScore += gained;
-    intelPoints += Math.max(1, Math.round(streak * 0.32));
+    intelPoints += Math.max(1, Math.round(streak * 0.32 * chainRewardState.multiplier));
     corridorCombos.set(key, {
       key,
       streak,
@@ -589,7 +2297,7 @@ function updateCorridorCombos(state) {
     }
   }
 
-  intelPoints += 1;
+  intelPoints += Math.max(1, Math.round(chainRewardState.multiplier));
   lastComboRound = state.round;
 }
 
@@ -687,11 +2395,17 @@ function renderEventDecisionCard() {
   eventDecisionCardEl.innerHTML = `
     <div class="event-decision-title">${pendingDecision.title}</div>
     <div class="event-decision-desc">${
-      i18n.locale === 'zh-CN'
-        ? '突发事件需要立刻抉择。'
-        : i18n.locale === 'ja'
-          ? '突発イベントへの即時判断が必要です。'
-          : 'A breaking event requires immediate strategic choice.'
+      pendingDecision.isNarrative
+        ? i18n.locale === 'zh-CN'
+          ? '事件链后续分支已开启。'
+          : i18n.locale === 'ja'
+            ? 'イベント連鎖の続編が開放。'
+            : 'A follow-up branch from the event chain is now active.'
+        : i18n.locale === 'zh-CN'
+          ? '突发事件需要立刻抉择。'
+          : i18n.locale === 'ja'
+            ? '突発イベントへの即時判断が必要です。'
+            : 'A breaking event requires immediate strategic choice.'
     }</div>
     <div class="event-decision-options">
       ${pendingDecision.options
@@ -724,6 +2438,9 @@ function renderEventDecisionCard() {
       );
       if (done) {
         intelPoints += 2;
+        if (!pendingDecision?.isNarrative) {
+          queueNarrativeFollowup(pendingDecision.eventId);
+        }
       }
       pendingDecision = null;
       renderEventDecisionCard();
@@ -830,6 +2547,28 @@ function renderTimingBurstCard() {
   }
 }
 
+function bossRuleDescription(phase) {
+  if (phase === 1) {
+    return i18n.locale === 'zh-CN'
+      ? '规则：策略卡暂时禁用'
+      : i18n.locale === 'ja'
+        ? 'ルール: 戦略カード一時無効'
+        : 'Rule: strategy cards disabled';
+  }
+  if (phase === 2) {
+    return i18n.locale === 'zh-CN'
+      ? '规则：预测解锁功能封锁'
+      : i18n.locale === 'ja'
+        ? 'ルール: 予測解放が封鎖'
+        : 'Rule: forecast unlock locked';
+  }
+  return i18n.locale === 'zh-CN'
+    ? '规则：每轮触发额外系统压制'
+    : i18n.locale === 'ja'
+      ? 'ルール: 毎ラウンド追加圧力が発生'
+      : 'Rule: extra systemic pressure each round';
+}
+
 function renderBossCrisisPanel(state) {
   if (!bossCrisisPanelEl) {
     return;
@@ -862,6 +2601,7 @@ function renderBossCrisisPanel(state) {
             ? `残りラウンド: ${boss.roundsLeft || 0}<br />失敗フェーズ: ${boss.failedStages || 0}<br />目標: ${boss.objective || '地域と社会シグナルの安定化'}`
             : `Rounds left: ${boss.roundsLeft || 0}<br />Failed phases: ${boss.failedStages || 0}<br />Objective: ${boss.objective || 'Stabilize regions and social signals'}`
       }
+      <br />${bossRuleDescription(Number(boss.phase || 1))}
     </div>
     ${
       latestLog
@@ -889,10 +2629,10 @@ function renderGameplayHud() {
     const streak = hot?.streak || 0;
     comboBadgeEl.textContent =
       i18n.locale === 'zh-CN'
-        ? `连击 ×${streak}`
+        ? `连击 ×${streak} · 链倍 x${chainRewardState.multiplier.toFixed(2)}`
         : i18n.locale === 'ja'
-          ? `コンボ ×${streak}`
-          : `Combo ×${streak}`;
+          ? `コンボ ×${streak} · 連鎖 x${chainRewardState.multiplier.toFixed(2)}`
+          : `Combo ×${streak} · Chain x${chainRewardState.multiplier.toFixed(2)}`;
   }
   if (intelBadgeEl) {
     intelBadgeEl.textContent =
@@ -905,19 +2645,31 @@ function renderGameplayHud() {
   if (intelUnlockBtnEl) {
     const hiddenForecastCount = forecastLinks.filter((item) => !forecastReveal.get(item.key)).length;
     const cost = currentForecastUnlockCost();
-    intelUnlockBtnEl.disabled = hiddenForecastCount <= 0 || intelPoints < cost;
+    const raidLocked = activeBossPanel?.active && Number(activeBossPanel.phase || 1) === 2;
+    intelUnlockBtnEl.disabled = hiddenForecastCount <= 0 || intelPoints < cost || raidLocked;
     if (i18n.locale === 'zh-CN') {
-      intelUnlockBtnEl.textContent = `解锁预测 (${cost})`;
+      intelUnlockBtnEl.textContent = raidLocked ? 'Boss 封锁中' : `解锁预测 (${cost})`;
     } else if (i18n.locale === 'ja') {
-      intelUnlockBtnEl.textContent = `予測解放 (${cost})`;
+      intelUnlockBtnEl.textContent = raidLocked ? 'Boss 封鎖中' : `予測解放 (${cost})`;
     } else {
-      intelUnlockBtnEl.textContent = `Unlock Forecast (${cost})`;
+      intelUnlockBtnEl.textContent = raidLocked ? 'Boss Locked' : `Unlock Forecast (${cost})`;
     }
   }
 }
 
 function unlockNextForecast() {
   if (!liveState) {
+    return;
+  }
+  if (activeBossPanel?.active && Number(activeBossPanel.phase || 1) === 2) {
+    if (statusEl) {
+      statusEl.textContent =
+        i18n.locale === 'zh-CN'
+          ? 'Boss Phase 2：预测系统被封锁'
+          : i18n.locale === 'ja'
+            ? 'Boss Phase 2: 予測システム封鎖'
+            : 'Boss Phase 2: forecast system locked';
+    }
     return;
   }
   const hidden = forecastLinks
@@ -954,6 +2706,7 @@ const SIGNAL_KEYS = [
 function renderSignalSliders(state) {
   if (!signalSlidersEl || !state?.socialSignals) return;
   const signals = state.socialSignals;
+  const lockSignals = gameRun.ironman;
 
   signalSlidersEl.innerHTML = SIGNAL_KEYS.map((key) => {
     const val = Number(signals[key] || 0.5);
@@ -964,7 +2717,7 @@ function renderSignalSliders(state) {
         <span class="signal-val">${pct}%</span>
       </div>
       <input class="signal-slider" type="range" min="10" max="98" step="1"
-        data-key="${key}" value="${Math.round(val * 100)}" />
+        data-key="${key}" value="${Math.round(val * 100)}" ${lockSignals ? 'disabled' : ''} />
     </div>`;
   }).join('');
 
@@ -1149,12 +2902,12 @@ function openReligionModal(religion) {
   drawMiniLineChart(modalHistoryCanvas, religion.history || [], religion.color);
 
   modalEl.hidden = false;
-  document.body.style.overflow = 'hidden';
+  syncBodyLock();
 }
 
 function closeReligionModal() {
   if (modalEl) modalEl.hidden = true;
-  document.body.style.overflow = '';
+  syncBodyLock();
   currentModalReligionId = null;
 }
 
@@ -1249,6 +3002,7 @@ function setLocale(locale, rerender = true) {
   }
 
   applyStaticI18n();
+  renderMetaBoard();
 
   if (!rerender) {
     return;
@@ -1259,6 +3013,11 @@ function setLocale(locale, rerender = true) {
     return;
   }
   statusEl.textContent = i18n.t('status.notStarted');
+  renderObjectiveBoard(null);
+  renderSecretAgendaBoard();
+  renderChainRewardBoard(null);
+  renderBetBoard(null);
+  renderDeckBoard();
 }
 
 const scene = new THREE.Scene();
@@ -2314,22 +4073,7 @@ function renderMapHud(state) {
     .sort((a, b) => b.score - a.score);
   const topSignal = signalEntries[0];
   const hotCombo = topComboEntry();
-  const ghostGap = (() => {
-    if (!ghostRunData?.byReligion) {
-      return null;
-    }
-    const currentTop = [...state.religions].sort((a, b) => b.followers - a.followers)[0];
-    if (!currentTop) {
-      return null;
-    }
-    const ghostSeries = ghostRunData.byReligion[currentTop.id];
-    if (!Array.isArray(ghostSeries) || ghostSeries.length === 0) {
-      return null;
-    }
-    const idx = clampValue(state.round, 0, ghostSeries.length - 1);
-    const ghostVal = Number(ghostSeries[idx] || 0);
-    return currentTop.followers - ghostVal;
-  })();
+  const ghostGap = computeGhostGap(state);
 
   mapHudStatsEl.innerHTML = `
     <article class="hud-chip">
@@ -2439,9 +4183,31 @@ function renderLogs(state) {
 
 function renderAll(state) {
   liveState = state;
+  const chainPreview = evaluateRegionChain(state);
+  chainRewardState.ownerId = chainPreview.ownerId;
+  chainRewardState.chainLength = chainPreview.chainLength;
+  chainRewardState.multiplier = chainPreview.multiplier;
+
   if (state.round > lastProcessedRound) {
     updateCorridorCombos(state);
     queueDecisionFromState(state);
+    spawnNarrativeDecision(state);
+    resolveActiveBet(state);
+    applyBossRaidRules(state);
+    evaluateObjectivesAndAgenda(state);
+    evaluateAchievements(state);
+    runTelemetry.push({
+      round: state.round,
+      topReligionId: [...state.religions].sort((a, b) => b.followers - a.followers)[0]?.id || null,
+      totalFlow: Number(state.roundMetrics?.totalFlow || 0),
+      judgmentRatio: Number(state.roundMetrics?.judgmentRatio || 0),
+      comboStreak: topComboEntry()?.streak || 0,
+      betWinRate:
+        gameRun.betStats.total > 0 ? Number((gameRun.betStats.won / gameRun.betStats.total).toFixed(4)) : 0
+    });
+    if (runTelemetry.length > 80) {
+      runTelemetry = runTelemetry.slice(-80);
+    }
     lastProcessedRound = state.round;
   }
   updateMapViewBounds(state);
@@ -2483,11 +4249,29 @@ function renderAll(state) {
   renderEventDecisionCard();
   renderTimingBurstCard();
   renderBossCrisisPanel(state);
+  renderObjectiveBoard(state);
+  renderSecretAgendaBoard();
+  renderChainRewardBoard(state);
+  renderBetBoard(state);
+  renderDeckBoard();
+  renderMetaBoard();
 
   // If modal is open, refresh it with updated data
   if (currentModalReligionId && !modalEl.hidden) {
     const r = state.religions.find((x) => x.id === currentModalReligionId);
     if (r) openReligionModal(r);
+  }
+
+  if (gameRun.ironman && Number(state.bossCrisis?.failedStages || 0) >= 2) {
+    stopLoop();
+    stopBtn.disabled = true;
+    startBtn.disabled = false;
+    settleRunProgress(state, 'ironman-breach');
+  } else if (gameRun.ironman && state.round >= 24) {
+    stopLoop();
+    stopBtn.disabled = true;
+    startBtn.disabled = false;
+    settleRunProgress(state, 'ironman-finish');
   }
 }
 
@@ -2895,7 +4679,19 @@ async function postJson(url, body = {}) {
 
 async function startSimulation() {
   if (liveState?.round > 0) {
+    settleRunProgress(liveState, 'restart');
     archiveGhostRunFromState(liveState);
+  }
+  gameRun = createEmptyGameRun();
+  gameRun.id = `run_${Date.now()}`;
+  gameRun.startedAt = new Date().toISOString();
+  gameRun.dailyChallenge = Boolean(dailyChallengeToggleEl?.checked);
+  gameRun.ironman = Boolean(ironmanToggleEl?.checked);
+  gameRun.scoreMultiplier = gameRun.dailyChallenge ? dailyChallengeProfile.scoreMultiplier : 1;
+  initializeRunSystems();
+
+  if (gameRun.dailyChallenge) {
+    scenarioSelect.value = dailyChallengeProfile.scenario;
   }
   corridorCombos.clear();
   forecastReveal.clear();
@@ -2913,8 +4709,23 @@ async function startSimulation() {
     useAI: openaiToggle.checked,
     useOpenAI: openaiToggle.checked,
     locale: i18n.locale,
-    scenario: scenarioSelect.value
+    scenario: gameRun.dailyChallenge ? dailyChallengeProfile.scenario : scenarioSelect.value
   });
+
+  if (gameRun.dailyChallenge) {
+    try {
+      await postJson('/api/simulation/signals', { overrides: dailyChallengeProfile.signalPatch });
+      const refreshed = await fetch('/api/simulation/state').then((response) => response.json());
+      Object.assign(snapshot, refreshed);
+    } catch (_err) {
+      // Keep base snapshot if challenge signal patch fails.
+    }
+  }
+
+  if (metaProgress?.perks?.starterIntel) {
+    intelPoints += 6;
+  }
+  stopBtn.disabled = Boolean(gameRun.ironman);
   renderAll(snapshot);
   // Always reset map framing on new game start for a stable first view.
   resetCameraView();
@@ -2967,11 +4778,15 @@ startBtn.addEventListener('click', async () => {
 });
 
 stopBtn.addEventListener('click', () => {
+  if (gameRun.ironman) {
+    return;
+  }
   stopLoop();
   stopBtn.disabled = true;
   startBtn.disabled = false;
   if (liveState) {
     statusEl.textContent = i18n.t('status.pausedRound', { round: liveState.round });
+    settleRunProgress(liveState, 'paused');
   } else {
     statusEl.textContent = i18n.t('status.paused');
   }
@@ -2987,6 +4802,27 @@ scenarioSelect.addEventListener('change', (event) => {
   }
 });
 
+if (dailyChallengeToggleEl) {
+  dailyChallengeToggleEl.addEventListener('change', () => {
+    dailyChallengeProfile = buildDailyChallengeProfile();
+    if (dailyChallengeToggleEl.checked) {
+      scenarioSelect.value = dailyChallengeProfile.scenario;
+    }
+    applyStaticI18n();
+    renderMetaBoard();
+  });
+}
+
+if (ironmanToggleEl) {
+  ironmanToggleEl.addEventListener('change', () => {
+    if (!tickTimer && liveState) {
+      gameRun.ironman = Boolean(ironmanToggleEl.checked);
+      renderSignalSliders(liveState);
+      renderGameplayHud();
+    }
+  });
+}
+
 logFilterSelect.addEventListener('change', (event) => {
   activeLogFilter = event.target.value || 'all';
   if (liveState) {
@@ -3001,9 +4837,44 @@ if (modalEl) {
     if (e.target === modalEl) closeReligionModal();
   });
 }
+if (guideBtnEl) {
+  guideBtnEl.addEventListener('click', () => {
+    openGuideBook(0);
+  });
+}
+if (guideCloseBtnEl) {
+  guideCloseBtnEl.addEventListener('click', closeGuideBook);
+}
+if (guidePrevBtnEl) {
+  guidePrevBtnEl.addEventListener('click', () => {
+    guideChapterIndex = Math.max(guideChapterIndex - 1, 0);
+    renderGuideBook();
+  });
+}
+if (guideNextBtnEl) {
+  guideNextBtnEl.addEventListener('click', () => {
+    const chapterCount = getGuideBookByLocale().chapters?.length || 1;
+    guideChapterIndex = Math.min(guideChapterIndex + 1, chapterCount - 1);
+    renderGuideBook();
+  });
+}
+if (guideModalEl) {
+  guideModalEl.addEventListener('click', (e) => {
+    if (e.target === guideModalEl) {
+      closeGuideBook();
+    }
+  });
+}
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
-    if (modalEl && !modalEl.hidden) closeReligionModal();
+    if (guideModalEl && !guideModalEl.hidden) {
+      closeGuideBook();
+      return;
+    }
+    if (modalEl && !modalEl.hidden) {
+      closeReligionModal();
+      return;
+    }
     const overlay = document.getElementById('drawerOverlay');
     if (overlay && !overlay.hidden) overlay.hidden = true;
   }
@@ -3118,3 +4989,9 @@ fetch('/api/health')
 
 setLocale(i18n.locale, false);
 statusEl.textContent = i18n.t('status.notStarted');
+renderObjectiveBoard(null);
+renderSecretAgendaBoard();
+renderChainRewardBoard(null);
+renderBetBoard(null);
+renderDeckBoard();
+renderMetaBoard();

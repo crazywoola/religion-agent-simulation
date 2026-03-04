@@ -19,11 +19,14 @@ const DICTIONARY = {
       provider: 'AI Provider',
       logFilter: 'Log Filter',
       screenshot: 'Screenshot',
+      gameGuide: 'Game Guide',
       exportReport: 'Export AI Analysis Report',
       generatingReport: 'AI is generating report...',
       reportFailed: 'Report generation failed',
       drawerToggle: 'Insights & Logs',
-      signalReset: 'Reset Signals'
+      signalReset: 'Reset Signals',
+      dailyChallenge: 'Daily Challenge',
+      ironman: 'Ironman'
     },
     drawer: {
       insights: 'Insights',
@@ -38,6 +41,7 @@ const DICTIONARY = {
       events: 'Breaking Events',
       signals: 'Signal Control',
       history: 'Follower Trend',
+      gameLab: 'Game Lab',
       subtabAssimilation: 'Assimilation',
       subtabRegions: 'Regions',
       subtabEvents: 'Events'
@@ -198,11 +202,14 @@ const DICTIONARY = {
       provider: 'AI 提供商',
       logFilter: '日志筛选',
       screenshot: '截图',
+      gameGuide: '游戏指南',
       exportReport: '导出 AI 分析报告',
       generatingReport: 'AI 正在生成报告...',
       reportFailed: '报告生成失败',
       drawerToggle: '洞察与日志',
-      signalReset: '重置信号'
+      signalReset: '重置信号',
+      dailyChallenge: '每日挑战',
+      ironman: '铁人模式'
     },
     drawer: {
       insights: '洞察',
@@ -217,6 +224,7 @@ const DICTIONARY = {
       events: '突发事件',
       signals: '信号调控',
       history: '信众趋势',
+      gameLab: '游戏实验室',
       subtabAssimilation: '同化链路',
       subtabRegions: '区域格局',
       subtabEvents: '突发事件'
@@ -377,11 +385,14 @@ const DICTIONARY = {
       provider: 'AI プロバイダ',
       logFilter: 'ログフィルター',
       screenshot: 'スクリーンショット',
+      gameGuide: 'ゲームガイド',
       exportReport: 'AI分析レポートをエクスポート',
       generatingReport: 'AIがレポートを生成中...',
       reportFailed: 'レポート生成に失敗しました',
       drawerToggle: 'インサイトとログ',
-      signalReset: 'シグナルリセット'
+      signalReset: 'シグナルリセット',
+      dailyChallenge: 'デイリーチャレンジ',
+      ironman: 'アイアンマン'
     },
     drawer: {
       insights: 'インサイト',
@@ -396,6 +407,7 @@ const DICTIONARY = {
       events: '突発イベント',
       signals: 'シグナル操作',
       history: '信徒トレンド',
+      gameLab: 'ゲームラボ',
       subtabAssimilation: '同化',
       subtabRegions: '地域',
       subtabEvents: 'イベント'

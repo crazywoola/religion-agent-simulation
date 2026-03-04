@@ -187,6 +187,216 @@ select:focus {
   box-shadow: 0 4px 0 rgba(46, 54, 95, 0.15);
 }
 
+.game-lab-panel {
+  border: 2px solid #2e365f;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(238, 248, 255, 0.88));
+  box-shadow: 0 5px 0 rgba(46, 54, 95, 0.14), 0 10px 18px rgba(20, 35, 67, 0.12);
+  padding: 10px;
+  margin-bottom: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.game-lab-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+#gameLabTitle {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.star-badge {
+  border: 2px solid #2e365f;
+  border-radius: 999px;
+  background: linear-gradient(140deg, #ffe89f, #ffd67a);
+  box-shadow: 0 3px 0 rgba(46, 54, 95, 0.15);
+  color: #47300b;
+  font-weight: 900;
+  font-size: 0.72rem;
+  padding: 4px 10px;
+  white-space: nowrap;
+}
+
+.game-lab-switches {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.game-switch {
+  border: 2px solid #2e365f;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.68);
+  padding: 5px 8px;
+  font-size: 0.72rem;
+  line-height: 1.2;
+  color: #2a3459;
+  min-height: 36px;
+}
+
+.game-switch input {
+  margin-top: 1px;
+}
+
+.game-board {
+  border: 1px dashed #90a1c8;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.65);
+  padding: 8px;
+  display: grid;
+  gap: 6px;
+}
+
+.game-board-title {
+  font-size: 0.73rem;
+  color: #48598c;
+  font-weight: 800;
+}
+
+.game-board-empty {
+  font-size: 0.72rem;
+  color: #7380a7;
+}
+
+.objective-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px;
+  align-items: center;
+  font-size: 0.72rem;
+}
+
+.objective-label {
+  font-weight: 700;
+  color: #1e2d4d;
+}
+
+.objective-progress {
+  color: #566998;
+  font-size: 0.69rem;
+}
+
+.objective-item.is-done .objective-label,
+.objective-item.is-done .objective-progress {
+  color: #1f8a5a;
+}
+
+.secret-agenda-card {
+  border: 1px solid #8da1cb;
+  border-radius: 9px;
+  background: linear-gradient(145deg, #f6f9ff, #eef4ff);
+  padding: 6px 7px;
+  font-size: 0.71rem;
+  color: #223557;
+}
+
+.secret-agenda-card.is-hidden {
+  background: linear-gradient(145deg, #f1f3f8, #e8edf7);
+  color: #6d7b9f;
+}
+
+.chain-bar {
+  height: 8px;
+  border-radius: 999px;
+  border: 1px solid #2e365f;
+  background: #e9eefc;
+  overflow: hidden;
+}
+
+.chain-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #66d9ff, #56a8ff, #8170ff);
+}
+
+.bet-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.bet-option-btn,
+.deck-card-btn,
+.bet-confirm-btn {
+  border: 2px solid #2e365f;
+  border-radius: 9px;
+  color: #1f2f4d;
+  box-shadow: 0 3px 0 rgba(46, 54, 95, 0.13);
+  font-size: 0.67rem;
+  font-weight: 800;
+  padding: 5px 6px;
+  min-height: 34px;
+}
+
+.bet-option-btn {
+  background: linear-gradient(145deg, #ffffff, #eaf0ff);
+}
+
+.bet-option-btn.is-active {
+  background: linear-gradient(145deg, #ffe9b0, #ffd686);
+}
+
+.bet-confirm-btn {
+  background: linear-gradient(145deg, #ffeab4, #ffd98a);
+}
+
+.deck-hand {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.deck-card-btn {
+  background: linear-gradient(145deg, #f8fffd, #def5ea);
+  text-align: left;
+}
+
+.deck-card-btn small {
+  display: block;
+  color: #587299;
+  margin-top: 3px;
+}
+
+.meta-kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.meta-chip {
+  border: 1px solid #7e92bf;
+  border-radius: 9px;
+  background: #f4f8ff;
+  padding: 5px 6px;
+  font-size: 0.68rem;
+  color: #2b3f65;
+}
+
+.achievement-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.achievement-pill {
+  border: 1px solid #6f83b5;
+  border-radius: 999px;
+  padding: 2px 7px;
+  font-size: 0.64rem;
+  font-weight: 700;
+  background: #edf3ff;
+  color: #2f4168;
+}
+
+.achievement-pill.is-new {
+  background: linear-gradient(145deg, #ffeaa5, #ffd57f);
+  color: #4d3208;
+}
+
 .stage-wrap {
   position: relative;
   overflow: hidden;
@@ -845,6 +1055,30 @@ select:focus {
 .drawer-toggle-btn:hover { transform: scale(1.08); }
 .drawer-toggle-btn:active { transform: scale(0.96); }
 
+/* ── Guide button ─────────────────────────────── */
+.guide-btn {
+  position: absolute;
+  bottom: 14px;
+  right: 152px;
+  z-index: 5;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 2px solid #2e365f;
+  background: rgba(255,255,255,0.88);
+  backdrop-filter: blur(6px);
+  font-size: 1.05rem;
+  cursor: pointer;
+  box-shadow: 0 4px 0 rgba(46,54,95,0.18), 0 8px 16px rgba(24,39,75,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.guide-btn:hover { transform: scale(1.08); }
+.guide-btn:active { transform: scale(0.96); }
+
 /* ── Drawer overlay & panel ───────────────────── */
 .drawer-overlay {
   position: fixed;
@@ -1384,6 +1618,224 @@ select:focus {
   margin-top: 4px;
 }
 
+/* ── Guide book modal ─────────────────────────── */
+.guide-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 180;
+  background: rgba(15, 20, 45, 0.58);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+}
+
+.guide-modal-overlay[hidden] {
+  display: none;
+}
+
+.guide-book {
+  width: min(1120px, 96vw);
+  max-height: 92vh;
+  border: 3px solid #2e365f;
+  border-radius: 20px;
+  background:
+    linear-gradient(90deg, #f8ecd4 0, #f9f0dd 49%, #e8dac0 50%, #f9f0dd 51%, #fcf4e5 100%);
+  box-shadow: 0 12px 0 rgba(46, 54, 95, 0.2), 0 30px 70px rgba(18, 28, 56, 0.42);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.guide-book-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 14px 16px 10px;
+  border-bottom: 2px solid #8c7a58;
+  background: linear-gradient(180deg, rgba(255,255,255,0.4), rgba(255,255,255,0.14));
+}
+
+#guideBookTitle {
+  margin: 0;
+  font-size: 1.06rem;
+  color: #2f2d2f;
+}
+
+#guideBookSubtitle {
+  margin: 4px 0 0;
+  font-size: 0.75rem;
+  color: #69604f;
+}
+
+.guide-close-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid #2e365f;
+  background: rgba(255,255,255,0.86);
+  color: #2e365f;
+  font-weight: 800;
+  box-shadow: 0 3px 0 rgba(46,54,95,0.14);
+  padding: 0;
+}
+
+.guide-book-body {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 0;
+  flex: 1;
+}
+
+.guide-toc {
+  border-right: 2px solid rgba(71, 61, 41, 0.34);
+  background: rgba(255, 255, 255, 0.33);
+  padding: 10px 9px;
+  overflow: auto;
+  display: grid;
+  gap: 6px;
+}
+
+.guide-toc-item {
+  border: 1.5px solid #8f7a54;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.6);
+  text-align: left;
+  box-shadow: none;
+  color: #443b2d;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 7px 8px;
+}
+
+.guide-toc-item.is-active {
+  background: linear-gradient(145deg, #ffe6ac, #ffd17f);
+  border-color: #6a5034;
+}
+
+.guide-page {
+  min-height: 0;
+  overflow: auto;
+  padding: 12px 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.guide-page h3 {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #2e2c2d;
+}
+
+.guide-page p {
+  margin: 0;
+  font-size: 0.76rem;
+  line-height: 1.6;
+  color: #433f37;
+}
+
+.guide-section {
+  border: 1px solid rgba(108, 91, 63, 0.4);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.55);
+  padding: 8px 9px;
+  display: grid;
+  gap: 5px;
+}
+
+.guide-section-title {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #6f5f45;
+}
+
+.guide-list {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 3px;
+}
+
+.guide-list li {
+  font-size: 0.73rem;
+  line-height: 1.5;
+  color: #3f3d36;
+}
+
+.guide-table-wrap {
+  overflow-x: auto;
+}
+
+.guide-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.7rem;
+}
+
+.guide-table th,
+.guide-table td {
+  border: 1px solid #a58c61;
+  padding: 5px 6px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.guide-table th {
+  background: rgba(255, 229, 169, 0.55);
+  color: #4a3f2d;
+  font-weight: 800;
+}
+
+.guide-table td {
+  background: rgba(255, 255, 255, 0.62);
+  color: #3e3a32;
+}
+
+.guide-tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.guide-tag {
+  border: 1px solid #836948;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 0.64rem;
+  font-weight: 700;
+  color: #4e3d2d;
+  background: rgba(255, 232, 185, 0.64);
+}
+
+.guide-book-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-top: 2px solid #8c7a58;
+  padding: 8px 10px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.3));
+}
+
+.guide-nav-btn {
+  border: 2px solid #6a5436;
+  border-radius: 999px;
+  box-shadow: 0 3px 0 rgba(46, 54, 95, 0.12);
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #4c3d2b;
+  background: linear-gradient(145deg, #ffe5ad, #ffd082);
+  padding: 5px 11px;
+}
+
+.guide-page-indicator {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #5c503d;
+}
+
 /* ── Media query updates ──────────────────────── */
 @media (max-width: 1480px) {
   .layout {
@@ -1489,5 +1941,31 @@ select:focus {
     transform: none;
     min-width: 0;
     bottom: 56px;
+  }
+
+  .game-lab-switches,
+  .meta-kpis,
+  .deck-hand {
+    grid-template-columns: 1fr;
+  }
+
+  .bet-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .guide-book {
+    width: 100%;
+    max-height: 95vh;
+  }
+
+  .guide-book-body {
+    grid-template-columns: 1fr;
+  }
+
+  .guide-toc {
+    border-right: none;
+    border-bottom: 2px solid rgba(71, 61, 41, 0.34);
+    max-height: 120px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

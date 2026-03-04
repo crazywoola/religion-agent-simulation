@@ -62,6 +62,30 @@
 
         <div class="status" id="status">Status: Not started</div>
 
+        <!-- Game Lab -->
+        <section id="gameLabPanel" class="game-lab-panel">
+          <div class="game-lab-head">
+            <h2 id="gameLabTitle">Game Lab</h2>
+            <div id="starBadge" class="star-badge">★ 0 / 3</div>
+          </div>
+          <div class="game-lab-switches">
+            <label class="switch game-switch">
+              <input id="dailyChallengeToggle" type="checkbox" />
+              <span id="dailyChallengeLabel">Daily Challenge</span>
+            </label>
+            <label class="switch game-switch">
+              <input id="ironmanToggle" type="checkbox" />
+              <span id="ironmanLabel">Ironman</span>
+            </label>
+          </div>
+          <div id="objectiveBoard" class="game-board objective-board"></div>
+          <div id="secretAgendaBoard" class="game-board secret-agenda-board"></div>
+          <div id="chainRewardBoard" class="game-board chain-board"></div>
+          <div id="betBoard" class="game-board bet-board"></div>
+          <div id="deckBoard" class="game-board deck-board"></div>
+          <div id="metaBoard" class="game-board meta-board"></div>
+        </section>
+
         <!-- Signal Control Panel -->
         <details class="signal-panel" id="signalPanel">
           <summary id="signalSectionTitle">
@@ -102,6 +126,8 @@
         <button id="reportBtn" class="report-btn" title="Export AI Report">📄</button>
         <!-- Drawer toggle button -->
         <button id="drawerToggleBtn" class="drawer-toggle-btn" title="Insights & Logs">📊</button>
+        <!-- Guide button -->
+        <button id="guideBtn" class="guide-btn" title="Game Guide">📘</button>
         <aside id="eventDecisionCard" class="event-decision-card" hidden></aside>
         <aside id="timingBurstCard" class="timing-burst-card" hidden></aside>
         <aside id="bossCrisisPanel" class="boss-crisis-panel" hidden></aside>
@@ -197,6 +223,28 @@
             <h3 id="modalHistoryLabel">History</h3>
             <canvas id="modalHistoryCanvas" class="modal-history" width="280" height="100"></canvas>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== GAME GUIDE BOOK MODAL ===== -->
+    <div id="guideModal" class="guide-modal-overlay" hidden>
+      <div class="guide-book" role="dialog" aria-modal="true" aria-labelledby="guideBookTitle">
+        <div class="guide-book-head">
+          <div>
+            <h2 id="guideBookTitle">Simulation Field Guide</h2>
+            <p id="guideBookSubtitle">Operations, systems, and parameters explained.</p>
+          </div>
+          <button id="guideCloseBtn" class="guide-close-btn" type="button" aria-label="Close Guide">✕</button>
+        </div>
+        <div class="guide-book-body">
+          <aside id="guideToc" class="guide-toc"></aside>
+          <section id="guidePage" class="guide-page"></section>
+        </div>
+        <div class="guide-book-foot">
+          <button id="guidePrevBtn" class="guide-nav-btn" type="button">← Prev</button>
+          <span id="guidePageIndicator" class="guide-page-indicator">1 / 1</span>
+          <button id="guideNextBtn" class="guide-nav-btn" type="button">Next →</button>
         </div>
       </div>
     </div>
