@@ -9,6 +9,7 @@ import { ensureAcademicReportStructure, generatePdfBuffer } from '../report/pdf-
 import { ReligionSimulation } from '../simulation/religion-simulation.js';
 import { listAvailableProviders } from '../ai/providers.js';
 import { SIMULATION_CONFIG } from '../../data/simulation-config.js';
+import { GUIDE_BOOK } from '../content/guide-book.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -62,6 +63,12 @@ export function createApp() {
     } catch (err) {
       res.status(400).json({ message: err.message });
     }
+  });
+
+  app.get('/api/guide', (req, res) => {
+    const locale = normalizeLocale(req.query.locale || DEFAULT_LOCALE);
+    const guide = GUIDE_BOOK[locale] || GUIDE_BOOK[DEFAULT_LOCALE];
+    res.json(guide);
   });
 
   app.get('/api/simulation/scenarios', (_req, res) => {

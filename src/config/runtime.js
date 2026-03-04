@@ -1,9 +1,9 @@
 import os from 'os';
+import { SUPPORTED_LOCALES, DEFAULT_LOCALE } from '../../data/locale-config.js';
 
 export const PORT = Number(process.env.PORT || 3000);
 export const HOST = process.env.HOST || '0.0.0.0';
-export const SUPPORTED_LOCALES = ['en', 'zh-CN', 'ja'];
-export const DEFAULT_LOCALE = 'en';
+export { SUPPORTED_LOCALES, DEFAULT_LOCALE };
 
 export function normalizeLocale(input) {
   if (!input || typeof input !== 'string') {

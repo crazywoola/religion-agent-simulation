@@ -1,5 +1,5 @@
-export const SUPPORTED_LOCALES = ['en', 'zh-CN', 'ja'];
-export const DEFAULT_LOCALE = 'en';
+import { SUPPORTED_LOCALES, DEFAULT_LOCALE } from '/data/locale-config.js';
+export { SUPPORTED_LOCALES, DEFAULT_LOCALE };
 
 const DICTIONARY = {
   en: {
