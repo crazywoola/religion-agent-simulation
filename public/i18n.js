@@ -60,7 +60,8 @@ const DICTIONARY = {
       polarization_spike: 'Polarization Spike',
       pluralism_wave: 'Pluralism Wave',
       climate_anxiety: 'Climate Anxiety',
-      institutional_reform: 'Institutional Reform'
+      institutional_reform: 'Institutional Reform',
+      global_crisis: 'Global Crisis'
     },
     status: {
       notStarted: 'Status: Not started',
@@ -238,7 +239,8 @@ const DICTIONARY = {
       polarization_spike: '极化激增',
       pluralism_wave: '多元化浪潮',
       climate_anxiety: '气候焦虑',
-      institutional_reform: '制度改革'
+      institutional_reform: '制度改革',
+      global_crisis: '全球危机'
     },
     status: {
       notStarted: '状态：未开始',
@@ -416,7 +418,8 @@ const DICTIONARY = {
       polarization_spike: '分極化の急増',
       pluralism_wave: '多元主義の波',
       climate_anxiety: '気候不安',
-      institutional_reform: '制度改革'
+      institutional_reform: '制度改革',
+      global_crisis: 'グローバル危機'
     },
     status: {
       notStarted: '状態：未開始',

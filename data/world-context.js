@@ -2,7 +2,7 @@ export const WORLD_REGIONS = [
   {
     id: 'north_america',
     name: '北美',
-    position: { x: -14, z: 4 },
+    position: { x: -18, z: 7 },
     populationWeight: 0.16,
     factors: {
       digitalization: 0.89,
@@ -22,7 +22,7 @@ export const WORLD_REGIONS = [
   {
     id: 'latin_america',
     name: '拉美',
-    position: { x: -9, z: -8 },
+    position: { x: -13, z: -8 },
     populationWeight: 0.15,
     factors: {
       digitalization: 0.73,
@@ -42,7 +42,7 @@ export const WORLD_REGIONS = [
   {
     id: 'europe',
     name: '欧洲',
-    position: { x: 1, z: 7 },
+    position: { x: 2.5, z: 8.5 },
     populationWeight: 0.14,
     factors: {
       digitalization: 0.9,
@@ -62,7 +62,7 @@ export const WORLD_REGIONS = [
   {
     id: 'middle_east_africa',
     name: '中东/非洲',
-    position: { x: 9, z: 1 },
+    position: { x: 8, z: 0.5 },
     populationWeight: 0.19,
     factors: {
       digitalization: 0.59,
@@ -82,7 +82,7 @@ export const WORLD_REGIONS = [
   {
     id: 'south_asia',
     name: '南亚',
-    position: { x: 13, z: -2 },
+    position: { x: 12.5, z: -1.5 },
     populationWeight: 0.17,
     factors: {
       digitalization: 0.66,
@@ -102,7 +102,7 @@ export const WORLD_REGIONS = [
   {
     id: 'east_asia',
     name: '东亚',
-    position: { x: 18, z: 4 },
+    position: { x: 17.5, z: 5.5 },
     populationWeight: 0.14,
     factors: {
       digitalization: 0.92,
@@ -122,7 +122,7 @@ export const WORLD_REGIONS = [
   {
     id: 'global_online',
     name: '线上社群',
-    position: { x: 2, z: -13 },
+    position: { x: 3.5, z: -12.5 },
     populationWeight: 0.05,
     factors: {
       digitalization: 0.99,

@@ -231,6 +231,16 @@ select:focus {
   z-index: 0;
 }
 
+#fxCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: 2;
+  pointer-events: none;
+}
+
 .map-hud {
   position: absolute;
   top: 14px;
@@ -242,6 +252,216 @@ select:focus {
   align-items: flex-start;
   gap: 10px;
   pointer-events: none;
+}
+
+.gameplay-hud {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.gameplay-chip {
+  border: 2px solid #2e365f;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 0 rgba(46, 54, 95, 0.16), 0 8px 14px rgba(24, 39, 75, 0.14);
+  padding: 5px 10px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #1e2a44;
+  backdrop-filter: blur(6px);
+  min-width: 86px;
+  text-align: center;
+}
+
+.intel-unlock-btn {
+  border: 2px solid #2e365f;
+  border-radius: 999px;
+  background: linear-gradient(145deg, #ffeab4, #ffd98a);
+  color: #3a2b00;
+  font-weight: 900;
+  font-size: 0.7rem;
+  padding: 6px 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 0 rgba(46, 54, 95, 0.15);
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.intel-unlock-btn:hover {
+  transform: translateY(-1px);
+  filter: saturate(1.06);
+}
+
+.intel-unlock-btn:active {
+  transform: translateY(1px);
+}
+
+.intel-unlock-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.event-decision-card,
+.timing-burst-card,
+.boss-crisis-panel {
+  position: absolute;
+  border: 2px solid #2e365f;
+  border-radius: 14px;
+  box-shadow: 0 8px 0 rgba(46, 54, 95, 0.16), 0 16px 28px rgba(17, 29, 62, 0.22);
+  backdrop-filter: blur(8px);
+  pointer-events: auto;
+}
+
+.event-decision-card {
+  z-index: 7;
+  top: 78px;
+  right: 14px;
+  width: min(300px, calc(100% - 30px));
+  background: rgba(255, 253, 246, 0.94);
+  padding: 10px 11px;
+}
+
+.event-decision-card[hidden] {
+  display: none;
+}
+
+.event-decision-title {
+  font-size: 0.78rem;
+  font-weight: 900;
+  color: #172744;
+}
+
+.event-decision-desc {
+  margin-top: 4px;
+  font-size: 0.68rem;
+  color: #3a4b68;
+  line-height: 1.45;
+}
+
+.event-decision-options {
+  margin-top: 8px;
+  display: grid;
+  gap: 6px;
+}
+
+.event-decision-option {
+  text-align: left;
+  border: 2px solid #3d537a;
+  border-radius: 10px;
+  background: linear-gradient(145deg, #ffffff, #f0f4ff);
+  color: #202f4c;
+  font-size: 0.67rem;
+  font-weight: 700;
+  padding: 7px 8px;
+  cursor: pointer;
+  transition: transform 0.14s ease, background 0.14s ease;
+}
+
+.event-decision-option:hover {
+  transform: translateY(-1px);
+  background: linear-gradient(145deg, #fefcf3, #f1f6ff);
+}
+
+.timing-burst-card {
+  z-index: 7;
+  left: 50%;
+  bottom: 62px;
+  transform: translateX(-50%);
+  min-width: 240px;
+  background: rgba(248, 253, 255, 0.94);
+  padding: 9px 11px;
+  text-align: center;
+}
+
+.timing-burst-card[hidden] {
+  display: none;
+}
+
+.timing-burst-title {
+  font-size: 0.74rem;
+  font-weight: 900;
+  color: #0f3358;
+}
+
+.timing-burst-sub {
+  margin-top: 2px;
+  font-size: 0.64rem;
+  color: #395474;
+}
+
+.timing-burst-meter {
+  margin-top: 7px;
+  height: 8px;
+  border-radius: 999px;
+  border: 1px solid #4f678e;
+  background: linear-gradient(90deg, #f2f6ff 0%, #ffd8ad 45%, #f2f6ff 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.timing-burst-needle {
+  position: absolute;
+  top: -1px;
+  width: 2px;
+  height: 10px;
+  background: #10274c;
+}
+
+.timing-burst-btn {
+  margin-top: 8px;
+  border: 2px solid #26415f;
+  border-radius: 999px;
+  background: linear-gradient(145deg, #8ae5ff, #6ec9ff);
+  color: #072846;
+  font-size: 0.68rem;
+  font-weight: 900;
+  padding: 5px 14px;
+  cursor: pointer;
+  box-shadow: 0 3px 0 rgba(46, 54, 95, 0.15);
+}
+
+.timing-burst-btn:hover {
+  transform: translateY(-1px);
+}
+
+.boss-crisis-panel {
+  z-index: 6;
+  top: 78px;
+  left: 14px;
+  width: min(256px, calc(100% - 28px));
+  background: rgba(255, 244, 244, 0.92);
+  padding: 9px 10px;
+}
+
+.boss-crisis-panel[hidden] {
+  display: none;
+}
+
+.boss-crisis-title {
+  font-size: 0.74rem;
+  font-weight: 900;
+  color: #5a1822;
+}
+
+.boss-crisis-meta {
+  margin-top: 4px;
+  font-size: 0.64rem;
+  color: #643444;
+  line-height: 1.45;
+}
+
+.boss-crisis-log {
+  margin-top: 6px;
+  border-top: 1px dashed #8f5b67;
+  padding-top: 5px;
+  font-size: 0.62rem;
+  color: #5c2c39;
 }
 
 .map-hud-stats,
@@ -1196,6 +1416,10 @@ select:focus {
     max-width: none;
     grid-template-columns: repeat(3, minmax(100px, 1fr));
   }
+
+  .boss-crisis-panel {
+    top: 146px;
+  }
 }
 
 @media (max-width: 740px) {
@@ -1220,5 +1444,35 @@ select:focus {
 
   .map-legend {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .gameplay-hud {
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .event-decision-card {
+    left: 10px;
+    right: 10px;
+    width: auto;
+    top: 160px;
+  }
+
+  .boss-crisis-panel {
+    left: 10px;
+    right: 10px;
+    width: auto;
+    top: 78px;
+  }
+
+  .timing-burst-card {
+    left: 10px;
+    right: 10px;
+    transform: none;
+    min-width: 0;
+    bottom: 56px;
   }
 }

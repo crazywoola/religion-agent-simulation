@@ -2,7 +2,7 @@
 
 # Religion Agent Map Simulation
 
-AI-driven multi-agent simulation for religious conversion dynamics with OpenAI-compatible providers + Three.js.
+AI-driven multi-agent simulation for religious conversion dynamics with OpenAI-compatible providers and Three.js.
 
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-3C873A?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
 [![Three.js](https://img.shields.io/badge/Three.js-3D%20Map-black?style=for-the-badge&logo=three.js&logoColor=white)](https://threejs.org/)
@@ -17,54 +17,57 @@ English | [简体中文](./README.zh-CN.md) | [日本語](./README.ja.md)
 
 </div>
 
-## Welcome
-This project simulates how multiple religion agents influence each other over time while preserving a constant total population. The backend combines rule-based constraints with AI-generated structured transfer links, and the frontend visualizes conversion flows as animated ant-path lines on a 3D world map.
+## Overview
+This project simulates conversion flow between religion agents under social signals, regional context, governance constraints, and event shocks while keeping total population constant.
 
 ## Full Game Screenshot
 ![Full game screenshot](./assets/full-game-screenshot.png)
-Captured from a live run at round 3 using the current local `.env` configuration.
 
-## Key Features
-- Multi-agent simulation for 8 religions (including Shinto).
-- Constant-total followers invariant (`sum followers` stays fixed each round).
-- Built-in i18n UI (`en`, `zh-CN`, `ja`) with runtime language switch.
-- Hybrid transfer engine:
-  - Rule engine computes baseline transfers.
-  - AI transfer agent outputs `structureOutput.links` with structured quantities.
-- Three.js map UI with:
-  - Regional dominance towers.
-  - Dynamic conversion ant-path lines.
-  - Transfer source labels (`AI` / `Rule`).
-- Rich doctrine model per religion:
-  - Short doctrine, long description, classic texts.
-  - Social traits and regional affinity vectors.
+## Current Feature Set
+- 8 religion agents with doctrine, governance, traits, regional affinity, and transfer history.
+- Constant-total population invariant across rounds.
+- Scenario system (`balanced`, `high_regulation`, `high_secularization`, `high_polarization`).
+- Dynamic event system + active shock decay.
+- Territory control model (`regionControl`) and route friction in transfer corridors.
+- Boss crisis arc (`global_crisis`) with phase goals and pass/fail logs.
+- Canvas gameplay layer:
+  - Combo corridors and intel points.
+  - Forecast link reveal (fog-of-war style unlock).
+  - Event decision card (signal intervention choices).
+  - Timing burst interaction and boss status panel.
+  - Ghost timeline overlay (compare with previous run).
+- Three.js map visualization:
+  - 3D region landmarks and dominance cues.
+  - Animated ant-line transfer corridors with friction-aware speed/intensity.
+  - HUD stats, legend, and event/canvas visual effects.
+- AI report export (`/api/simulation/report`) to academic-style PDF with Markdown table parsing.
+- i18n UI for `en`, `zh-CN`, `ja`.
 
-## Architecture
-- Backend: Express + OpenAI-compatible API clients (OpenAI, Moonshot/Kimi)
-- Frontend: Vanilla JS + Three.js
-- Data models:
-  - `data/religion-doctrines.js`
-  - `data/world-context.js`
-
+## Software Structure
 ```text
-AI Provider (OpenAI / Moonshot Kimi)
-                |
-                v
-        server.js simulation core
-     (rule + AI hybrid transfer plan)
-                |
-                v
-      /api/simulation/* snapshot JSON
-                |
-                v
-      Three.js world map + ant links
+.
+├── server.js                  # Express API + simulation core + AI client + PDF report renderer
+├── data/
+│   ├── religion-doctrines.js  # religion seeds, doctrine, traits, governance, regional affinity
+│   ├── world-context.js       # world regions + baseline social signals
+│   └── simulation-config.js   # scenarios, event pool, transfer/judgment tuning
+├── public/
+│   ├── index.html             # UI layout (panels, map stage, gameplay HUD, cards/modals)
+│   ├── main.js                # Three.js scene, rendering, gameplay interaction, API calls
+│   ├── style.css              # responsive UI and gameplay overlay styles
+│   └── i18n.js                # localization strings and runtime locale helpers
+├── assets/
+│   └── full-game-screenshot.png
+├── .env.example
+├── package.json
+└── README*.md
 ```
 
 ## Quick Start
 ```bash
 npm install
 cp .env.example .env
-# fill AI_API_KEY (and optional AI_PROVIDER) in .env
+# Fill AI_API_KEY (optional for rule-only mode)
 npm run dev
 ```
 
@@ -84,45 +87,37 @@ See `.env.example`:
 - `AI_API_RETRY_BASE_DELAY_MS`
 - `NODE_USE_ENV_PROXY`
 - `PORT`
+- `HOST`
 
 Provider defaults:
 - `openai`: model `gpt-4o-mini`, base `https://api.openai.com/v1`
 - `moonshot`: model `kimi-k2-turbo-preview`, base `https://api.moonshot.cn/v1`
 
-If you see frequent `fetch failed | code=ECONNRESET`, increase `AI_API_TIMEOUT_MS` and `AI_API_MAX_RETRIES`, and make sure `AI_API_BASE` / proxy settings are reachable.
-
 ## API
-- `POST /api/simulation/start`
-  - body: `{ "useAI": true | false, "provider": "openai|moonshot", "locale": "en|zh-CN|ja" }`
-- `POST /api/simulation/tick`
-  - body: `{ "locale": "en|zh-CN|ja" }`
-- `GET /api/simulation/state`
 - `GET /api/health`
+  - Returns runtime health, provider/model, available providers, and AI key status.
+- `POST /api/simulation/start`
+  - Body: `{ "useAI": true|false, "provider": "openai|moonshot", "locale": "en|zh-CN|ja", "scenario": "balanced|high_regulation|high_secularization|high_polarization" }`
+- `POST /api/simulation/tick`
+  - Body: `{ "locale": "en|zh-CN|ja", "scenario": "..." }`
+- `GET /api/simulation/state`
+  - Current snapshot.
+- `GET /api/simulation/scenarios`
+  - Available scenarios and config version.
+- `POST /api/simulation/signals`
+  - Body: `{ "overrides": { "digitalization": 0.8, ... } }`
+- `POST /api/simulation/report`
+  - Exports a PDF report; requires AI configured and at least one completed round.
 
-Structured output example:
-
-```json
-{
-  "transferEngine": "ai|hybrid|rule",
-  "structureOutput": {
-    "antLinks": [
-      {
-        "fromReligionId": "buddhism",
-        "toReligionId": "shinto",
-        "fromRegionId": "south_asia",
-        "toRegionId": "east_asia",
-        "amount": 128,
-        "reason": "digital outreach"
-      }
-    ]
-  }
-}
-```
+Snapshot highlights:
+- `regionControl`
+- `bossCrisis`
+- `structureOutput.antLinks[].friction`
 
 ## Security Notes
 - Secrets are excluded from git via `.gitignore` (`.env`, `.env.*`).
 - Keep real keys only in local `.env`.
-- Use `.env.example` for shared templates.
+- Share only `.env.example`.
 
 ## Disclaimer
-This is a technical simulation demo for agent systems and visualization. It does not represent real-world religious statistics, truth claims, or value judgments.
+This project is a technical simulation and visualization demo. It does not represent real-world religious statistics, truth claims, or value judgments.

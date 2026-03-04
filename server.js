@@ -21,6 +21,7 @@ const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || '0.0.0.0';
 const SUPPORTED_LOCALES = ['en', 'zh-CN', 'ja'];
 const DEFAULT_LOCALE = 'en';
+const WORLD_REGION_INDEX = new Map(WORLD_REGIONS.map((region) => [region.id, region]));
 
 function normalizeScenario(input) {
   if (!input || typeof input !== 'string') {
@@ -103,6 +104,151 @@ function localeName(locale) {
   return 'English';
 }
 
+function normalizeInlineMarkdown(text = '') {
+  return String(text || '')
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/__([^_]+)__/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1')
+    .replace(/_([^_]+)_/g, '$1')
+    .replace(/~~([^~]+)~~/g, '$1')
+    .replace(/<[^>]+>/g, '')
+    .trim();
+}
+
+function parseTableRow(line) {
+  const text = String(line || '').trim();
+  if (!text.includes('|')) {
+    return null;
+  }
+  const compact = text.replace(/^\|/, '').replace(/\|$/, '');
+  const cells = compact.split('|').map((cell) => normalizeInlineMarkdown(cell.trim()));
+  return cells.length ? cells : null;
+}
+
+function isMarkdownTableDivider(line) {
+  const text = String(line || '').trim();
+  if (!text.includes('|')) {
+    return false;
+  }
+  const compact = text.replace(/^\|/, '').replace(/\|$/, '');
+  return compact.split('|').every((segment) => /^:?-{3,}:?$/.test(segment.trim()));
+}
+
+function collectMarkdownTable(lines, startIndex) {
+  if (!lines[startIndex]) {
+    return null;
+  }
+  if (!lines[startIndex].includes('|') || !isMarkdownTableDivider(lines[startIndex + 1])) {
+    return null;
+  }
+  const header = parseTableRow(lines[startIndex]);
+  if (!header) {
+    return null;
+  }
+  const rows = [];
+  let cursor = startIndex + 2;
+  while (cursor < lines.length) {
+    const line = lines[cursor];
+    if (!line.trim() || !line.includes('|')) {
+      break;
+    }
+    const row = parseTableRow(line);
+    if (!row) {
+      break;
+    }
+    rows.push(row);
+    cursor += 1;
+  }
+  return { header, rows, nextIndex: cursor };
+}
+
+function ensurePdfSpace(doc, neededHeight = 24, footerReserve = 26) {
+  const bottom = doc.page.height - doc.page.margins.bottom - footerReserve;
+  if (doc.y + neededHeight > bottom) {
+    doc.addPage();
+  }
+}
+
+function drawPdfTable(doc, table, pageWidth) {
+  const columnCount = Math.max(
+    1,
+    table.header.length,
+    ...table.rows.map((row) => row.length)
+  );
+  const normalizeRow = (row) =>
+    Array.from({ length: columnCount }, (_, index) => normalizeInlineMarkdown(row[index] || ''));
+
+  const header = normalizeRow(table.header);
+  const rows = table.rows.map((row) => normalizeRow(row));
+  const maxChars = new Array(columnCount).fill(8);
+  for (const row of [header, ...rows]) {
+    row.forEach((cell, index) => {
+      maxChars[index] = Math.max(maxChars[index], Math.min(36, cell.length));
+    });
+  }
+
+  const totalChars = maxChars.reduce((sum, value) => sum + value, 0);
+  const colWidths = maxChars.map((chars) => (pageWidth * chars) / totalChars);
+  const startX = doc.page.margins.left;
+  const cellPadX = 6;
+  const cellPadY = 4;
+  const minRowHeight = 18;
+
+  const rowHeight = (row, isHeader = false) => {
+    const font = isHeader ? 'Helvetica-Bold' : 'Helvetica';
+    const size = isHeader ? 10 : 9.5;
+    let height = minRowHeight;
+    for (let i = 0; i < row.length; i += 1) {
+      const text = row[i];
+      const cellWidth = Math.max(30, colWidths[i] - cellPadX * 2);
+      doc.font(font).fontSize(size);
+      const measured = doc.heightOfString(text || ' ', { width: cellWidth, lineGap: 1 });
+      height = Math.max(height, measured + cellPadY * 2);
+    }
+    return height;
+  };
+
+  const drawRow = (row, isHeader = false) => {
+    const height = rowHeight(row, isHeader);
+    let x = startX;
+    const y = doc.y;
+    for (let i = 0; i < row.length; i += 1) {
+      const width = colWidths[i];
+      doc
+        .rect(x, y, width, height)
+        .fillAndStroke(isHeader ? '#e7edf9' : '#ffffff', '#8a9cb1');
+      doc
+        .font(isHeader ? 'Helvetica-Bold' : 'Helvetica')
+        .fontSize(isHeader ? 10 : 9.5)
+        .fillColor('#1f2b3d')
+        .text(row[i], x + cellPadX, y + cellPadY, {
+          width: Math.max(30, width - cellPadX * 2),
+          lineGap: 1
+        });
+      x += width;
+    }
+    doc.y = y + height;
+    return height;
+  };
+
+  doc.moveDown(0.25);
+  ensurePdfSpace(doc, rowHeight(header, true));
+  drawRow(header, true);
+  for (const row of rows) {
+    const currentHeight = rowHeight(row, false);
+    const bottom = doc.page.height - doc.page.margins.bottom - 26;
+    if (doc.y + currentHeight > bottom) {
+      doc.addPage();
+      drawRow(header, true);
+    }
+    drawRow(row, false);
+  }
+  doc.moveDown(0.35);
+}
+
 function generatePdfBuffer(markdownText, metadata = {}) {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
@@ -122,63 +268,237 @@ function generatePdfBuffer(markdownText, metadata = {}) {
     doc.on('end', () => resolve(Buffer.concat(chunks)));
     doc.on('error', reject);
 
-    const lines = markdownText.split('\n');
-    const PAGE_WIDTH = 495;
+    const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+    const lines = String(markdownText || '').split(/\r?\n/);
+    let index = 0;
 
-    for (const line of lines) {
+    while (index < lines.length) {
+      const line = lines[index];
       const trimmed = line.trim();
 
+      const table = collectMarkdownTable(lines, index);
+      if (table) {
+        drawPdfTable(doc, table, pageWidth);
+        index = table.nextIndex;
+        continue;
+      }
+
       if (!trimmed) {
-        doc.moveDown(0.4);
+        doc.moveDown(0.32);
+        index += 1;
+        continue;
+      }
+
+      if (trimmed.startsWith('```')) {
+        const codeLines = [];
+        index += 1;
+        while (index < lines.length && !lines[index].trim().startsWith('```')) {
+          codeLines.push(lines[index]);
+          index += 1;
+        }
+        if (index < lines.length && lines[index].trim().startsWith('```')) {
+          index += 1;
+        }
+        const blockText = codeLines.join('\n').trim() || ' ';
+        ensurePdfSpace(doc, doc.heightOfString(blockText, { width: pageWidth - 24 }) + 16);
+        const y = doc.y;
+        const blockHeight = doc.heightOfString(blockText, { width: pageWidth - 24, lineGap: 1.5 }) + 12;
+        doc.rect(doc.page.margins.left, y, pageWidth, blockHeight).fill('#f3f5f9');
+        doc
+          .font('Courier')
+          .fontSize(9)
+          .fillColor('#2f3747')
+          .text(blockText, doc.page.margins.left + 12, y + 6, { width: pageWidth - 24, lineGap: 1.5 });
+        doc.y = y + blockHeight + 5;
         continue;
       }
 
       if (trimmed.startsWith('# ')) {
-        doc.moveDown(0.8);
-        doc.fontSize(18).font('Helvetica-Bold').fillColor('#1a1a2e')
-          .text(trimmed.slice(2), { width: PAGE_WIDTH });
-        doc.moveDown(0.3);
-      } else if (trimmed.startsWith('## ')) {
-        doc.moveDown(0.6);
-        doc.fontSize(15).font('Helvetica-Bold').fillColor('#16213e')
-          .text(trimmed.slice(3), { width: PAGE_WIDTH });
+        ensurePdfSpace(doc, 36);
+        doc
+          .moveDown(0.45)
+          .fontSize(18)
+          .font('Helvetica-Bold')
+          .fillColor('#13233f')
+          .text(normalizeInlineMarkdown(trimmed.slice(2)), { width: pageWidth, lineGap: 2 });
         doc.moveDown(0.2);
-      } else if (trimmed.startsWith('### ')) {
-        doc.moveDown(0.4);
-        doc.fontSize(13).font('Helvetica-Bold').fillColor('#0f3460')
-          .text(trimmed.slice(4), { width: PAGE_WIDTH });
-        doc.moveDown(0.15);
-      } else if (trimmed === '---') {
-        doc.moveDown(0.3);
-        const y = doc.y;
-        doc.moveTo(50, y).lineTo(545, y).strokeColor('#cccccc').lineWidth(0.5).stroke();
-        doc.moveDown(0.3);
-      } else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
-        doc.fontSize(11).font('Helvetica').fillColor('#333333')
-          .text(`  \u2022  ${trimmed.slice(2)}`, { width: PAGE_WIDTH, lineGap: 3 });
-      } else if (/^\d+\.\s/.test(trimmed)) {
-        const match = trimmed.match(/^(\d+\.)\s(.*)$/);
-        doc.fontSize(11).font('Helvetica').fillColor('#333333')
-          .text(`  ${match[1]}  ${match[2]}`, { width: PAGE_WIDTH, lineGap: 3 });
-      } else {
-        doc.fontSize(11).font('Helvetica').fillColor('#333333')
-          .text(trimmed, { width: PAGE_WIDTH, lineGap: 3 });
+        index += 1;
+        continue;
       }
+
+      if (trimmed.startsWith('## ')) {
+        ensurePdfSpace(doc, 30);
+        doc
+          .moveDown(0.3)
+          .fontSize(14.5)
+          .font('Helvetica-Bold')
+          .fillColor('#1a3356')
+          .text(normalizeInlineMarkdown(trimmed.slice(3)), { width: pageWidth, lineGap: 2 });
+        doc.moveDown(0.15);
+        index += 1;
+        continue;
+      }
+
+      if (trimmed.startsWith('### ')) {
+        ensurePdfSpace(doc, 24);
+        doc
+          .moveDown(0.2)
+          .fontSize(12)
+          .font('Helvetica-Bold')
+          .fillColor('#274469')
+          .text(normalizeInlineMarkdown(trimmed.slice(4)), { width: pageWidth });
+        doc.moveDown(0.1);
+        index += 1;
+        continue;
+      }
+
+      if (trimmed.startsWith('#### ')) {
+        ensurePdfSpace(doc, 20);
+        doc
+          .fontSize(10.8)
+          .font('Helvetica-Bold')
+          .fillColor('#274469')
+          .text(normalizeInlineMarkdown(trimmed.slice(5)), { width: pageWidth });
+        index += 1;
+        continue;
+      }
+
+      if (trimmed === '---') {
+        ensurePdfSpace(doc, 12);
+        const y = doc.y + 2;
+        doc.moveTo(doc.page.margins.left, y).lineTo(doc.page.margins.left + pageWidth, y).strokeColor('#c4ccd9').lineWidth(0.6).stroke();
+        doc.moveDown(0.4);
+        index += 1;
+        continue;
+      }
+
+      if (trimmed.startsWith('>')) {
+        const quote = normalizeInlineMarkdown(trimmed.replace(/^>\s?/, ''));
+        const quoteHeight = doc.heightOfString(quote, { width: pageWidth - 18, lineGap: 2 }) + 10;
+        ensurePdfSpace(doc, quoteHeight);
+        const startY = doc.y;
+        doc
+          .moveTo(doc.page.margins.left + 2, startY)
+          .lineTo(doc.page.margins.left + 2, startY + quoteHeight)
+          .lineWidth(2)
+          .strokeColor('#90a3bd')
+          .stroke();
+        doc
+          .font('Helvetica-Oblique')
+          .fontSize(10.5)
+          .fillColor('#3a4a63')
+          .text(quote, doc.page.margins.left + 10, startY + 2, { width: pageWidth - 16, lineGap: 2 });
+        doc.y = startY + quoteHeight + 2;
+        index += 1;
+        continue;
+      }
+
+      if (/^[-*]\s+/.test(trimmed)) {
+        const text = normalizeInlineMarkdown(trimmed.replace(/^[-*]\s+/, ''));
+        ensurePdfSpace(doc, 18);
+        doc
+          .fontSize(10.8)
+          .font('Helvetica')
+          .fillColor('#222f42')
+          .text(`\u2022 ${text}`, doc.page.margins.left + 8, doc.y, { width: pageWidth - 8, lineGap: 2 });
+        index += 1;
+        continue;
+      }
+
+      if (/^\d+\.\s+/.test(trimmed)) {
+        const matched = trimmed.match(/^(\d+\.)\s+(.+)$/);
+        const label = matched?.[1] || '';
+        const text = normalizeInlineMarkdown(matched?.[2] || trimmed);
+        ensurePdfSpace(doc, 18);
+        doc
+          .fontSize(10.8)
+          .font('Helvetica')
+          .fillColor('#222f42')
+          .text(`${label} ${text}`, doc.page.margins.left + 4, doc.y, { width: pageWidth - 4, lineGap: 2 });
+        index += 1;
+        continue;
+      }
+
+      const paragraph = normalizeInlineMarkdown(trimmed);
+      ensurePdfSpace(doc, doc.heightOfString(paragraph, { width: pageWidth, lineGap: 2 }) + 4);
+      doc
+        .fontSize(10.8)
+        .font('Helvetica')
+        .fillColor('#2a3140')
+        .text(paragraph, { width: pageWidth, lineGap: 2, align: 'justify' });
+      doc.moveDown(0.06);
+      index += 1;
     }
 
     const pageCount = doc.bufferedPageRange().count;
-    for (let i = 0; i < pageCount; i++) {
+    for (let i = 0; i < pageCount; i += 1) {
       doc.switchToPage(i);
-      doc.fontSize(8).font('Helvetica').fillColor('#999999')
+      doc
+        .fontSize(8)
+        .font('Helvetica')
+        .fillColor('#8c95a4')
         .text(
           `${metadata.title || 'Religion Simulation Report'} — Page ${i + 1} / ${pageCount}`,
-          50, doc.page.height - 40,
-          { width: PAGE_WIDTH, align: 'center' }
+          doc.page.margins.left,
+          doc.page.height - 38,
+          { width: pageWidth, align: 'center' }
         );
     }
 
     doc.end();
   });
+}
+
+function ensureAcademicReportStructure(markdownText, snapshot) {
+  let text = String(markdownText || '').trim();
+  if (!text) {
+    return text;
+  }
+
+  const topReligion = [...(snapshot.religions || [])].sort((a, b) => b.followers - a.followers)[0];
+  const strongestTransfer = [...(snapshot.topTransfers || [])].sort((a, b) => b.amount - a.amount)[0];
+  const share = topReligion
+    ? ((topReligion.followers / Math.max(1, snapshot.totalFollowers)) * 100).toFixed(1)
+    : 'N/A';
+  const defaultTitle = `# Religion Dynamics Under Social Stress: Round ${snapshot.round} Analysis`;
+  if (!/^#\s+/m.test(text)) {
+    text = `${defaultTitle}\n\n${text}`;
+  }
+
+  const has = (pattern) => pattern.test(text);
+  if (!has(/(^|\n)##\s+Abstract\b/i)) {
+    text = text.replace(
+      /^#\s+.+$/m,
+      (title) =>
+        `${title}\n\n## Abstract\nThis report analyzes simulation round ${snapshot.round} under scenario "${snapshot.scenario}", focusing on religious redistribution dynamics, institutional constraints, and event shocks. The currently dominant group is ${topReligion?.name || 'N/A'} (${share}%). Transfer evidence indicates the strongest observed corridor is ${strongestTransfer ? `${strongestTransfer.from} -> ${strongestTransfer.to}` : 'N/A'}, suggesting structured rather than random conversion pressure. Findings are interpreted through religious studies, historical sociology, and philosophy of religion, with explicit claim-evidence coupling and reproducible references to simulation records [1][2].`
+    );
+  }
+  if (!has(/(^|\n)##\s+Keywords\b/i)) {
+    text += `\n\n## Keywords\nreligion dynamics; social signals; conversion flow; institutional governance; computational simulation`;
+  }
+  if (!has(/(^|\n)##\s+1\.\s*Introduction\b/i)) {
+    text += `\n\n## 1. Introduction\nThe simulation models inter-religious conversion with a fixed total population and dynamic social signal shocks. This section frames the analytical scope and research questions [1].`;
+  }
+  if (!has(/(^|\n)##\s+2\.\s*Methodology\b/i)) {
+    text += `\n\n## 2. Methodology and Data\nThe analysis uses round-level state snapshots, transfer corridors, event history, and judgment records.\n\n| Indicator | Definition | Source |\n|---|---|---|\n| Followers | Current adherent count by religion | Snapshot religion state [1] |\n| Transfer Flow | Directed conversion volume | Top transfer events [2] |\n| Judgment Blocking | Tribunal-mediated blocked conversions | Judgment records [3] |`;
+  }
+  if (!has(/(^|\n)##\s+3\.\s*Empirical Findings\b/i)) {
+    text += `\n\n## 3. Empirical Findings\n### Claim 1\nArgument: Institutional capacity and retention jointly increase stability of high-cohesion traditions.\nEvidence: Dominance and transfer concentration in this round indicate asymmetric conversion resilience [1][2].\n\n### Claim 2\nArgument: Social signal fluctuations alter channel effectiveness faster than doctrinal baselines.\nEvidence: Event shocks and signal deltas align with observed changes in corridor intensity [2][4].\n\n### Claim 3\nArgument: Legal-pluralism and regulation tension mediates conversion efficiency.\nEvidence: Judgment blocking records and net conversion efficiency metrics move in opposite directions under restrictive conditions [3].`;
+  }
+  if (!has(/(^|\n)##\s+4\.\s*Discussion\b/i)) {
+    text += `\n\n## 4. Discussion\nThis section should synthesize religious studies, historical path dependence, and philosophical meaning-formation under modern social fragmentation [1][4].`;
+  }
+  if (!has(/(^|\n)##\s+5\.\s*Conclusion\b/i)) {
+    text += `\n\n## 5. Conclusion\nThe model suggests that conversion pathways are structurally constrained by institutional cohesion, social shocks, and regional compatibility. Future work should add demographic cohorts and empirical calibration [1][2].`;
+  }
+  if (!has(/(^|\n)##\s+References\b/i)) {
+    text += `\n\n## References\n1. [1] Simulation snapshot data (religion states, round ${snapshot.round}).\n2. [2] Transfer corridor records (topTransfers, structureOutput).\n3. [3] Religious judgment and blocking records.\n4. [4] Event history and social signal trajectory logs.`;
+  }
+  if (!has(/(^|\n)##\s+Appendix\b/i)) {
+    text += `\n\n## Appendix A. Supplementary Tables\n| Metric | Value |\n|---|---|\n| Round | ${snapshot.round} |\n| Scenario | ${snapshot.scenario} |\n| Total Followers | ${snapshot.totalFollowers} |`;
+  }
+
+  return text;
 }
 
 function randomIn(min, max) {
@@ -1154,17 +1474,29 @@ religionState=${JSON.stringify(agentState)}`;
         : 'N/A'
     }));
 
-    const systemPrompt = `You are a panel of three distinguished scholars collaborating on an academic research report analyzing religious dynamics:
+    const systemPrompt = `You are an interdisciplinary academic writing committee (religious studies, history, and philosophy).
 
-1. **Religious Studies Scholar**: Expert in comparative religion, theology, missionary strategies, doctrine evolution, and faith retention mechanisms. You analyze how doctrinal appeal, ritual depth, community bonds, and institutional capacity affect religious growth and decline.
+Write in formal academic English and output strict Markdown only.
 
-2. **Historian**: Specialist in the history of civilizations, religious movements, geopolitical influences on faith, migration patterns, and socioeconomic forces. You analyze how external social signals—digitalization, economic stress, secularization, state regulation—shape religious landscapes over time.
+Hard requirements:
+1) Use this section order exactly:
+   - # Title
+   - ## Abstract
+   - ## Keywords
+   - ## 1. Introduction
+   - ## 2. Methodology and Data
+   - ## 3. Empirical Findings
+   - ## 4. Discussion
+   - ## 5. Conclusion
+   - ## References
+   - ## Appendix A. Supplementary Tables
+2) In "Empirical Findings", include at least 3 explicit claims. For each claim, add one line beginning with "Evidence:" and cite data with bracket citations like [1], [2].
+3) Include at least one Markdown table in Methodology/Data and at least one in Appendix.
+4) The References section must be a numbered list using bracket format (e.g., [1] ...), and each citation used in the text must appear in References.
+5) Keep all interpretations grounded in provided simulation data; avoid theological value judgments.
+6) Do not output code fences.`;
 
-3. **Philosopher**: Focused on philosophy of religion, existentialism, meaning-making, identity construction, and the tension between modernity and tradition. You analyze the deeper human motivations behind religious conversion, apostasy, and the search for meaning in an increasingly fragmented world.
-
-Write the report in English. Use an academic tone with proper structure. The report must be data-driven, referencing specific numbers and trends from the simulation data provided. Format the output as Markdown. Be thorough and detailed in each section.`;
-
-    const userPrompt = `Based on the following multi-agent religion simulation data (Round ${snapshot.round}, Scenario: ${snapshot.scenario}), produce a comprehensive academic analysis report.
+    const userPrompt = `Based on the following multi-agent religion simulation data (Round ${snapshot.round}, Scenario: ${snapshot.scenario}), produce a comprehensive academic report.
 
 ## Simulation Parameters
 
@@ -1191,36 +1523,18 @@ ${JSON.stringify((snapshot.logs || []).slice(-30), null, 2)}
 
 ---
 
-Please produce the report with the following structure:
-
-# The Rise and Fall of Religions: A Multi-Perspective Academic Analysis
-
-## 1. Executive Summary
-(Brief executive summary of key findings, 200-300 words)
-
-## 2. Data Overview
-(Comparative overview table of all religions: followers, growth/decline trends, key metrics)
-
-## 3. Religious Studies Perspective
-### 3.1 Doctrinal Appeal and Missionary Strategy Effectiveness
-### 3.2 Faith Retention Mechanisms and Exit Barriers
-### 3.3 Institutional Capacity and Religious Tribunals
-
-## 4. Historian's Perspective
-### 4.1 Social Signal Shifts and the Religious Landscape
-### 4.2 The Digital Wave vs. Traditional Faith
-### 4.3 Migration, Economic Pressure, and the Redrawing of Religious Boundaries
-
-## 5. Philosopher's Perspective
-### 5.1 The Search for Meaning in a Secular Age
-### 5.2 Identity Crisis and Religious Resurgence
-### 5.3 The Pluralism Dilemma and Fragmentation of Faith
-
-## 6. Synthesis and Outlook
-(Synthesis of all three perspectives, key predictions, academic implications)
-
-## 7. Data Appendix
-(Key data points referenced in the analysis)`;
+Formatting and argument requirements:
+- Use one title line at top.
+- Abstract length: 180-260 words.
+- Keywords: 5-8 terms.
+- Methodology/Data section must explain indicator definitions and include a comparative table across religions.
+- Empirical Findings section must contain at least 3 numbered claims, each followed by:
+  - "Argument:" (interpretive statement)
+  - "Evidence:" (specific numeric evidence from provided data with citations)
+- Discussion should integrate religious studies, historical, and philosophical interpretations.
+- Conclusion should include limitations and future research directions.
+- References must cite simulation data sources from this prompt (e.g., religion states, transfer events, judgment records, event history, logs).
+- Appendix must include at least one table with supplementary metrics used in argumentation.`;
 
     try {
       const content = await this.chat(
@@ -1275,48 +1589,350 @@ class ReligionSimulation {
     });
   }
 
-  // 随机事件系统：每 N 轮以概率触发事件，短期扰动社会信号
-  applyEvents(state) {
-    const cfg = this.config.events;
-    if (!cfg?.enabled) return;
-    if (state.round % cfg.checkEveryNRounds !== 0) {
-      // 仍需衰减已有事件
-      this._decayActiveEvents(state);
+  ensureBossState(state) {
+    if (!state.bossCrisis) {
+      state.bossCrisis = {
+        active: false,
+        phase: 0,
+        totalPhases: 3,
+        phaseDuration: 3,
+        roundsLeft: 0,
+        failedStages: 0,
+        cooldown: 7,
+        objective: '',
+        log: [],
+        startedRound: null,
+        lastOutcome: null
+      };
+    }
+    return state.bossCrisis;
+  }
+
+  assignDominantRegionToAgents(agents, regions) {
+    const bestRegion = new Map();
+    for (const region of regions || []) {
+      for (const item of region.distribution || []) {
+        const prev = bestRegion.get(item.id);
+        if (!prev || item.followers > prev.followers) {
+          bestRegion.set(item.id, {
+            regionId: region.id,
+            regionName: region.name,
+            followers: item.followers
+          });
+        }
+      }
+    }
+    for (const agent of agents) {
+      const hit = bestRegion.get(agent.id);
+      if (hit) {
+        agent.dominantRegionId = hit.regionId;
+        agent.dominantRegionName = hit.regionName;
+        agent.dominantRegionFollowers = hit.followers;
+      } else if (!agent.dominantRegionId) {
+        agent.dominantRegionId = 'global_online';
+      }
+    }
+  }
+
+  regionMobilityFactor(fromRegionId, toRegionId, socialSignals) {
+    if (!fromRegionId || !toRegionId || fromRegionId === toRegionId) {
+      return 1.05;
+    }
+    const from = WORLD_REGION_INDEX.get(fromRegionId);
+    const to = WORLD_REGION_INDEX.get(toRegionId);
+    if (!from || !to) {
+      return 0.92;
+    }
+    const dx = Number(from.position?.x || 0) - Number(to.position?.x || 0);
+    const dz = Number(from.position?.z || 0) - Number(to.position?.z || 0);
+    const distance = Math.sqrt(dx * dx + dz * dz);
+    const distanceCost = clamp(distance / 30, 0, 1.2);
+    const regGap = Math.abs((from.factors?.stateRegulation || 0.5) - (to.factors?.stateRegulation || 0.5));
+    const legalGap = Math.abs((from.factors?.legalPluralism || 0.5) - (to.factors?.legalPluralism || 0.5));
+    const identityGap = Math.abs((from.factors?.identityPolitics || 0.5) - (to.factors?.identityPolitics || 0.5));
+    const migration = clamp(Number(socialSignals?.migration || 0.55), 0.05, 0.98);
+    const digitalization = clamp(Number(socialSignals?.digitalization || 0.55), 0.05, 0.98);
+    const friction =
+      distanceCost * 0.34 +
+      regGap * 0.24 +
+      legalGap * 0.2 +
+      identityGap * 0.14 +
+      (1 - migration) * 0.12 +
+      (1 - digitalization) * 0.08;
+    return clamp(1.2 - friction, 0.58, 1.24);
+  }
+
+  initializeRegionControl(regions) {
+    return this.refreshRegionControl([], regions);
+  }
+
+  refreshRegionControl(previousControl = [], regions = []) {
+    const prevByRegion = new Map(
+      (previousControl || []).map((item) => [item.regionId, item])
+    );
+    return regions.map((region) => {
+      const top = region.distribution?.[0] || { id: null, share: 0, name: '' };
+      const second = region.distribution?.[1] || { share: 0 };
+      const lead = clamp((top.share || 0) - (second.share || 0), 0, 1);
+      const targetControl = clamp(
+        0.26 + (top.share || 0) * 0.86 - (region.competitionIndex || 0) * 0.18,
+        0.08,
+        1
+      );
+      const prev = prevByRegion.get(region.id);
+      if (!prev) {
+        return {
+          regionId: region.id,
+          ownerId: top.id,
+          ownerName: top.name,
+          control: clamp(targetControl, 0.18, 0.9),
+          streak: 1,
+          contested: region.competitionIndex > 0.72
+        };
+      }
+
+      let ownerId = prev.ownerId;
+      let ownerName = prev.ownerName || top.name;
+      let control = prev.control;
+      let streak = prev.streak;
+
+      if (prev.ownerId === top.id) {
+        control = clamp(prev.control * 0.66 + targetControl * 0.34 + lead * 0.2, 0.06, 1);
+        streak = prev.streak + 1;
+      } else {
+        const decayed = clamp(prev.control * 0.62 - (region.competitionIndex || 0) * 0.12, 0.04, 1);
+        if (decayed < 0.28 || (top.share || 0) > 0.53) {
+          ownerId = top.id;
+          ownerName = top.name;
+          control = clamp(0.24 + (top.share || 0) * 0.5, 0.08, 0.92);
+          streak = 1;
+        } else {
+          control = decayed;
+          streak = Math.max(0, prev.streak - 1);
+        }
+      }
+
+      return {
+        regionId: region.id,
+        ownerId,
+        ownerName,
+        control,
+        streak,
+        contested: region.competitionIndex > 0.72 || lead < 0.07
+      };
+    });
+  }
+
+  applyTerritoryBonuses(agents, regions, regionControl = []) {
+    const regionById = new Map((regions || []).map((region) => [region.id, region]));
+    const controlScoreByOwner = new Map();
+    for (const control of regionControl || []) {
+      const region = regionById.get(control.regionId);
+      if (!region || !control.ownerId) {
+        continue;
+      }
+      const weight = clamp(Number(region.populationWeight || 0), 0.01, 1);
+      const stability = clamp(1 - Number(region.competitionIndex || 0) * 0.4, 0.52, 1);
+      const score = clamp(Number(control.control || 0), 0, 1) * weight * stability;
+      controlScoreByOwner.set(control.ownerId, (controlScoreByOwner.get(control.ownerId) || 0) + score);
+    }
+
+    for (const agent of agents) {
+      const territoryScore = clamp(controlScoreByOwner.get(agent.id) || 0, 0, 1.6);
+      agent.territoryBonus = {
+        territoryScore,
+        retentionBoost: clamp(territoryScore * 0.12, 0, 0.08),
+        outreachBoost: clamp(territoryScore * 0.09, 0, 0.07),
+        defenseBoost: clamp(territoryScore * 0.14, 0, 0.11)
+      };
+    }
+  }
+
+  bossPhaseShock(phase) {
+    if (phase === 1) {
+      return { socialFragmentation: 0.06, economicStress: 0.05, migration: 0.03 };
+    }
+    if (phase === 2) {
+      return { mediaPolarization: 0.06, stateRegulation: 0.05, identityPolitics: 0.05 };
+    }
+    return { meaningSearch: 0.07, socialFragmentation: 0.05, institutionalTrust: -0.05 };
+  }
+
+  bossPhaseObjectiveText(phase) {
+    if (phase === 1) {
+      return 'Reduce social fragmentation while preserving institutional trust';
+    }
+    if (phase === 2) {
+      return 'Stabilize contested regions and avoid extreme polarization';
+    }
+    return 'Contain judgment pressure and recover pluralistic balance';
+  }
+
+  evaluateBossPhase(state, phase) {
+    const signals = state.socialSignals || {};
+    const regions = state.regions || [];
+    const stableRegions = regions.filter((region) => Number(region.competitionIndex || 0) < 0.68).length;
+    const contestedRegions = regions.filter((region) => Number(region.competitionIndex || 0) > 0.76).length;
+    const metrics = state.roundMetrics || {};
+
+    if (phase === 1) {
+      const passed = signals.socialFragmentation < 0.74 && signals.institutionalTrust > 0.36;
+      return {
+        passed,
+        note: passed ? 'Fragmentation pressure moderated' : 'Fragmentation remained too high',
+        reward: { socialFragmentation: -0.03, institutionalTrust: 0.03 },
+        penalty: { socialFragmentation: 0.05, institutionalTrust: -0.04 }
+      };
+    }
+    if (phase === 2) {
+      const passed = stableRegions >= 4 && contestedRegions <= 2 && signals.mediaPolarization < 0.8;
+      return {
+        passed,
+        note: passed ? 'Regional fronts stabilized' : 'Regional contestation escalated',
+        reward: { mediaPolarization: -0.03, legalPluralism: 0.03, identityPolitics: -0.02 },
+        penalty: { mediaPolarization: 0.05, identityPolitics: 0.05, stateRegulation: 0.04 }
+      };
+    }
+    const passed =
+      Number(metrics.judgmentRatio || 0) < 0.5 &&
+      signals.legalPluralism > 0.44 &&
+      signals.socialFragmentation < 0.78;
+    return {
+      passed,
+      note: passed ? 'System contained crisis spillover' : 'Crisis spillover breached governance limits',
+      reward: { legalPluralism: 0.04, institutionalTrust: 0.03, socialFragmentation: -0.04 },
+      penalty: { legalPluralism: -0.05, stateRegulation: 0.04, socialFragmentation: 0.05 }
+    };
+  }
+
+  triggerBossCrisis(state) {
+    const boss = this.ensureBossState(state);
+    boss.active = true;
+    boss.phase = 1;
+    boss.roundsLeft = boss.phaseDuration;
+    boss.failedStages = 0;
+    boss.startedRound = state.round;
+    boss.objective = this.bossPhaseObjectiveText(1);
+    boss.log = [];
+    boss.lastOutcome = null;
+
+    const existing = state.activeEvents.find((event) => event.id === 'global_crisis');
+    if (!existing) {
+      state.activeEvents.push({
+        id: 'global_crisis',
+        startRound: state.round,
+        duration: boss.totalPhases * boss.phaseDuration,
+        roundsLeft: boss.totalPhases * boss.phaseDuration,
+        shock: this.bossPhaseShock(1),
+        boss: true
+      });
+      state.eventHistory.push({
+        id: 'global_crisis',
+        round: state.round,
+        shock: this.bossPhaseShock(1)
+      });
+      if (state.eventHistory.length > 80) {
+        state.eventHistory = state.eventHistory.slice(-80);
+      }
+    }
+  }
+
+  updateBossCrisis(state) {
+    const boss = this.ensureBossState(state);
+    if (!boss.active) {
+      boss.cooldown = Math.max(0, Number(boss.cooldown || 0) - 1);
+      if (boss.cooldown <= 0 && state.round >= 6 && state.round % 9 === 0 && Math.random() < 0.46) {
+        this.triggerBossCrisis(state);
+      }
       return;
     }
 
-    this._decayActiveEvents(state);
+    const crisisEvent = state.activeEvents.find((event) => event.id === 'global_crisis');
+    if (crisisEvent) {
+      crisisEvent.shock = this.bossPhaseShock(boss.phase);
+      crisisEvent.duration = boss.totalPhases * boss.phaseDuration;
+      crisisEvent.roundsLeft = Math.max(
+        1,
+        (boss.totalPhases - boss.phase) * boss.phaseDuration + boss.roundsLeft
+      );
+    }
+    boss.objective = this.bossPhaseObjectiveText(boss.phase);
+    boss.roundsLeft = Math.max(0, boss.roundsLeft - 1);
 
-    const fired = [];
-    for (const eventDef of cfg.pool) {
-      if (fired.length >= cfg.maxPerCheck) break;
-      if (Math.random() < eventDef.prob) {
-        const ev = {
-          id: eventDef.id,
-          startRound: state.round,
-          duration: eventDef.duration,
-          roundsLeft: eventDef.duration,
-          shock: { ...eventDef.shock }
-        };
-        state.activeEvents.push(ev);
-        state.eventHistory.push({
-          id: eventDef.id,
-          round: state.round,
-          shock: ev.shock
-        });
-        if (state.eventHistory.length > 80) {
-          state.eventHistory = state.eventHistory.slice(-80);
+    if (boss.roundsLeft > 0) {
+      return;
+    }
+
+    const phaseResult = this.evaluateBossPhase(state, boss.phase);
+    const patch = phaseResult.passed ? phaseResult.reward : phaseResult.penalty;
+    if (!phaseResult.passed) {
+      boss.failedStages += 1;
+    }
+    for (const [key, delta] of Object.entries(patch || {})) {
+      if (key in state.socialSignals) {
+        state.socialSignals[key] = clamp(Number(state.socialSignals[key] || 0.55) + Number(delta || 0), 0.1, 0.98);
+      }
+    }
+    boss.log.unshift({
+      round: state.round,
+      phase: boss.phase,
+      passed: phaseResult.passed,
+      note: phaseResult.note
+    });
+    boss.log = boss.log.slice(0, 12);
+
+    if (boss.phase >= boss.totalPhases) {
+      boss.active = false;
+      boss.lastOutcome = boss.failedStages === 0 ? 'victory' : boss.failedStages <= 1 ? 'contained' : 'breach';
+      boss.cooldown = 9 + boss.failedStages * 2;
+      state.activeEvents = state.activeEvents.filter((event) => event.id !== 'global_crisis');
+      return;
+    }
+    boss.phase += 1;
+    boss.roundsLeft = boss.phaseDuration;
+    boss.objective = this.bossPhaseObjectiveText(boss.phase);
+  }
+
+  // 随机事件系统：每 N 轮以概率触发事件，短期扰动社会信号
+  applyEvents(state) {
+    const cfg = this.config.events;
+    this._decayActiveEvents(state);
+    if (cfg?.enabled && state.round % cfg.checkEveryNRounds === 0) {
+      const fired = [];
+      for (const eventDef of cfg.pool) {
+        if (fired.length >= cfg.maxPerCheck) break;
+        if (Math.random() < eventDef.prob) {
+          const ev = {
+            id: eventDef.id,
+            startRound: state.round,
+            duration: eventDef.duration,
+            roundsLeft: eventDef.duration,
+            shock: { ...eventDef.shock }
+          };
+          state.activeEvents.push(ev);
+          state.eventHistory.push({
+            id: eventDef.id,
+            round: state.round,
+            shock: ev.shock
+          });
+          if (state.eventHistory.length > 80) {
+            state.eventHistory = state.eventHistory.slice(-80);
+          }
+          fired.push(ev);
         }
-        fired.push(ev);
       }
     }
 
-    // 应用所有活跃事件的冲击到当前社会信号
+    this._applyActiveEventShocks(state);
+  }
+
+  _applyActiveEventShocks(state) {
     for (const ev of state.activeEvents) {
       for (const [key, delta] of Object.entries(ev.shock)) {
         if (key in state.socialSignals) {
+          const remaining = Math.max(0.1, Number(ev.roundsLeft || 1) / Math.max(1, Number(ev.duration || 1)));
           state.socialSignals[key] = clamp(
-            (state.socialSignals[key] || 0.5) + delta * (ev.roundsLeft / ev.duration),
+            (state.socialSignals[key] || 0.5) + delta * remaining,
             0.1,
             0.98
           );
@@ -1327,9 +1943,12 @@ class ReligionSimulation {
 
   _decayActiveEvents(state) {
     for (const ev of state.activeEvents) {
+      if (ev.id === 'global_crisis') {
+        continue;
+      }
       ev.roundsLeft = Math.max(0, ev.roundsLeft - 1);
     }
-    state.activeEvents = state.activeEvents.filter((ev) => ev.roundsLeft > 0);
+    state.activeEvents = state.activeEvents.filter((ev) => ev.id === 'global_crisis' || ev.roundsLeft > 0);
   }
 
   driftSocialSignals(current) {
@@ -1410,7 +2029,26 @@ class ReligionSimulation {
           agent.metrics.retention * 0.17,
         0.12,
         0.96
-      )
+      ),
+      inertia: clamp(
+        0.24 + agent.traits.institutionCapacity * 0.34 + agent.metrics.retention * 0.24,
+        0.18,
+        0.92
+      ),
+      riskTolerance: clamp(
+        0.16 + agent.metrics.openness * 0.44 + (1 - agent.metrics.retention) * 0.24,
+        0.08,
+        0.88
+      ),
+      cohesion: clamp(
+        0.2 +
+          agent.traits.identityBond * 0.35 +
+          agent.traits.ritualDepth * 0.2 +
+          agent.metrics.retention * 0.18,
+        0.12,
+        0.97
+      ),
+      recentOutcome: 0
     };
   }
 
@@ -1427,13 +2065,16 @@ class ReligionSimulation {
   adaptAgentStrategies(agents, socialSignals) {
     for (const agent of agents) {
       const strategy = agent.strategy || this.buildInitialStrategy(agent);
-      const outcomeRate = clamp(
-        (agent.followers > 0 ? agent.delta / agent.followers : 0) || 0,
-        -0.06,
-        0.06
-      );
-      const stress = Math.max(0, -outcomeRate);
-      const success = Math.max(0, outcomeRate);
+      strategy.inertia = clamp(Number(strategy.inertia ?? 0.46), 0.18, 0.94);
+      strategy.riskTolerance = clamp(Number(strategy.riskTolerance ?? 0.42), 0.06, 0.9);
+      strategy.cohesion = clamp(Number(strategy.cohesion ?? 0.52), 0.1, 0.99);
+      strategy.recentOutcome = clamp(Number(strategy.recentOutcome ?? 0), -0.08, 0.08);
+
+      const outcomeRate = clamp((agent.followers > 0 ? agent.delta / agent.followers : 0) || 0, -0.06, 0.06);
+      const smoothedOutcome = clamp(strategy.recentOutcome * 0.64 + outcomeRate * 0.36, -0.06, 0.06);
+      strategy.recentOutcome = smoothedOutcome;
+      const stress = Math.max(0, -smoothedOutcome);
+      const success = Math.max(0, smoothedOutcome);
 
       const targetChannels = {};
       for (const channel of STRATEGY_CHANNELS) {
@@ -1441,8 +2082,13 @@ class ReligionSimulation {
         const pressure = this.getSignalPressureValue(socialSignals, channel);
         const pressurePriority = pressure * (0.45 + trait * 0.55);
         const defensiveBias =
-          channel === 'identity' || channel === 'institution' ? 1 + stress * 1.4 : 1;
-        const growthBias = channel === 'digital' || channel === 'youth' ? 1 + success * 0.9 : 1;
+          channel === 'identity' || channel === 'institution'
+            ? 1 + stress * (1.15 + strategy.cohesion * 0.35)
+            : 1;
+        const growthBias =
+          channel === 'digital' || channel === 'youth'
+            ? 1 + success * (0.65 + strategy.riskTolerance * 0.55)
+            : 1;
         const cultureBias =
           channel === 'identity'
             ? 0.86 + socialSignals.mediaPolarization * 0.32
@@ -1453,14 +2099,25 @@ class ReligionSimulation {
                 : channel === 'institution'
                   ? 0.84 + socialSignals.stateRegulation * 0.28
                   : 1;
-        targetChannels[channel] = pressurePriority * defensiveBias * growthBias * cultureBias;
+        const cohesionBias =
+          channel === 'identity' || channel === 'institution'
+            ? 0.9 + strategy.cohesion * 0.34
+            : 0.9 + (1 - strategy.cohesion) * 0.26;
+        const riskBias =
+          channel === 'digital' || channel === 'youth'
+            ? 0.82 + strategy.riskTolerance * 0.42
+            : 1 - strategy.riskTolerance * 0.08;
+        targetChannels[channel] =
+          pressurePriority * defensiveBias * growthBias * cultureBias * cohesionBias * riskBias;
       }
 
       const normalizedTarget = normalizeChannelWeights(targetChannels);
       const learningRate = clamp(
-        strategy.adaptation * (0.36 + stress * 1.6 + success * 0.85),
-        0.025,
-        0.24
+        strategy.adaptation *
+          (0.24 + stress * 1.35 + success * 0.62) *
+          (1 - strategy.inertia * 0.52),
+        0.012,
+        0.19
       );
       const blended = {};
       for (const channel of STRATEGY_CHANNELS) {
@@ -1472,34 +2129,71 @@ class ReligionSimulation {
 
       const outreachLoad = clamp((agent.transferOut || 0) / Math.max(1, agent.followers), 0, 0.15);
       strategy.fatigue = clamp(
-        strategy.fatigue + outreachLoad * 0.42 - success * 1.9 + stress * 0.25 - 0.012,
+        strategy.fatigue +
+          outreachLoad * (0.24 + strategy.tempo * 0.24) -
+          success * 1.28 +
+          stress * 0.28 -
+          strategy.cohesion * 0.03 -
+          0.01,
         0.02,
         0.64
       );
       strategy.momentum = clamp(
-        strategy.momentum + success * 1.45 - stress * 0.85 - strategy.fatigue * 0.06 + 0.014,
+        strategy.momentum +
+          success * 1.12 -
+          stress * 0.74 -
+          strategy.fatigue * 0.06 +
+          (strategy.riskTolerance - 0.42) * 0.03 +
+          0.012,
         0.08,
         0.98
       );
       strategy.defensiveFocus = clamp(
-        strategy.defensiveFocus + stress * 0.18 - success * 0.1,
+        strategy.defensiveFocus + stress * 0.16 + strategy.cohesion * 0.04 - success * 0.08,
         0.07,
         0.96
       );
       strategy.credibility = clamp(
         strategy.credibility +
-          success * 0.5 -
-          stress * 0.33 +
+          success * 0.44 -
+          stress * 0.28 +
           (agent.traits.communityService * 0.02 + agent.traits.institutionCapacity * 0.02),
         0.1,
         0.99
       );
       strategy.tempo = clamp(
         strategy.tempo +
-          (strategy.momentum - strategy.fatigue) * 0.055 +
-          success * 0.12 -
-          stress * 0.07,
+          (strategy.momentum - strategy.fatigue) * 0.046 +
+          success * (0.09 + strategy.riskTolerance * 0.05) -
+          stress * (0.06 + strategy.inertia * 0.03),
         0.14,
+        0.99
+      );
+      strategy.riskTolerance = clamp(
+        strategy.riskTolerance +
+          success * 0.16 -
+          stress * 0.12 +
+          (agent.metrics.openness - 0.5) * 0.05,
+        0.06,
+        0.9
+      );
+      strategy.inertia = clamp(
+        strategy.inertia +
+          stress * 0.08 -
+          success * 0.06 +
+          agent.traits.institutionCapacity * 0.01 -
+          strategy.adaptation * 0.01,
+        0.18,
+        0.94
+      );
+      strategy.cohesion = clamp(
+        strategy.cohesion +
+          strategy.defensiveFocus * 0.06 +
+          stress * 0.1 -
+          success * 0.08 +
+          agent.metrics.retention * 0.02 -
+          (1 - socialSignals.legalPluralism) * 0.02,
+        0.1,
         0.99
       );
 
@@ -1587,6 +2281,7 @@ class ReligionSimulation {
     }
 
     const strategy = agent.strategy || this.buildInitialStrategy(agent);
+    const territoryBonus = agent.territoryBonus || {};
     const mismatch = this.estimateSocialMismatch(agent, socialSignals);
     const churn = this.config.transfer.churn;
     const churnRate =
@@ -1604,10 +2299,36 @@ class ReligionSimulation {
       strategy.fatigue * churn.fatigue;
 
     // exitBarrier 降低信众流失率（宗教越难离开，流失越少）
-    const barrierReduction = 1 - clamp(Number(agent.exitBarrier || 0), 0, 0.9) * (this.config.exitBarrierWeight || 0.68);
-    const boundedRate = clamp(churnRate * barrierReduction, 0.0012, 0.052);
+    const barrierReduction =
+      1 - clamp(Number(agent.exitBarrier || 0), 0, 0.9) * (this.config.exitBarrierWeight || 0.68);
+    const inertiaBrake = 1 - clamp(Number(strategy.inertia || 0), 0.1, 0.94) * 0.18;
+    const cohesionBrake = 1 - clamp(Number(strategy.cohesion || 0), 0.1, 0.99) * 0.22;
+    const governance = agent.governance || normalizeGovernance();
+    const governanceBrake =
+      1 -
+      clamp(
+        governance.orthodoxy * 0.08 + governance.antiProselytization * 0.14 + governance.tribunalCapacity * 0.06,
+        0,
+        0.28
+      );
+    const boundedRate = clamp(
+      churnRate *
+        barrierReduction *
+        inertiaBrake *
+        cohesionBrake *
+        governanceBrake *
+        (1 - clamp(Number(territoryBonus.retentionBoost || 0), 0, 0.2)),
+      0.001,
+      0.048
+    );
     const outBudgetRaw = Math.floor(agent.followers * boundedRate * randomIn(0.9, 1.1));
-    const cap = Math.floor(agent.followers * (0.046 + agent.metrics.openness * 0.018));
+    const cap = Math.floor(
+      agent.followers *
+        (0.041 +
+          agent.metrics.openness * 0.017 +
+          Number(strategy.riskTolerance || 0.4) * 0.005 +
+          Number(territoryBonus.outreachBoost || 0) * 0.03)
+    );
     return clamp(outBudgetRaw, 0, Math.min(available, cap));
   }
 
@@ -1635,6 +2356,9 @@ class ReligionSimulation {
 
   sourcePullScore(source, target, socialSignals) {
     const sourceStrategy = source.strategy || this.buildInitialStrategy(source);
+    const targetStrategy = target.strategy || this.buildInitialStrategy(target);
+    const sourceTerritoryBonus = source.territoryBonus || {};
+    const targetTerritoryBonus = target.territoryBonus || {};
     const sourceGovernance = source.governance || normalizeGovernance();
     const targetGovernance = target.governance || normalizeGovernance();
     const outreachStrength = this.channelOutreachStrength(source, socialSignals);
@@ -1701,6 +2425,34 @@ class ReligionSimulation {
     const secularBuff = source.isSecular
       ? clamp(socialSignals.secularization * (this.config.secularBuff || 1.55), 0.6, 1.9)
       : 1;
+    const sourceStability = clamp(
+      0.84 +
+        sourceStrategy.credibility * 0.16 +
+        (1 - sourceStrategy.fatigue) * 0.08 -
+        sourceStrategy.inertia * 0.07,
+      0.72,
+      1.18
+    );
+    const targetCohesionPenalty = clamp(
+      1 - (targetStrategy.cohesion * 0.16 + targetStrategy.inertia * 0.08),
+      0.62,
+      1
+    );
+    const mobilityFactor = this.regionMobilityFactor(
+      source.dominantRegionId,
+      target.dominantRegionId,
+      socialSignals
+    );
+    const territoryAdvantage = clamp(
+      0.92 + Number(sourceTerritoryBonus.outreachBoost || 0) * 2.2,
+      0.88,
+      1.2
+    );
+    const targetTerritoryDefense = clamp(
+      1 - Number(targetTerritoryBonus.defenseBoost || 0) * 1.6,
+      0.72,
+      1
+    );
 
     return (
       outreachStrength *
@@ -1715,7 +2467,12 @@ class ReligionSimulation {
       regulationPenalty *
       shockWindow *
       secularBuff *
-      randomIn(0.9, 1.1)
+      sourceStability *
+      targetCohesionPenalty *
+      mobilityFactor *
+      territoryAdvantage *
+      targetTerritoryDefense *
+      randomIn(0.93, 1.07)
     );
   }
 
@@ -2213,37 +2970,84 @@ class ReligionSimulation {
 
   regionFitScore(agent, region, socialSignals) {
     const traits = agent.traits;
+    const metrics = agent.metrics;
+    const governance = agent.governance || normalizeGovernance();
     const factors = region.factors;
-    const affinity = Number(agent.regionalAffinity?.[region.id] || 0.3);
+    const affinity = clamp(Number(agent.regionalAffinity?.[region.id] || 0.3), 0.02, 1);
+    const affinityAnchor = Math.pow(affinity, 1.7);
+
+    const ritualDemand =
+      factors.meaningSearch * 0.42 + (1 - factors.secularization) * 0.34 + factors.traditionalism * 0.24;
+    const institutionalDemand =
+      factors.institutionalTrust * 0.42 +
+      factors.stateRegulation * 0.23 +
+      (1 - factors.mediaPolarization) * 0.15;
+    const mobilityDemand =
+      factors.migration * 0.5 + socialSignals.migration * 0.3 + factors.digitalization * 0.2;
+
+    const communityFit = traits.communityService * (0.42 + factors.economicStress * 0.44);
+    const missionFit = traits.digitalMission * (0.34 + factors.digitalization * 0.5);
+    const ritualFit = traits.ritualDepth * (0.28 + ritualDemand * 0.58);
+    const discourseFit =
+      traits.intellectualDialog *
+      (0.24 + factors.legalPluralism * 0.36 + (1 - socialSignals.socialFragmentation) * 0.24);
+    const youthFit = traits.youthAppeal * (0.28 + factors.youthPressure * 0.42);
+    const identityFit = traits.identityBond * (0.28 + factors.identityPolitics * 0.42);
+    const institutionalFit =
+      traits.institutionCapacity * (0.26 + institutionalDemand * 0.56) +
+      governance.tribunalCapacity * 0.08;
+    const secularFit = agent.isSecular
+      ? 0.82 + factors.secularization * 0.34 + factors.legalPluralism * 0.12
+      : 1 - factors.secularization * 0.06;
+    const resistancePenalty = clamp(
+      (1 - affinity) * 0.16 +
+        governance.antiProselytization * 0.06 * (1 - factors.legalPluralism) +
+        governance.orthodoxy * 0.05 * factors.stateRegulation,
+      0,
+      0.32
+    );
 
     const score =
-      affinity * 0.36 +
-      traits.communityService * (0.03 + factors.economicStress * 0.08) +
-      traits.digitalMission * (0.03 + factors.digitalization * 0.09) +
-      traits.ritualDepth *
-        (0.03 + factors.meaningSearch * 0.07 + (1 - factors.secularization) * 0.05) +
-      traits.intellectualDialog *
-        (0.02 +
-          (1 - socialSignals.socialFragmentation) * 0.04 +
-          factors.legalPluralism * 0.04) +
-      traits.youthAppeal * (0.02 + factors.youthPressure * 0.07) +
-      traits.identityBond *
-        (0.02 + factors.identityPolitics * 0.05 + factors.mediaPolarization * 0.04) +
-      traits.institutionCapacity *
-        (0.02 + factors.institutionalTrust * 0.05 + factors.stateRegulation * 0.04);
+      affinityAnchor * 0.48 +
+      communityFit * 0.08 +
+      missionFit * 0.08 +
+      ritualFit * 0.09 +
+      discourseFit * 0.07 +
+      youthFit * 0.06 +
+      identityFit * 0.07 +
+      institutionalFit * 0.07 +
+      metrics.retention * 0.03 +
+      metrics.persuasion * 0.03 +
+      mobilityDemand * metrics.openness * 0.07;
 
-    return clamp(score, 0.001, 2.5);
+    return clamp(score * secularFit * (1 - resistancePenalty), 0.001, 3.2);
   }
 
-  buildRegionalLandscape(agents, socialSignals) {
+  buildRegionalLandscape(agents, socialSignals, previousRegions = []) {
     const totalFollowers = agents.reduce((sum, agent) => sum + agent.followers, 0);
+    const previousShareByRegion = new Map();
+    for (const region of previousRegions || []) {
+      const shares = new Map();
+      for (const item of region.distribution || []) {
+        shares.set(item.id, clamp(Number(item.share || 0), 0, 1));
+      }
+      previousShareByRegion.set(region.id, shares);
+    }
 
     return WORLD_REGIONS.map((region) => {
       const regionTotal = Math.max(1200, Math.round(totalFollowers * region.populationWeight));
+      const previousShares = previousShareByRegion.get(region.id) || new Map();
       const scores = agents.map((agent) => {
-        const globalShare = agent.followers / totalFollowers;
+        const globalShare = clamp(agent.followers / Math.max(1, totalFollowers), 0.0001, 1);
         const fit = this.regionFitScore(agent, region, socialSignals);
-        const score = Math.max(0.0001, globalShare * fit);
+        const affinity = clamp(Number(agent.regionalAffinity?.[region.id] || 0.3), 0.02, 1);
+        const anchor = Math.pow(affinity, 2.15);
+        const previousShare = clamp(Number(previousShares.get(agent.id) || 0), 0, 1);
+        const inertia = previousShare > 0 ? 0.76 + Math.sqrt(previousShare) * 0.92 : 0.62 + anchor * 0.52;
+        const diaspora = 0.84 + socialSignals.migration * (0.14 + Math.sqrt(globalShare) * 0.36);
+        const baseMix = globalShare * 0.3 + anchor * 0.47 + fit * 0.23;
+        const minorityFloor = 0.004 + anchor * 0.02;
+        const score = Math.max(0.0001, baseMix * inertia * diaspora + minorityFloor);
         return {
           id: agent.id,
           name: agent.name,
@@ -2306,7 +3110,7 @@ class ReligionSimulation {
     return result;
   }
 
-  buildStructureOutput(round, topTransfers, regions, transferEngine) {
+  buildStructureOutput(round, topTransfers, regions, transferEngine, socialSignals = {}) {
     const dominantRegionByReligion = this.findDominantRegionByReligion(regions);
     const maxAmount = Math.max(...topTransfers.map((item) => item.amount), 1);
 
@@ -2321,6 +3125,9 @@ class ReligionSimulation {
 
         const intensity = clamp(item.amount / maxAmount, 0.12, 1);
         const curve = (index % 2 === 0 ? 1 : -1) * (0.6 + intensity * 1.2);
+        const mobility = this.regionMobilityFactor(fromRegion.regionId, toRegion.regionId, socialSignals);
+        const friction = clamp(1.26 - mobility, 0.04, 0.78);
+        const routeType = friction > 0.5 ? 'high_friction' : friction > 0.3 ? 'medium_friction' : 'low_friction';
         return {
           id: `${round}-${index}-${item.fromId}-${item.toId}`,
           fromReligionId: item.fromId,
@@ -2335,9 +3142,12 @@ class ReligionSimulation {
           reason: item.reason,
           source: item.source || 'rule',
           intensity,
-          speed: 0.18 + intensity * 0.65,
-          ants: 3 + Math.round(intensity * 5),
+          speed: (0.18 + intensity * 0.65) * (1 - friction * 0.42),
+          ants: 3 + Math.round(intensity * 5 + (1 - friction) * 2),
           curve,
+          friction,
+          mobility,
+          routeType,
           fromPosition: fromRegion.position,
           toPosition: toRegion.position
         };
@@ -2399,8 +3209,11 @@ class ReligionSimulation {
     const startedAt = new Date().toISOString();
     const socialSignals = buildScenarioSignalTarget(resolvedScenario);
     const regions = this.buildRegionalLandscape(agents, socialSignals);
+    this.assignDominantRegionToAgents(agents, regions);
+    const regionControl = this.initializeRegionControl(regions);
+    this.applyTerritoryBonuses(agents, regions, regionControl);
     const transferEngine = 'rule';
-    const structureOutput = this.buildStructureOutput(0, [], regions, transferEngine);
+    const structureOutput = this.buildStructureOutput(0, [], regions, transferEngine, socialSignals);
     const roundMetrics = this.buildRoundMetrics(agents, [], [], regions);
 
     this.state = {
@@ -2419,6 +3232,20 @@ class ReligionSimulation {
       judgmentRecords: [],
       activeEvents: [],
       eventHistory: [],
+      regionControl,
+      bossCrisis: {
+        active: false,
+        phase: 0,
+        totalPhases: 3,
+        phaseDuration: 3,
+        roundsLeft: 0,
+        failedStages: 0,
+        cooldown: 7,
+        objective: '',
+        log: [],
+        startedRound: null,
+        lastOutcome: null
+      },
       manualSignalOverrides: {},
       logs: agents.map((agent) => ({
         type: 'mission',
@@ -2468,6 +3295,10 @@ class ReligionSimulation {
       state.manualSignalOverrides = {};
     }
 
+    this.assignDominantRegionToAgents(state.agents, state.regions);
+    state.regionControl = this.refreshRegionControl(state.regionControl || [], state.regions || []);
+    this.applyTerritoryBonuses(state.agents, state.regions, state.regionControl);
+    this.updateBossCrisis(state);
     // 随机事件系统
     this.applyEvents(state);
     this.adaptAgentStrategies(state.agents, state.socialSignals);
@@ -2573,12 +3404,16 @@ class ReligionSimulation {
       state.logs = state.logs.slice(-460);
     }
 
-    state.regions = this.buildRegionalLandscape(state.agents, state.socialSignals);
+    state.regions = this.buildRegionalLandscape(state.agents, state.socialSignals, state.regions);
+    state.regionControl = this.refreshRegionControl(state.regionControl || [], state.regions || []);
+    this.assignDominantRegionToAgents(state.agents, state.regions);
+    this.applyTerritoryBonuses(state.agents, state.regions, state.regionControl);
     state.structureOutput = this.buildStructureOutput(
       state.round,
       state.topTransfers,
       state.regions,
-      state.transferEngine
+      state.transferEngine,
+      state.socialSignals
     );
     state.roundMetrics = this.buildRoundMetrics(
       state.agents,
@@ -2633,17 +3468,21 @@ class ReligionSimulation {
         metrics: agent.metrics,
         traits: agent.traits,
         governance: agent.governance,
+        territoryBonus: agent.territoryBonus || {},
+        dominantRegionId: agent.dominantRegionId || null,
         lastAction: agent.lastAction,
         history: agent.history
       })),
       regions: state.regions,
+      regionControl: state.regionControl || [],
       topTransfers: state.topTransfers,
       judgmentRecords: state.judgmentRecords.slice(-100),
       roundMetrics: state.roundMetrics,
       structureOutput: state.structureOutput,
       logs: state.logs.slice(-160),
       activeEvents: state.activeEvents || [],
-      eventHistory: (state.eventHistory || []).slice(-40)
+      eventHistory: (state.eventHistory || []).slice(-40),
+      bossCrisis: state.bossCrisis || null
     };
   }
 }
@@ -2747,10 +3586,11 @@ app.post('/api/simulation/report', async (req, res) => {
     if (!markdown) {
       return res.status(500).json({ message: 'AI failed to generate report content.' });
     }
+    const academicMarkdown = ensureAcademicReportStructure(markdown, snapshot);
 
     const title = `Religion Dynamics Analysis Report — Round ${snapshot.round}`;
 
-    const pdfBuffer = await generatePdfBuffer(markdown, { title });
+    const pdfBuffer = await generatePdfBuffer(academicMarkdown, { title });
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="religion-analysis-round-${snapshot.round}.pdf"`);
