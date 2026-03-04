@@ -4282,7 +4282,13 @@ function renderLogs(state) {
   logListEl.innerHTML = recent
     .map((log) => {
       const religion = log.religionId ? religionById.get(log.religionId) : null;
-      const displayName = log.nameKey ? i18n.t(log.nameKey) : (log.name || '');
+      const isEvent = log.type === 'event';
+      const isPassive = log.type === 'passive';
+      const isTerritory = log.type === 'territory';
+      let displayName = log.nameKey ? i18n.t(log.nameKey) : (log.name || '');
+      if (isEvent && log.name) {
+        displayName = i18n.t(`event.${log.name}`) || log.name;
+      }
       const religionName = religion
         ? religionDisplay(religion)
         : log.religionId
@@ -4293,12 +4299,15 @@ function renderLogs(state) {
         time: i18n.time(log.time),
         name: religionName
       });
+      let actionText = log.action || '';
+      if (isEvent && log.shockData && typeof log.shockData === 'object') {
+        actionText = Object.entries(log.shockData).slice(0, 3)
+          .map(([k, v]) => `${i18n.t(`signal.${k}`)} ${v > 0 ? '+' : ''}${(v * 100).toFixed(0)}%`)
+          .join(', ');
+      }
       const delta = formatSigned(log.delta);
       const isJudgment = log.type === 'judgment';
       const isDeck = log.source === 'deck';
-      const isEvent = log.type === 'event';
-      const isPassive = log.type === 'passive';
-      const isTerritory = log.type === 'territory';
       const tagClass = isEvent ? 'log-tag-event' : isPassive ? 'log-tag-passive' : isTerritory ? 'log-tag-territory' : '';
       const net = isJudgment
         ? `${i18n.t('log.judgment')} · ${i18n.number(log.judgment?.blocked || log.transferOut || 0)}`
@@ -4318,7 +4327,7 @@ function renderLogs(state) {
       return `
       <article class="log-item ${isJudgment ? 'is-judgment' : ''} ${isDeck ? 'is-deck' : ''} ${isEvent ? 'is-event' : ''} ${isPassive ? 'is-passive' : ''} ${isTerritory ? 'is-territory' : ''}">
         <div class="log-meta">${title}</div>
-        <div>${tagHtml}${log.action}</div>
+        <div>${tagHtml}${actionText}</div>
         ${net ? `<div class="log-meta">${net}</div>` : ''}
       </article>
     `;

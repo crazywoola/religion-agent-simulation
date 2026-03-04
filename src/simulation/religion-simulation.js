@@ -1987,14 +1987,13 @@ class ReligionSimulation {
     }
 
     for (const ev of firedEvents) {
-      const shockDesc = Object.entries(ev.shock || {}).slice(0, 3)
-        .map(([k, v]) => `${k} ${v > 0 ? '+' : ''}${(v * 100).toFixed(0)}%`).join(', ');
       state.logs.push({
         type: 'event',
         round: state.round,
         time: now,
         name: ev.id,
-        action: shockDesc,
+        action: '',
+        shockData: ev.shock || {},
         delta: 0, transferIn: 0, transferOut: 0
       });
     }
