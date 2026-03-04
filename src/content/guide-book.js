@@ -247,7 +247,7 @@ export const GUIDE_BOOK = {
               ['Insights', 'Regions', 'Control, competition, ownership.'],
               ['Insights', 'Events', 'Event feed with shock details.'],
               ['Insights', 'Judgment', 'Recent tribunal blocks with reasons.'],
-              ['Logs', 'All/Mission/Judgment/Event/Territory', 'Filtered mission logs.']
+              ['Logs', 'All/Mission/Judgment/Event/Territory', 'Filtered mission logs. Character selection and deck pick are logged at round 0 under Mission.']
             ]
           }
         ]
@@ -502,7 +502,7 @@ export const GUIDE_BOOK = {
               ['洞察', '区域', '控制、竞争、归属。'],
               ['洞察', '事件', '事件流及冲击详情。'],
               ['洞察', '审判', '拦截记录及原因。'],
-              ['日志', '全部/传教/审判/事件/领地', '按类型过滤的日志。']
+              ['日志', '全部/传教/审判/事件/领地', '按类型过滤的日志。角色选择与卡组选取在第 0 轮以传教类型记录。']
             ]
           }
         ]
@@ -757,7 +757,7 @@ export const GUIDE_BOOK = {
               ['インサイト', '地域', '支配・競合・所有者。'],
               ['インサイト', 'イベント', 'イベントフィード（衝撃詳細付き）。'],
               ['インサイト', '審判', '遮断記録と理由。'],
-              ['ログ', '全部/布教/審判/イベント/領域', 'タイプ別フィルターログ。']
+              ['ログ', '全部/布教/審判/イベント/領域', 'タイプ別フィルターログ。キャラクター選択・デッキ選択はラウンド0の布教ログに記録。']
             ]
           }
         ]

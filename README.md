@@ -19,7 +19,7 @@ English | [简体中文](./README.zh-CN.md) | [日本語](./README.ja.md)
 
 ## What is this?
 
-This is a browser-based strategy simulation where 9 religions (including a secular movement) compete for followers across 7 world regions. Each religion has unique traits, governance rules, and a passive ability that subtly shapes the social landscape. You don't control any single religion — instead, you influence the world through event decisions, strategy cards, signal tuning, and risk bets while the simulation runs.
+This is a browser-based strategy simulation where **14 religions** (including a secular movement) compete for followers across **7 world regions**. Each religion has unique traits, governance rules, and a passive ability that subtly shapes the social landscape. You don't control any single religion — instead, you influence the world through event decisions, strategy cards, signal tuning, and risk bets while the simulation runs. Before each run you pick one of **59 role archetypes** paired with a religion, select from **20 strategy deck presets** (or a random draw from 108 cards), and pursue a unique win objective.
 
 ![Full game screenshot](./assets/full-game-screenshot.png)
 
@@ -35,16 +35,18 @@ Any **OpenAI-compatible** API provider works: OpenAI, Moonshot/Kimi, Ollama, LM 
 
 ## Key Features
 
-- **9 Religions** — Buddhism, Hinduism, Taoism, Islam, Protestant, Pastafarianism, Catholicism, Shinto, and Secular — each with distinct metrics, traits, governance, doctrine, and a unique passive ability
+- **14 Religions** — Buddhism, Hinduism, Taoism, Islam, Protestant, Pastafarianism, Catholicism, Shinto, Secular, Judaism, Sikhism, Eastern Orthodox, Zoroastrianism, and Baha'i — each with distinct metrics, traits, governance, doctrine, and a unique passive ability
 - **7 World Regions** — North America, Latin America, Europe, Middle East/Africa, South Asia, East Asia, and Online Communities — each with unique social factor profiles
 - **14 Random Events** — From religious scandals to AI doctrine leaks, each with narrative chain follow-ups and player decision options that shift social signals
-- **Strategy Deck** — 15 cards across 3 types: immediate effect, conditional (doubles when a threshold is met), and sustained (applies over 2-3 rounds)
+- **Character & Role System** — 59 role archetypes (Diplomat, Warlord, Spy, Mystic, and 55 more) paired with a religion at game start; each character has a unique win objective, starter Intel bonus, and preferred card pool
+- **108-Card Strategy Pool** — Split into Deck A (Diplomacy & Stability, 54 cards) and Deck B (Expansion & Disruption, 54 cards); each game deals a hand of 15 cards from 20 curated presets or a random 36-card draw; cards span 3 types: immediate, conditional (activates at a signal threshold), and sustained (multi-round effect)
 - **Religious Judgment System** — Religions with high orthodoxy can block incoming conversions through tribunal proceedings, with reason-specific log descriptions
 - **Boss Crisis** — Multi-phase raids with real-time pass/fail threshold displays; failing phases applies lasting penalties
 - **Territory Control** — Region ownership, streaks, and territory bonuses that affect retention and outreach
 - **Risk Bets & Combos** — 5 bet types, corridor combo chains, and a ghost comparison system
+- **Meta Progression** — Research points, unlockable perks, achievements, and a daily challenge leaderboard that tracks character and deck choices across runs
 - **3D Visualization** — Interactive Three.js map with animated ant-line transfer corridors, region nodes, and event overlays
-- **Rich Log System** — Mission, Judgment, Event, Passive, and Territory logs with context-specific text and filter options
+- **Rich Log System** — Mission, Judgment, Event, Passive, and Territory logs (plus character selection and deck pick) with context-specific text and filter options
 - **Localization** — Full runtime switching between English, Simplified Chinese, and Japanese
 
 ## Quick Start

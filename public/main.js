@@ -429,7 +429,14 @@ function buildRunRecord(state = null, reason = '') {
     intelPoints: Number(intelPoints || 0),
     betStats: { ...(gameRun.betStats || { total: 0, won: 0, streak: 0 }) },
     topReligionId: topReligion?.id || null,
-    topReligionFollowers: Number(topReligion?.followers || 0)
+    topReligionFollowers: Number(topReligion?.followers || 0),
+    characterRoleId: gameRun.character?.role?.id || null,
+    characterReligionId: gameRun.character?.religionId || null,
+    characterReligionLabel: gameRun.character?.religionLabel || null,
+    characterRoleIcon: gameRun.character?.role?.icon || null,
+    characterGoalId: gameRun.character?.role?.goal?.id || null,
+    characterGoalDone: Boolean(gameRun.characterGoalDone),
+    deckPresetId: gameRun.character?.deckPreset?.id || null
   };
 }
 
@@ -2102,7 +2109,11 @@ function settleRunProgress(state, reason = 'manual') {
       score: finalScore,
       stars,
       round: state.round,
-      at: gameRun.endedAt
+      at: gameRun.endedAt,
+      roleId: gameRun.character?.role?.id || null,
+      roleIcon: gameRun.character?.role?.icon || null,
+      religionLabel: gameRun.character?.religionLabel || null,
+      deckPresetId: gameRun.character?.deckPreset?.id || null
     };
     const board = Array.isArray(metaProgress.dailyLeaderboard[boardKey])
       ? metaProgress.dailyLeaderboard[boardKey]
@@ -2589,12 +2600,14 @@ function renderMetaBoard() {
     }</div>
     <div class="achievement-list">${achievementPills || '<span class="game-board-empty">-</span>'}</div>
     <div class="game-board-title">${labels.dailyTop} (${dailyChallengeProfile.key})</div>
-    <div class="game-board-empty">${
+    <div class="meta-leaderboard">${
       board.length
-        ? board
-            .map((item, idx) => `${idx + 1}. ${i18n.number(item.score)} ★${item.stars}`)
-            .join('<br />')
-        : '-'
+        ? board.map((item, idx) => {
+            const roleChip = item.roleIcon ? `<span class="meta-lb-role">${item.roleIcon}</span>` : '';
+            const religionChip = item.religionLabel ? `<span class="meta-lb-religion">${escapeHtml(item.religionLabel)}</span>` : '';
+            return `<div class="meta-lb-row"><span class="meta-lb-rank">${idx + 1}.</span>${roleChip}${religionChip}<span class="meta-lb-score">${i18n.number(item.score)}</span><span class="meta-lb-stars">★${item.stars}</span></div>`;
+          }).join('')
+        : '<span class="game-board-empty">-</span>'
     }</div>
   `;
 }
@@ -5239,6 +5252,34 @@ async function startSimulation() {
   gameRun.characterGoalDone = false;
   initializeRunSystems();
   lastPersistedSnapshotRound = -1;
+
+  // Log character selection
+  const roleLabel = localizedText(chosen.role.label, chosen.role.id);
+  const deckLabel = chosen.deckPreset ? localizedText(chosen.deckPreset.label, chosen.deckPreset.id) : (i18n.locale === 'zh-CN' ? '随机' : i18n.locale === 'ja' ? 'ランダム' : 'Random');
+  const goalLabel = localizedText(chosen.role.goal.label, chosen.role.goal.id);
+  appendGameplayLog({
+    round: 0,
+    source: 'character',
+    type: 'mission',
+    name: chosen.religionLabel,
+    action: i18n.locale === 'zh-CN'
+      ? `角色选择：${chosen.role.icon} ${roleLabel} / ${chosen.religionLabel} · 目标：${goalLabel}`
+      : i18n.locale === 'ja'
+        ? `キャラ選択：${chosen.role.icon} ${roleLabel} / ${chosen.religionLabel} · 目標：${goalLabel}`
+        : `Character: ${chosen.role.icon} ${roleLabel} / ${chosen.religionLabel} · Goal: ${goalLabel}`
+  });
+  appendGameplayLog({
+    round: 0,
+    source: 'deck',
+    type: 'mission',
+    name: chosen.religionLabel,
+    action: i18n.locale === 'zh-CN'
+      ? `卡组选择：${chosen.deckPreset?.icon || '🎲'} ${deckLabel}（${chosen.deckPreset ? chosen.deckPreset.cards.length : 36} 张）`
+      : i18n.locale === 'ja'
+        ? `デッキ選択：${chosen.deckPreset?.icon || '🎲'} ${deckLabel}（${chosen.deckPreset ? chosen.deckPreset.cards.length : 36}枚）`
+        : `Deck: ${chosen.deckPreset?.icon || '🎲'} ${deckLabel} (${chosen.deckPreset ? chosen.deckPreset.cards.length : 36} cards)`
+  });
+
   saveRunRecordToIndexedDb(null, 'start').catch(() => {});
 
   if (gameRun.dailyChallenge) {

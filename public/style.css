@@ -819,6 +819,29 @@ select:focus {
   color: #2b3f65;
 }
 
+.meta-leaderboard {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 2px;
+}
+
+.meta-lb-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.65rem;
+  padding: 3px 5px;
+  border-radius: 6px;
+  background: rgba(99,102,241,0.08);
+}
+
+.meta-lb-rank { color: #94a3b8; min-width: 14px; }
+.meta-lb-role { font-size: 0.85rem; }
+.meta-lb-religion { color: #cbd5e1; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.meta-lb-score { color: #fbbf24; font-weight: 600; }
+.meta-lb-stars { color: #f59e0b; }
+
 .achievement-list {
   display: flex;
   flex-wrap: wrap;
