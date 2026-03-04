@@ -1016,6 +1016,7 @@ function syncBodyLock() {
 
 function setGameLabCollapsed(collapsed) {
   gameLabCollapsed = Boolean(collapsed);
+  document.body.classList.toggle('game-lab-open', !gameLabCollapsed);
   if (gameLabPanelEl) {
     gameLabPanelEl.classList.toggle('is-collapsed', gameLabCollapsed);
   }

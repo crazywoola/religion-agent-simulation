@@ -78,40 +78,6 @@
 
         <div class="status" id="status">Status: Not started</div>
 
-        <!-- Game Lab -->
-        <section id="gameLabPanel" class="game-lab-panel">
-          <div class="game-lab-head">
-            <div class="game-lab-console-meta">
-              <span class="console-dot dot-red" aria-hidden="true"></span>
-              <span class="console-dot dot-yellow" aria-hidden="true"></span>
-              <span class="console-dot dot-green" aria-hidden="true"></span>
-              <h2 id="gameLabTitle">Game Lab</h2>
-            </div>
-            <div class="game-lab-head-actions">
-              <div id="starBadge" class="star-badge">★ 0 / 3</div>
-              <button id="gameLabToggleBtn" class="game-lab-toggle-btn" type="button" aria-expanded="true">▾</button>
-            </div>
-          </div>
-          <div id="gameLabBody" class="game-lab-body">
-            <div class="game-lab-switches">
-              <label class="switch game-switch">
-                <input id="dailyChallengeToggle" type="checkbox" />
-                <span id="dailyChallengeLabel">Daily Challenge</span>
-              </label>
-              <label class="switch game-switch">
-                <input id="ironmanToggle" type="checkbox" />
-                <span id="ironmanLabel">Ironman</span>
-              </label>
-            </div>
-            <div id="objectiveBoard" class="game-board objective-board"></div>
-            <div id="secretAgendaBoard" class="game-board secret-agenda-board"></div>
-            <div id="chainRewardBoard" class="game-board chain-board"></div>
-            <div id="betBoard" class="game-board bet-board"></div>
-            <div id="deckBoard" class="game-board deck-board"></div>
-            <div id="metaBoard" class="game-board meta-board"></div>
-          </div>
-        </section>
-
         <!-- Signal Control Panel -->
         <details class="signal-panel" id="signalPanel">
           <summary id="signalSectionTitle">
@@ -164,6 +130,37 @@
         <h2 id="religionSectionTitle">Religion Profiles</h2>
         <div id="religionCards" class="religion-cards"></div>
       </aside>
+    </div>
+
+    <!-- ===== GAME LAB BOTTOM DOCK ===== -->
+    <div class="game-lab-dock">
+      <section id="gameLabPanel" class="game-lab-panel">
+        <div class="game-lab-head">
+          <h2 id="gameLabTitle">Game Lab</h2>
+          <div class="game-lab-head-actions">
+            <div id="starBadge" class="star-badge">★ 0 / 3</div>
+            <button id="gameLabToggleBtn" class="game-lab-toggle-btn" type="button" aria-expanded="true">▾</button>
+          </div>
+        </div>
+        <div id="gameLabBody" class="game-lab-body">
+          <div class="game-lab-switches">
+            <label class="switch game-switch">
+              <input id="dailyChallengeToggle" type="checkbox" />
+              <span id="dailyChallengeLabel">Daily Challenge</span>
+            </label>
+            <label class="switch game-switch">
+              <input id="ironmanToggle" type="checkbox" />
+              <span id="ironmanLabel">Ironman</span>
+            </label>
+          </div>
+          <div id="objectiveBoard" class="game-board objective-board"></div>
+          <div id="secretAgendaBoard" class="game-board secret-agenda-board"></div>
+          <div id="chainRewardBoard" class="game-board chain-board"></div>
+          <div id="betBoard" class="game-board bet-board"></div>
+          <div id="deckBoard" class="game-board deck-board"></div>
+          <div id="metaBoard" class="game-board meta-board"></div>
+        </div>
+      </section>
     </div>
 
     <!-- ===== EVENT BANNER (top of page, auto-fades) ===== -->
