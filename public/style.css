@@ -896,6 +896,10 @@ select:focus {
   z-index: 8;
 }
 
+.intel-dropdown[hidden] {
+  display: none !important;
+}
+
 .intel-dropdown-list {
   overflow: auto;
   padding: 8px;
