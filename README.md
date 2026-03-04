@@ -4,7 +4,7 @@
 
 AI-driven multi-agent simulation for religious conversion dynamics with OpenAI-compatible providers and Three.js.
 
-[![Node.js](https://img.shields.io/badge/Node.js-18%2B-3C873A?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-24%2B-3C873A?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
 [![Three.js](https://img.shields.io/badge/Three.js-3D%20Map-black?style=for-the-badge&logo=three.js&logoColor=white)](https://threejs.org/)
 [![OpenAI Compatible](https://img.shields.io/badge/LLM-OpenAI%20Compatible-10A37F?style=for-the-badge)](https://platform.openai.com/docs/api-reference)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](./LICENSE)
@@ -15,6 +15,8 @@ AI-driven multi-agent simulation for religious conversion dynamics with OpenAI-c
 
 English | [简体中文](./README.zh-CN.md) | [日本語](./README.ja.md)
 
+<a href="https://www.buymeacoffee.com/pinkbanana" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
+
 </div>
 
 ## Overview
@@ -23,30 +25,39 @@ This project simulates conversion flow between religion agents under social sign
 ## Full Game Screenshot
 ![Full game screenshot](./assets/full-game-screenshot.png)
 
-## Current Feature Set
-- 8 religion agents with doctrine, governance, traits, regional affinity, and transfer history.
-- Constant-total population invariant across rounds.
-- Scenario system (`balanced`, `high_regulation`, `high_secularization`, `high_polarization`).
-- Dynamic event system + active shock decay.
-- Territory control model (`regionControl`) and route friction in transfer corridors.
-- Boss crisis arc (`global_crisis`) with phase goals and pass/fail logs.
-- Canvas gameplay layer:
-  - Combo corridors and intel points.
-  - Forecast link reveal (fog-of-war style unlock).
-  - Event decision card (signal intervention choices).
-  - Timing burst interaction and boss status panel.
-  - Ghost timeline overlay (compare with previous run).
-- Three.js map visualization:
-  - 3D region landmarks and dominance cues.
-  - Animated ant-line transfer corridors with friction-aware speed/intensity.
-  - HUD stats, legend, and event/canvas visual effects.
-- AI report export (`/api/simulation/report`) to academic-style PDF with Markdown table parsing.
-- i18n UI for `en`, `zh-CN`, `ja`.
+## Feature Highlights
+- **Simulation Engine**: 8 religion agents with doctrine, governance, trait vectors, regional affinity, and per-round history.
+- **Scenario & Event Model**: Scenarios (`balanced`, `high_regulation`, `high_secularization`, `high_polarization`) and dynamic shock events.
+- **Region Dynamics**: Territory control output (`regionControl`) and transfer route friction (`structureOutput.antLinks[].friction`).
+- **Gameplay Layer**: Combo corridors, intel points, forecast unlock, event decision card, timing burst, boss crisis panel, and ghost timeline.
+- **3D Visualization**: Three.js map landmarks, directional ant-line corridors, HUD legends, and canvas event effects.
+- **Report Export**: AI-generated academic-style PDF report (`/api/simulation/report`) with Markdown table rendering.
+- **Localization**: Runtime i18n for `en`, `zh-CN`, `ja`.
 
 ## Software Structure
 ```text
 .
-├── server.js                  # Express API + simulation core + AI client + PDF report renderer
+├── server.js                  # server bootstrap (listen + startup logs)
+├── src/
+│   ├── server/
+│   │   └── create-app.js      # express app + route wiring
+│   ├── simulation/
+│   │   └── religion-simulation.js
+│   ├── ai/
+│   │   ├── openai-client.js
+│   │   └── providers.js
+│   ├── report/
+│   │   └── pdf-report.js
+│   ├── config/
+│   │   ├── runtime.js
+│   │   └── scenario.js
+│   ├── domain/
+│   │   ├── localization.js
+│   │   ├── normalization.js
+│   │   └── strategy.js
+│   └── utils/
+│       ├── common.js
+│       └── math.js
 ├── data/
 │   ├── religion-doctrines.js  # religion seeds, doctrine, traits, governance, regional affinity
 │   ├── world-context.js       # world regions + baseline social signals
@@ -64,6 +75,8 @@ This project simulates conversion flow between religion agents under social sign
 ```
 
 ## Quick Start
+Requires `Node.js 24+`.
+
 ```bash
 npm install
 cp .env.example .env
@@ -74,45 +87,78 @@ npm run dev
 Open: `http://localhost:3000`
 
 ## Environment Variables
-See `.env.example`:
-- `AI_PROVIDER` (`openai` | `moonshot`)
-- `AI_API_KEY`
-- `AI_MODEL`
-- `AI_API_BASE`
-- `AI_API_LOG`
-- `AI_API_LOG_PAYLOAD`
-- `AI_TRANSFER_AGENT`
-- `AI_API_TIMEOUT_MS`
-- `AI_API_MAX_RETRIES`
-- `AI_API_RETRY_BASE_DELAY_MS`
-- `NODE_USE_ENV_PROXY`
-- `PORT`
-- `HOST`
+| Variable | Purpose | Default |
+| --- | --- | --- |
+| `AI_PROVIDER` | AI provider (`openai` or `moonshot`) | `openai` |
+| `AI_API_KEY` | API key for selected provider | empty |
+| `AI_MODEL` | Override model name | provider default |
+| `AI_API_BASE` | Override API base URL | provider default |
+| `AI_API_LOG` | Enable API logs (`1`/`0`) | `1` |
+| `AI_API_LOG_PAYLOAD` | Log full payloads (`1`/`0`) | `0` |
+| `AI_TRANSFER_AGENT` | Enable AI transfer agent (`1`/`0`) | `1` |
+| `AI_API_TIMEOUT_MS` | Request timeout | `25000` |
+| `AI_API_MAX_RETRIES` | Max retry count | `2` |
+| `AI_API_RETRY_BASE_DELAY_MS` | Base retry delay | `350` |
+| `NODE_USE_ENV_PROXY` | Respect system proxy env | `1` |
+| `PORT` | Server port | `3000` |
+| `HOST` | Server host | `0.0.0.0` |
 
 Provider defaults:
 - `openai`: model `gpt-4o-mini`, base `https://api.openai.com/v1`
 - `moonshot`: model `kimi-k2-turbo-preview`, base `https://api.moonshot.cn/v1`
 
-## API
-- `GET /api/health`
-  - Returns runtime health, provider/model, available providers, and AI key status.
-- `POST /api/simulation/start`
-  - Body: `{ "useAI": true|false, "provider": "openai|moonshot", "locale": "en|zh-CN|ja", "scenario": "balanced|high_regulation|high_secularization|high_polarization" }`
-- `POST /api/simulation/tick`
-  - Body: `{ "locale": "en|zh-CN|ja", "scenario": "..." }`
-- `GET /api/simulation/state`
-  - Current snapshot.
-- `GET /api/simulation/scenarios`
-  - Available scenarios and config version.
-- `POST /api/simulation/signals`
-  - Body: `{ "overrides": { "digitalization": 0.8, ... } }`
-- `POST /api/simulation/report`
-  - Exports a PDF report; requires AI configured and at least one completed round.
+## API Reference
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `GET` | `/api/health` | Service health and provider/runtime info |
+| `POST` | `/api/simulation/start` | Start or reset simulation |
+| `POST` | `/api/simulation/tick` | Advance one round |
+| `GET` | `/api/simulation/state` | Get current snapshot |
+| `GET` | `/api/simulation/scenarios` | List scenarios + config version |
+| `POST` | `/api/simulation/signals` | Apply manual signal overrides |
+| `POST` | `/api/simulation/report` | Export academic-style PDF report |
+
+Request examples:
+
+```json
+POST /api/simulation/start
+{
+  "useAI": true,
+  "provider": "openai",
+  "locale": "en",
+  "scenario": "balanced"
+}
+```
+
+```json
+POST /api/simulation/tick
+{
+  "locale": "en",
+  "scenario": "high_regulation"
+}
+```
+
+```json
+POST /api/simulation/signals
+{
+  "overrides": {
+    "digitalization": 0.8,
+    "mediaPolarization": 0.6
+  }
+}
+```
 
 Snapshot highlights:
 - `regionControl`
 - `bossCrisis`
 - `structureOutput.antLinks[].friction`
+
+## Support
+If this project helps you, you can support continued development here:
+
+<a href="https://www.buymeacoffee.com/pinkbanana" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
+
+[Buy Me a Coffee](https://www.buymeacoffee.com/pinkbanana)
 
 ## Security Notes
 - Secrets are excluded from git via `.gitignore` (`.env`, `.env.*`).

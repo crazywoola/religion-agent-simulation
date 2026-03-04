@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "scripts": {
     "dev": "NODE_USE_ENV_PROXY=1 node server.js",
     "start": "NODE_USE_ENV_PROXY=1 node server.js"

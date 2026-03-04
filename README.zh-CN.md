@@ -4,7 +4,18 @@
 
 基于 OpenAI 兼容模型与 Three.js 的多宗教同化传播仿真系统。
 
+[![Node.js](https://img.shields.io/badge/Node.js-24%2B-3C873A?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Three.js](https://img.shields.io/badge/Three.js-3D%20Map-black?style=for-the-badge&logo=three.js&logoColor=white)](https://threejs.org/)
+[![OpenAI Compatible](https://img.shields.io/badge/LLM-OpenAI%20Compatible-10A37F?style=for-the-badge)](https://platform.openai.com/docs/api-reference)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](./LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/crazywoola/religion-agent-simulation?style=for-the-badge)](https://github.com/crazywoola/religion-agent-simulation/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/crazywoola/religion-agent-simulation?style=for-the-badge)](https://github.com/crazywoola/religion-agent-simulation/network/members)
+[![GitHub issues](https://img.shields.io/github/issues/crazywoola/religion-agent-simulation?style=for-the-badge)](https://github.com/crazywoola/religion-agent-simulation/issues)
+[![Last commit](https://img.shields.io/github/last-commit/crazywoola/religion-agent-simulation?style=for-the-badge)](https://github.com/crazywoola/religion-agent-simulation/commits/main)
+
 [English](./README.md) | 简体中文 | [日本語](./README.ja.md)
+
+<a href="https://www.buymeacoffee.com/pinkbanana" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
 
 </div>
 
@@ -14,30 +25,39 @@
 ## 全局截图
 ![Full game screenshot](./assets/full-game-screenshot.png)
 
-## 当前功能
-- 8 个宗教 Agent（含教义、治理参数、特征参数、区域亲和度、历史轨迹）。
-- 总人数恒定约束（跨宗教迁移，不增减总量）。
-- 场景系统：`balanced`、`high_regulation`、`high_secularization`、`high_polarization`。
-- 动态事件系统（含持续冲击与衰减）。
-- 领地控制模型（`regionControl`）与迁移路径摩擦（`friction`）。
-- Boss 危机弧线（`global_crisis`），包含分阶段目标与通过/失败日志。
-- Canvas 玩法层：
-  - 连击走廊（Combo）与情报点（Intel）。
-  - 预测线解锁（迷雾逐步揭示）。
-  - 事件决策卡（即时信号干预选项）。
-  - Timing Burst 交互与危机状态面板。
-  - Ghost 时间线对照（与上一局比较）。
-- Three.js 地图可视化：
-  - 区域地标与主导宗教可视提示。
-  - 随摩擦动态变化的蚂蚁线速度/强度。
-  - HUD 统计、图例与事件特效。
-- AI 报告导出（`/api/simulation/report`）：生成学术风格 PDF，支持 Markdown 表格渲染。
-- 内置 i18n：`en`、`zh-CN`、`ja`。
+## 功能亮点
+- **仿真引擎**：8 个宗教 Agent，包含教义、治理参数、特征参数、区域亲和度和历史轨迹。
+- **场景与事件**：支持 `balanced`、`high_regulation`、`high_secularization`、`high_polarization`，并带动态冲击事件。
+- **区域动态**：输出领地控制（`regionControl`）与迁移路径摩擦（`structureOutput.antLinks[].friction`）。
+- **玩法系统**：连击走廊、情报点、预测线解锁、事件决策卡、Timing Burst、Boss 面板、Ghost 时间线对照。
+- **3D 可视化**：Three.js 地图地标、方向蚂蚁线、HUD 图例与事件特效。
+- **报告导出**：`/api/simulation/report` 可导出学术风格 PDF，并支持 Markdown 表格渲染。
+- **多语言**：内置 `en`、`zh-CN`、`ja` 运行时切换。
 
 ## 软件结构
 ```text
 .
-├── server.js                  # Express API + 仿真核心 + AI 客户端 + PDF 报告渲染
+├── server.js                  # 服务启动入口（监听端口与启动日志）
+├── src/
+│   ├── server/
+│   │   └── create-app.js      # Express 应用与路由组装
+│   ├── simulation/
+│   │   └── religion-simulation.js
+│   ├── ai/
+│   │   ├── openai-client.js
+│   │   └── providers.js
+│   ├── report/
+│   │   └── pdf-report.js
+│   ├── config/
+│   │   ├── runtime.js
+│   │   └── scenario.js
+│   ├── domain/
+│   │   ├── localization.js
+│   │   ├── normalization.js
+│   │   └── strategy.js
+│   └── utils/
+│       ├── common.js
+│       └── math.js
 ├── data/
 │   ├── religion-doctrines.js  # 宗教种子、教义、特征、治理参数、区域亲和
 │   ├── world-context.js       # 世界区域与基础社会信号
@@ -55,6 +75,8 @@
 ```
 
 ## 快速开始
+需要 `Node.js 24+`。
+
 ```bash
 npm install
 cp .env.example .env
@@ -65,45 +87,78 @@ npm run dev
 访问：`http://localhost:3000`
 
 ## 环境变量
-参考 `.env.example`：
-- `AI_PROVIDER`（`openai` | `moonshot`）
-- `AI_API_KEY`
-- `AI_MODEL`
-- `AI_API_BASE`
-- `AI_API_LOG`
-- `AI_API_LOG_PAYLOAD`
-- `AI_TRANSFER_AGENT`
-- `AI_API_TIMEOUT_MS`
-- `AI_API_MAX_RETRIES`
-- `AI_API_RETRY_BASE_DELAY_MS`
-- `NODE_USE_ENV_PROXY`
-- `PORT`
-- `HOST`
+| 变量 | 说明 | 默认值 |
+| --- | --- | --- |
+| `AI_PROVIDER` | 模型提供商（`openai` / `moonshot`） | `openai` |
+| `AI_API_KEY` | 提供商 API Key | 空 |
+| `AI_MODEL` | 覆盖模型名 | 提供商默认 |
+| `AI_API_BASE` | 覆盖接口地址 | 提供商默认 |
+| `AI_API_LOG` | 是否记录 API 日志（`1`/`0`） | `1` |
+| `AI_API_LOG_PAYLOAD` | 是否记录完整 payload | `0` |
+| `AI_TRANSFER_AGENT` | 是否启用 AI 转移代理 | `1` |
+| `AI_API_TIMEOUT_MS` | 请求超时毫秒 | `25000` |
+| `AI_API_MAX_RETRIES` | 最大重试次数 | `2` |
+| `AI_API_RETRY_BASE_DELAY_MS` | 重试基础延迟 | `350` |
+| `NODE_USE_ENV_PROXY` | 是否使用系统代理环境变量 | `1` |
+| `PORT` | 服务端口 | `3000` |
+| `HOST` | 服务监听地址 | `0.0.0.0` |
 
 Provider 默认值：
 - `openai`：`gpt-4o-mini`，`https://api.openai.com/v1`
 - `moonshot`：`kimi-k2-turbo-preview`，`https://api.moonshot.cn/v1`
 
-## API
-- `GET /api/health`
-  - 返回健康状态、模型提供商、模型名、可用 provider、AI 配置状态。
-- `POST /api/simulation/start`
-  - Body: `{ "useAI": true|false, "provider": "openai|moonshot", "locale": "en|zh-CN|ja", "scenario": "balanced|high_regulation|high_secularization|high_polarization" }`
-- `POST /api/simulation/tick`
-  - Body: `{ "locale": "en|zh-CN|ja", "scenario": "..." }`
-- `GET /api/simulation/state`
-  - 获取当前快照。
-- `GET /api/simulation/scenarios`
-  - 获取场景列表和配置版本。
-- `POST /api/simulation/signals`
-  - Body: `{ "overrides": { "digitalization": 0.8, ... } }`
-- `POST /api/simulation/report`
-  - 导出 PDF 报告（需已配置 AI，且至少完成 1 轮）。
+## API 参考
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| `GET` | `/api/health` | 服务健康状态与运行时信息 |
+| `POST` | `/api/simulation/start` | 启动或重置仿真 |
+| `POST` | `/api/simulation/tick` | 推进一轮 |
+| `GET` | `/api/simulation/state` | 获取当前快照 |
+| `GET` | `/api/simulation/scenarios` | 场景列表与配置版本 |
+| `POST` | `/api/simulation/signals` | 手动覆盖社会信号 |
+| `POST` | `/api/simulation/report` | 导出学术风格 PDF 报告 |
+
+请求示例：
+
+```json
+POST /api/simulation/start
+{
+  "useAI": true,
+  "provider": "openai",
+  "locale": "zh-CN",
+  "scenario": "balanced"
+}
+```
+
+```json
+POST /api/simulation/tick
+{
+  "locale": "zh-CN",
+  "scenario": "high_regulation"
+}
+```
+
+```json
+POST /api/simulation/signals
+{
+  "overrides": {
+    "digitalization": 0.8,
+    "mediaPolarization": 0.6
+  }
+}
+```
 
 快照关键字段：
 - `regionControl`
 - `bossCrisis`
 - `structureOutput.antLinks[].friction`
+
+## 支持项目
+如果这个项目对你有帮助，欢迎请我喝杯咖啡：
+
+<a href="https://www.buymeacoffee.com/pinkbanana" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
+
+[Buy Me a Coffee](https://www.buymeacoffee.com/pinkbanana)
 
 ## 安全说明
 - `.env`、`.env.*` 已通过 `.gitignore` 排除。

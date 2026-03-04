@@ -10,7 +10,7 @@ const DICTIONARY = {
         'Each religion starts with 10,000 followers. The system simulates only assimilation/loss across religions, while the total population remains constant.'
     },
     controls: {
-      start: 'Start Simulation',
+      start: 'Start',
       stop: 'Pause',
       polling: 'Tick Interval (ms)',
       useAI: 'Use AI API for doctrine/action generation',
@@ -368,7 +368,7 @@ const DICTIONARY = {
         '各宗教は1万人から開始します。宗教間の同化・流出のみをシミュレーションし、総信徒数は一定です。'
     },
     controls: {
-      start: 'シミュレーション開始',
+      start: 'Start',
       stop: '一時停止',
       polling: 'ティック間隔(ms)',
       useAI: '教義/行動ログ生成に AI API を使用',

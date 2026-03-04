@@ -4,7 +4,18 @@
 
 OpenAI 互換プロバイダと Three.js による、複数宗教エージェントの同化ダイナミクス・シミュレーション。
 
+[![Node.js](https://img.shields.io/badge/Node.js-24%2B-3C873A?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Three.js](https://img.shields.io/badge/Three.js-3D%20Map-black?style=for-the-badge&logo=three.js&logoColor=white)](https://threejs.org/)
+[![OpenAI Compatible](https://img.shields.io/badge/LLM-OpenAI%20Compatible-10A37F?style=for-the-badge)](https://platform.openai.com/docs/api-reference)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](./LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/crazywoola/religion-agent-simulation?style=for-the-badge)](https://github.com/crazywoola/religion-agent-simulation/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/crazywoola/religion-agent-simulation?style=for-the-badge)](https://github.com/crazywoola/religion-agent-simulation/network/members)
+[![GitHub issues](https://img.shields.io/github/issues/crazywoola/religion-agent-simulation?style=for-the-badge)](https://github.com/crazywoola/religion-agent-simulation/issues)
+[![Last commit](https://img.shields.io/github/last-commit/crazywoola/religion-agent-simulation?style=for-the-badge)](https://github.com/crazywoola/religion-agent-simulation/commits/main)
+
 [English](./README.md) | [简体中文](./README.zh-CN.md) | 日本語
+
+<a href="https://www.buymeacoffee.com/pinkbanana" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
 
 </div>
 
@@ -14,30 +25,39 @@ OpenAI 互換プロバイダと Three.js による、複数宗教エージェン
 ## 全体スクリーンショット
 ![Full game screenshot](./assets/full-game-screenshot.png)
 
-## 現在の機能
-- 8宗教エージェント（教義、統治パラメータ、特性、地域親和性、履歴を保持）。
-- 総人口一定の制約。
-- シナリオ切替：`balanced`、`high_regulation`、`high_secularization`、`high_polarization`。
-- 動的イベントシステム（継続ショックと減衰を含む）。
-- 領域支配モデル（`regionControl`）と移動経路摩擦（`friction`）。
-- Boss危機アーク（`global_crisis`）の段階目標と成功/失敗ログ。
-- Canvasゲームプレイ層：
-  - コンボ回廊とインテルポイント。
-  - 予測リンク解放（フォグ解除型）。
-  - イベント意思決定カード（即時シグナル介入）。
-  - Timing Burst インタラクションと危機パネル。
-  - Ghostタイムライン比較（前回ランとの比較）。
-- Three.js マップ可視化：
-  - 地域ランドマークと優勢宗教の可視化。
-  - 摩擦に応じて速度/強度が変わるアントライン。
-  - HUD統計、凡例、イベント視覚効果。
-- AIレポート出力（`/api/simulation/report`）：学術スタイルPDFを生成し、Markdown表を描画。
-- i18n対応：`en`、`zh-CN`、`ja`。
+## 機能ハイライト
+- **シミュレーションエンジン**：8宗教エージェントに対し、教義・統治パラメータ・特性・地域親和性・履歴を保持。
+- **シナリオとイベント**：`balanced`、`high_regulation`、`high_secularization`、`high_polarization` と動的ショックイベントを提供。
+- **地域ダイナミクス**：領域支配（`regionControl`）と経路摩擦（`structureOutput.antLinks[].friction`）を出力。
+- **ゲームプレイ層**：コンボ回廊、インテルポイント、予測リンク解放、意思決定カード、Timing Burst、Bossパネル、Ghost比較。
+- **3D 可視化**：Three.js 地図ランドマーク、方向付きアントライン、HUD、イベント視覚効果。
+- **レポート出力**：`/api/simulation/report` で学術スタイルPDFを生成し、Markdown表を描画。
+- **多言語対応**：`en`、`zh-CN`、`ja` を実行中に切替可能。
 
 ## ソフトウェア構成
 ```text
 .
-├── server.js                  # Express API + シミュレーション本体 + AIクライアント + PDF生成
+├── server.js                  # サーバー起動エントリ（listen と起動ログ）
+├── src/
+│   ├── server/
+│   │   └── create-app.js      # Express アプリとルート構成
+│   ├── simulation/
+│   │   └── religion-simulation.js
+│   ├── ai/
+│   │   ├── openai-client.js
+│   │   └── providers.js
+│   ├── report/
+│   │   └── pdf-report.js
+│   ├── config/
+│   │   ├── runtime.js
+│   │   └── scenario.js
+│   ├── domain/
+│   │   ├── localization.js
+│   │   ├── normalization.js
+│   │   └── strategy.js
+│   └── utils/
+│       ├── common.js
+│       └── math.js
 ├── data/
 │   ├── religion-doctrines.js  # 宗教データ、教義、特性、統治、地域親和
 │   ├── world-context.js       # 世界地域データと基礎社会シグナル
@@ -55,6 +75,8 @@ OpenAI 互換プロバイダと Three.js による、複数宗教エージェン
 ```
 
 ## クイックスタート
+`Node.js 24+` が必要です。
+
 ```bash
 npm install
 cp .env.example .env
@@ -65,45 +87,78 @@ npm run dev
 アクセス: `http://localhost:3000`
 
 ## 環境変数
-`.env.example` を参照：
-- `AI_PROVIDER`（`openai` | `moonshot`）
-- `AI_API_KEY`
-- `AI_MODEL`
-- `AI_API_BASE`
-- `AI_API_LOG`
-- `AI_API_LOG_PAYLOAD`
-- `AI_TRANSFER_AGENT`
-- `AI_API_TIMEOUT_MS`
-- `AI_API_MAX_RETRIES`
-- `AI_API_RETRY_BASE_DELAY_MS`
-- `NODE_USE_ENV_PROXY`
-- `PORT`
-- `HOST`
+| 変数 | 目的 | 既定値 |
+| --- | --- | --- |
+| `AI_PROVIDER` | プロバイダ指定（`openai` / `moonshot`） | `openai` |
+| `AI_API_KEY` | APIキー | 空 |
+| `AI_MODEL` | モデル上書き | プロバイダ既定 |
+| `AI_API_BASE` | APIベースURL上書き | プロバイダ既定 |
+| `AI_API_LOG` | APIログ出力（`1`/`0`） | `1` |
+| `AI_API_LOG_PAYLOAD` | 詳細payloadログ（`1`/`0`） | `0` |
+| `AI_TRANSFER_AGENT` | AI転移エージェント有効化 | `1` |
+| `AI_API_TIMEOUT_MS` | タイムアウト(ms) | `25000` |
+| `AI_API_MAX_RETRIES` | 最大リトライ回数 | `2` |
+| `AI_API_RETRY_BASE_DELAY_MS` | リトライ基本遅延(ms) | `350` |
+| `NODE_USE_ENV_PROXY` | システムプロキシ環境変数を使用 | `1` |
+| `PORT` | サーバーポート | `3000` |
+| `HOST` | サーバーホスト | `0.0.0.0` |
 
 既定値：
 - `openai`：`gpt-4o-mini`、`https://api.openai.com/v1`
 - `moonshot`：`kimi-k2-turbo-preview`、`https://api.moonshot.cn/v1`
 
-## API
-- `GET /api/health`
-  - ヘルス状態、プロバイダ、モデル、利用可能プロバイダ、AI設定状態を返す。
-- `POST /api/simulation/start`
-  - Body: `{ "useAI": true|false, "provider": "openai|moonshot", "locale": "en|zh-CN|ja", "scenario": "balanced|high_regulation|high_secularization|high_polarization" }`
-- `POST /api/simulation/tick`
-  - Body: `{ "locale": "en|zh-CN|ja", "scenario": "..." }`
-- `GET /api/simulation/state`
-  - 現在スナップショット。
-- `GET /api/simulation/scenarios`
-  - シナリオ一覧と設定バージョン。
-- `POST /api/simulation/signals`
-  - Body: `{ "overrides": { "digitalization": 0.8, ... } }`
-- `POST /api/simulation/report`
-  - PDFレポート出力（AI設定済みかつ1ラウンド以上進行が必要）。
+## API リファレンス
+| Method | Endpoint | 説明 |
+| --- | --- | --- |
+| `GET` | `/api/health` | ヘルス状態とランタイム情報 |
+| `POST` | `/api/simulation/start` | シミュレーション開始/リセット |
+| `POST` | `/api/simulation/tick` | 1ラウンド進行 |
+| `GET` | `/api/simulation/state` | 現在スナップショット取得 |
+| `GET` | `/api/simulation/scenarios` | シナリオ一覧と設定バージョン |
+| `POST` | `/api/simulation/signals` | 社会シグナルの手動上書き |
+| `POST` | `/api/simulation/report` | 学術スタイルPDFの出力 |
+
+リクエスト例：
+
+```json
+POST /api/simulation/start
+{
+  "useAI": true,
+  "provider": "openai",
+  "locale": "ja",
+  "scenario": "balanced"
+}
+```
+
+```json
+POST /api/simulation/tick
+{
+  "locale": "ja",
+  "scenario": "high_regulation"
+}
+```
+
+```json
+POST /api/simulation/signals
+{
+  "overrides": {
+    "digitalization": 0.8,
+    "mediaPolarization": 0.6
+  }
+}
+```
 
 主要スナップショット項目：
 - `regionControl`
 - `bossCrisis`
 - `structureOutput.antLinks[].friction`
+
+## サポート
+このプロジェクトが役に立った場合は、コーヒー支援していただけると嬉しいです。
+
+<a href="https://www.buymeacoffee.com/pinkbanana" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
+
+[Buy Me a Coffee](https://www.buymeacoffee.com/pinkbanana)
 
 ## セキュリティ
 - `.env` と `.env.*` は `.gitignore` で除外。

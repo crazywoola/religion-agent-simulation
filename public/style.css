@@ -61,7 +61,8 @@ body {
 
 .panel {
   padding: 16px;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   position: relative;
 }
 
@@ -320,9 +321,12 @@ select:focus {
 
 .event-decision-card {
   z-index: 7;
-  top: 78px;
+  top: 50%;
   right: 14px;
+  transform: translateY(-50%);
   width: min(300px, calc(100% - 30px));
+  max-height: min(62vh, 460px);
+  overflow-y: auto;
   background: rgba(255, 253, 246, 0.94);
   padding: 10px 11px;
 }
@@ -432,9 +436,12 @@ select:focus {
 
 .boss-crisis-panel {
   z-index: 6;
-  top: 78px;
+  top: 50%;
   left: 14px;
+  transform: translateY(-50%);
   width: min(256px, calc(100% - 28px));
+  max-height: min(48vh, 320px);
+  overflow-y: auto;
   background: rgba(255, 244, 244, 0.92);
   padding: 9px 10px;
 }
@@ -726,15 +733,17 @@ select:focus {
 
 /* ── Speed buttons ────────────────────────────── */
 .btn-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
   align-items: center;
-  flex-wrap: wrap;
 }
 
 .btn-row > button {
-  flex: 1;
-  min-width: 90px;
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  white-space: nowrap;
 }
 
 /* ── Provider display ─────────────────────────── */
@@ -918,7 +927,8 @@ select:focus {
 
 .drawer-body {
   flex: 1;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -1418,7 +1428,8 @@ select:focus {
   }
 
   .boss-crisis-panel {
-    top: 146px;
+    top: 50%;
+    transform: translateY(-50%);
   }
 }
 
@@ -1459,6 +1470,8 @@ select:focus {
     right: 10px;
     width: auto;
     top: 160px;
+    transform: none;
+    max-height: 44vh;
   }
 
   .boss-crisis-panel {
@@ -1466,6 +1479,8 @@ select:focus {
     right: 10px;
     width: auto;
     top: 78px;
+    transform: none;
+    max-height: 32vh;
   }
 
   .timing-burst-card {
