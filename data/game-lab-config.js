@@ -252,6 +252,150 @@ export const DECK_CARD_LIBRARY = [
     deltas: { migration: 0.06, socialFragmentation: -0.03, legalPluralism: 0.03 }
   },
   {
+    id: 'civic_mediation_lab',
+    title: { en: 'Civic Mediation Lab', 'zh-CN': '公民调解实验室', ja: '市民調停ラボ' },
+    desc: {
+      en: '+Trust, +Pluralism, -Identity conflict',
+      'zh-CN': '+制度信任，+法律多元，-身份冲突',
+      ja: '制度信頼 + / 法的多元 + / アイデンティティ対立 -'
+    },
+    detail: {
+      en: 'Pilot neighborhood mediation hubs that de-escalate identity disputes before they become media flashpoints.',
+      'zh-CN': '试点社区调解节点，在身份冲突升级为舆情热点前进行降温。',
+      ja: '地域調停ハブを試験導入し、対立がメディア炎上化する前に沈静化。'
+    },
+    archetype: {
+      en: 'Conflict Mediation',
+      'zh-CN': '冲突调停',
+      ja: '紛争調停'
+    },
+    rarity: {
+      en: 'Anchor',
+      'zh-CN': '锚定',
+      ja: 'アンカー'
+    },
+    timing: {
+      en: 'Immediate',
+      'zh-CN': '即时生效',
+      ja: '即時発動'
+    },
+    tip: {
+      en: 'Excellent when identity politics and media polarization rise together.',
+      'zh-CN': '当身份政治与舆论极化同步上升时收益最高。',
+      ja: 'アイデンティティ政治と分極化が同時上昇する局面で有効。'
+    },
+    cost: 6,
+    deltas: { institutionalTrust: 0.06, legalPluralism: 0.05, identityPolitics: -0.05 }
+  },
+  {
+    id: 'open_data_pulpit',
+    title: { en: 'Open Data Pulpit', 'zh-CN': '开放数据讲坛', ja: 'オープンデータ講壇' },
+    desc: {
+      en: '+Digital, +Trust, -Regulation heat',
+      'zh-CN': '+数字化，+制度信任，-监管热度',
+      ja: 'デジタル化 + / 制度信頼 + / 規制熱 -'
+    },
+    detail: {
+      en: 'Publish transparent dashboards for faith-linked civic projects, reducing suspicion and over-regulation pressure.',
+      'zh-CN': '公开宗教相关公益项目仪表盘，降低不信任与过度监管压力。',
+      ja: '宗教関連の公益施策を可視化し、不信と過剰規制圧力を軽減。'
+    },
+    archetype: {
+      en: 'Transparency Ops',
+      'zh-CN': '透明治理',
+      ja: '透明運用'
+    },
+    rarity: {
+      en: 'Utility',
+      'zh-CN': '功能',
+      ja: 'ユーティリティ'
+    },
+    timing: {
+      en: 'Immediate',
+      'zh-CN': '即时生效',
+      ja: '即時発動'
+    },
+    tip: {
+      en: 'Great pre-boss stabilizer if tribunal pressure is trending upward.',
+      'zh-CN': '若审判容量在上升，可作为 Boss 前稳定器。',
+      ja: '審判圧力が上向く前の安定化カードとして優秀。'
+    },
+    cost: 5,
+    deltas: { digitalization: 0.04, institutionalTrust: 0.05, stateRegulation: -0.04 }
+  },
+  {
+    id: 'meaning_retreat_program',
+    title: { en: 'Meaning Retreat Program', 'zh-CN': '意义共修营', ja: '意味リトリート計画' },
+    desc: {
+      en: '+Meaning search, +Youth reach, -Fragmentation',
+      'zh-CN': '+意义追寻，+青年触达，-社会碎片化',
+      ja: '意味追求 + / 若年接点 + / 社会分断 -'
+    },
+    detail: {
+      en: 'Run inter-community retreat programs to channel anxiety into constructive identity and shared rituals.',
+      'zh-CN': '开展跨社群共修计划，将焦虑导向建设性身份与共同实践。',
+      ja: '共同リトリートを実施し、不安を建設的な帰属と実践へ転換。'
+    },
+    archetype: {
+      en: 'Cohesion Build',
+      'zh-CN': '凝聚建设',
+      ja: '結束形成'
+    },
+    rarity: {
+      en: 'Strategic',
+      'zh-CN': '战略',
+      ja: '戦略'
+    },
+    timing: {
+      en: 'Immediate',
+      'zh-CN': '即时生效',
+      ja: '即時発動'
+    },
+    tip: {
+      en: 'Strong answer to climate anxiety and youth awakening events.',
+      'zh-CN': '可针对气候焦虑与青年觉醒事件打出反制。',
+      ja: '気候不安・若者覚醒イベントへの対抗札として有効。'
+    },
+    cost: 5,
+    deltas: { meaningSearch: 0.07, youthPressure: 0.04, socialFragmentation: -0.04 }
+  },
+  {
+    id: 'legal_aid_caravan',
+    title: { en: 'Legal Aid Caravan', 'zh-CN': '巡回法援行动', ja: '移動リーガル支援隊' },
+    desc: {
+      en: '+Pluralism, -Regulation pressure, -Judgment heat',
+      'zh-CN': '+法律多元，-监管压力，-审判热度',
+      ja: '法的多元 + / 規制圧 - / 審判熱 -'
+    },
+    detail: {
+      en: 'Deploy mobile legal aid teams to reduce procedural panic and preserve fair participation across groups.',
+      'zh-CN': '部署巡回法律援助队，缓解程序恐慌并维护跨群体公平参与。',
+      ja: '移動型法支援チームで手続不安を下げ、公平な参加を確保。'
+    },
+    archetype: {
+      en: 'Rule-of-Law',
+      'zh-CN': '法治干预',
+      ja: '法治介入'
+    },
+    rarity: {
+      en: 'Control',
+      'zh-CN': '控制',
+      ja: 'コントロール'
+    },
+    timing: {
+      en: 'Immediate',
+      'zh-CN': '即时生效',
+      ja: '即時発動'
+    },
+    tip: {
+      en: 'Use after political persecution spikes to reopen safe transfer corridors.',
+      'zh-CN': '政治迫害事件后使用，可重新打开安全转化通道。',
+      ja: '政治的迫害イベント後に使うと安全な転化回廊を再建しやすい。'
+    },
+    cost: 6,
+    deltas: { legalPluralism: 0.06, stateRegulation: -0.05, mediaPolarization: -0.03 }
+  },
+  {
     id: 'calm_media',
     title: { en: 'Calm Media', 'zh-CN': '媒体冷却', ja: 'メディア冷却' },
     desc: {

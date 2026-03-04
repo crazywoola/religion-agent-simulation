@@ -110,6 +110,30 @@ export const SIMULATION_CONFIG = {
         prob: 0.07,
         shock: { institutionalTrust: 0.14, stateRegulation: -0.08, legalPluralism: 0.09 },
         duration: 5
+      },
+      {
+        id: 'ai_doctrine_leak',
+        prob: 0.08,
+        shock: { mediaPolarization: 0.09, digitalization: 0.08, institutionalTrust: -0.07 },
+        duration: 4
+      },
+      {
+        id: 'grassroots_relief_network',
+        prob: 0.07,
+        shock: { institutionalTrust: 0.1, economicStress: -0.07, socialFragmentation: -0.06 },
+        duration: 4
+      },
+      {
+        id: 'interfaith_education_reform',
+        prob: 0.06,
+        shock: { legalPluralism: 0.11, youthPressure: -0.04, meaningSearch: 0.06 },
+        duration: 5
+      },
+      {
+        id: 'algorithmic_echo_burst',
+        prob: 0.08,
+        shock: { digitalization: 0.09, mediaPolarization: 0.1, identityPolitics: 0.06 },
+        duration: 3
       }
     ]
   },

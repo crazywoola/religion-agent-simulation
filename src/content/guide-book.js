@@ -83,6 +83,27 @@ export const GUIDE_BOOK = {
               ['Stage Goals', 'Objective set', 'Per run', 'Up to 3 stars for run evaluation.'],
               ['Achievements', 'Meta unlock', 'Condition-based', 'Permanent profile badges.']
             ]
+          },
+          {
+            title: 'Deck Archetype Playbook',
+            kind: 'table',
+            headers: ['Archetype', 'Typical card line', 'Best timing', 'Trade-off'],
+            rows: [
+              ['Cooling/Control', 'Calm Media / Ethics Audit / Legal Aid Caravan', 'Before boss checks or after polarization spikes', 'Lower volatility but slower expansion.'],
+              ['Trust Stabilizer', 'Trust Grant / Open Data Pulpit / Civic Mediation Lab', 'When judgment ratio rises above 0.30', 'Costs more Intel, requires timing discipline.'],
+              ['Tempo Expansion', 'Youth Festival / Migration Corridor / Meaning Retreat Program', 'When your combo chain is already active', 'Can amplify noise if no follow-up cooling card.'],
+              ['Bridge Strategy', 'Bridge Dialogue + legalPluralism buffs', 'Pluralism-wave and reform windows', 'Depends on corridor quality and region contest state.']
+            ]
+          },
+          {
+            title: 'Event Response Checklist',
+            kind: 'list',
+            items: [
+              'If algorithmic/polarization events trigger, prioritize cooling cards within 1-2 rounds.',
+              'If trust shock events trigger, preserve Intel for trust stabilizers before betting.',
+              'If migration and youth pressure rise together, pair mobility cards with fragmentation control.',
+              'When legal pluralism drops below 0.35, reserve one law-oriented card for emergency recovery.'
+            ]
           }
         ]
       },
@@ -101,7 +122,10 @@ export const GUIDE_BOOK = {
               ['forecastCost', 'Integer', 'max(7, 12 - perk + ironmanTax)', 'Intel required for each forecast reveal.'],
               ['dailyMultiplier', 'Float', '1.25-1.45 (seeded)', 'Run score multiplier in Daily Challenge.'],
               ['ironmanCap', 'Integer', '24 rounds', 'Auto-settle boundary in Ironman mode.'],
-              ['betResolveRound', 'Integer', 'startRound + 3', 'Round index when a bet settles.']
+              ['betResolveRound', 'Integer', 'startRound + 3', 'Round index when a bet settles.'],
+              ['events.checkEveryNRounds', 'Integer', 'Default 3', 'Frequency of random event checks.'],
+              ['events.decayPerRound', 'Float', 'Default 0.18', 'How fast event shocks fade each round.'],
+              ['events.maxPerCheck', 'Integer', 'Default 2', 'Upper bound of concurrent random events.']
             ]
           },
           {
@@ -258,6 +282,27 @@ export const GUIDE_BOOK = {
               ['关卡目标', '目标集', '每局', '最多 3 星，用于局内评级。'],
               ['成就', '元进度', '条件解锁', '永久保留称号与记录。']
             ]
+          },
+          {
+            title: '卡组流派与时机',
+            kind: 'table',
+            headers: ['流派', '代表卡线', '最佳时机', '代价'],
+            rows: [
+              ['降温控制', '媒体冷却 / 伦理审计 / 巡回法援行动', 'Boss 判定前或极化事件后', '扩张速度放缓。'],
+              ['信任稳态', '信任补助 / 开放数据讲坛 / 公民调解实验室', '审判比超过 30% 时', 'Intel 消耗较高。'],
+              ['节奏扩张', '青年节拍 / 迁徙走廊 / 意义共修营', '连击已成型的中盘', '若无后续降温会放大噪声。'],
+              ['桥接外交', '跨域对话 + 法律多元加成', '多元浪潮与制度改革窗口', '依赖走廊质量与区域态势。']
+            ]
+          },
+          {
+            title: '事件应对清单',
+            kind: 'list',
+            items: [
+              '触发算法回音室/极化事件后，建议 1-2 轮内优先打出降温卡。',
+              '若出现信任类负面冲击，先保留 Intel 打稳态卡，再考虑下注。',
+              '当迁移与青年压力同步上升时，优先联动迁移卡与碎片化控制卡。',
+              '法律多元低于 0.35 时，保留至少一张法治向卡做紧急修复。'
+            ]
           }
         ]
       },
@@ -276,7 +321,10 @@ export const GUIDE_BOOK = {
               ['forecastCost', '整数', 'max(7, 12 - perk + ironmanTax)', '每次解锁预测所需情报。'],
               ['dailyMultiplier', '浮点', '1.25-1.45（种子确定）', '每日挑战局分数倍率。'],
               ['ironmanCap', '整数', '24 轮', '铁人模式自动结算上限。'],
-              ['betResolveRound', '整数', 'startRound + 3', '下注结算回合。']
+              ['betResolveRound', '整数', 'startRound + 3', '下注结算回合。'],
+              ['events.checkEveryNRounds', '整数', '默认 3', '随机事件的检查频率。'],
+              ['events.decayPerRound', '浮点', '默认 0.18', '事件冲击每轮衰减速度。'],
+              ['events.maxPerCheck', '整数', '默认 2', '单次检查可并发触发的事件上限。']
             ]
           },
           {
@@ -424,6 +472,27 @@ export const GUIDE_BOOK = {
               ['ステージ目標', '目標セット', '各ラン', '最大3スター評価。'],
               ['実績', 'メタ進行', '条件解除', '恒久バッジを保存。']
             ]
+          },
+          {
+            title: 'デッキ型と運用タイミング',
+            kind: 'table',
+            headers: ['型', '代表カード列', '最適タイミング', 'トレードオフ'],
+            rows: [
+              ['冷却/制御', 'メディア冷却 / 倫理監査 / 移動リーガル支援隊', 'Boss判定前・分極化イベント後', '拡張速度は落ちる。'],
+              ['信頼安定', '信頼助成 / オープンデータ講壇 / 市民調停ラボ', '審判比率が30%超の局面', 'Intel消費が重い。'],
+              ['テンポ拡張', 'ユース祭典 / 移動コリドー / 意味リトリート計画', '中盤でコンボが伸びた時', '冷却札が無いとノイズ増幅。'],
+              ['橋渡し外交', '越境対話 + 法的多元バフ', '多元主義イベントと改革ウィンドウ', '回廊品質と地域競合に依存。']
+            ]
+          },
+          {
+            title: 'イベント対応チェック',
+            kind: 'list',
+            items: [
+              'アルゴリズム反響・分極化イベント後は1-2ラウンド内に冷却カードを優先。',
+              '信頼ショック発生時は賭けより先に安定化カードへIntelを確保。',
+              '移動と若年圧力が同時上昇したら、移動カードと分断抑制を同時運用。',
+              '法的多元性が0.35未満なら、法治系カードを1枚温存。'
+            ]
           }
         ]
       },
@@ -442,7 +511,10 @@ export const GUIDE_BOOK = {
               ['forecastCost', 'Integer', 'max(7, 12 - perk + ironmanTax)', '予測解放ごとの必要情報量。'],
               ['dailyMultiplier', 'Float', '1.25-1.45（seed固定）', 'デイリーのスコア倍率。'],
               ['ironmanCap', 'Integer', '24', 'Ironman 自動精算上限。'],
-              ['betResolveRound', 'Integer', 'startRound + 3', '賭けの精算ラウンド。']
+              ['betResolveRound', 'Integer', 'startRound + 3', '賭けの精算ラウンド。'],
+              ['events.checkEveryNRounds', 'Integer', '既定 3', 'ランダムイベント判定の頻度。'],
+              ['events.decayPerRound', 'Float', '既定 0.18', 'イベント衝撃のラウンド減衰率。'],
+              ['events.maxPerCheck', 'Integer', '既定 2', '同時発生イベント数の上限。']
             ]
           },
           {
