@@ -236,23 +236,21 @@ class ReligionSimulation {
   }
 
   bossPhaseShock(phase) {
-    if (phase === 1) {
-      return { socialFragmentation: 0.06, economicStress: 0.05, migration: 0.03 };
-    }
-    if (phase === 2) {
-      return { mediaPolarization: 0.06, stateRegulation: 0.05, identityPolitics: 0.05 };
-    }
-    return { meaningSearch: 0.07, socialFragmentation: 0.05, institutionalTrust: -0.05 };
+    const shocks = {
+      1: { socialFragmentation: 0.06, economicStress: 0.05, migration: 0.03 },
+      2: { mediaPolarization: 0.06, stateRegulation: 0.05, identityPolitics: 0.05 },
+      3: { meaningSearch: 0.07, socialFragmentation: 0.05, institutionalTrust: -0.05 }
+    };
+    return shocks[phase] ?? shocks[3];
   }
 
   bossPhaseObjectiveText(phase) {
-    if (phase === 1) {
-      return 'Reduce social fragmentation while preserving institutional trust';
-    }
-    if (phase === 2) {
-      return 'Stabilize contested regions and avoid extreme polarization';
-    }
-    return 'Contain judgment pressure and recover pluralistic balance';
+    const objectives = {
+      1: 'Reduce social fragmentation while preserving institutional trust',
+      2: 'Stabilize contested regions and avoid extreme polarization',
+      3: 'Contain judgment pressure and recover pluralistic balance'
+    };
+    return objectives[phase] ?? objectives[3];
   }
 
   evaluateBossPhase(state, phase) {

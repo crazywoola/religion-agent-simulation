@@ -66,11 +66,12 @@ function parseJsonPayload(rawContent) {
 
 export class OpenAIClient {
   constructor() {
+    const defaultPreset = resolveProviderPreset(DEFAULT_AI_PROVIDER);
     this.provider = DEFAULT_AI_PROVIDER;
-    this.providerLabel = resolveProviderPreset(DEFAULT_AI_PROVIDER).label;
+    this.providerLabel = defaultPreset.label;
     this.apiKey = '';
-    this.baseUrl = resolveProviderPreset(DEFAULT_AI_PROVIDER).defaultBaseUrl;
-    this.model = resolveProviderPreset(DEFAULT_AI_PROVIDER).defaultModel;
+    this.baseUrl = defaultPreset.defaultBaseUrl;
+    this.model = defaultPreset.defaultModel;
     this.enabled = false;
     this.setProvider(process.env.AI_PROVIDER || process.env.OPENAI_PROVIDER || DEFAULT_AI_PROVIDER);
     this.enabled = Boolean(this.apiKey);
@@ -162,10 +163,7 @@ export class OpenAIClient {
   }
 
   parseRetryAfterMs(headerValue) {
-    if (!headerValue || typeof headerValue !== 'string') {
-      return null;
-    }
-    const trimmed = headerValue.trim();
+    const trimmed = typeof headerValue === 'string' ? headerValue.trim() : '';
     if (!trimmed) {
       return null;
     }

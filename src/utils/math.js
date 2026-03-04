@@ -17,6 +17,7 @@ export function allocateByScore(total, scoredItems) {
   }
 
   const plan = new Map();
+  const fracs = [];
   let allocated = 0;
 
   for (const item of scoredItems) {
@@ -24,19 +25,12 @@ export function allocateByScore(total, scoredItems) {
     const base = Math.floor(raw);
     plan.set(item.key, base);
     allocated += base;
+    fracs.push({ key: item.key, frac: raw - base });
   }
 
   let remainder = total - allocated;
   if (remainder > 0) {
-    const withFrac = scoredItems
-      .map((item) => {
-        const raw = (total * item.score) / sum;
-        return {
-          key: item.key,
-          frac: raw - Math.floor(raw)
-        };
-      })
-      .sort((a, b) => b.frac - a.frac);
+    const withFrac = fracs.slice().sort((a, b) => b.frac - a.frac);
 
     for (let i = 0; i < withFrac.length && remainder > 0; i += 1) {
       const current = plan.get(withFrac[i].key) || 0;

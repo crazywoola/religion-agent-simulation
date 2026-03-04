@@ -9,33 +9,24 @@ export function normalizeMetric(metrics = {}) {
   };
 }
 
+const TRAIT_KEYS = ['communityService', 'digitalMission', 'ritualDepth', 'intellectualDialog', 'youthAppeal', 'identityBond', 'institutionCapacity'];
+
 export function normalizeTraits(traits = {}) {
-  return {
-    communityService: clamp(Number(traits.communityService || 0.55), 0.1, 0.98),
-    digitalMission: clamp(Number(traits.digitalMission || 0.55), 0.1, 0.98),
-    ritualDepth: clamp(Number(traits.ritualDepth || 0.55), 0.1, 0.98),
-    intellectualDialog: clamp(Number(traits.intellectualDialog || 0.55), 0.1, 0.98),
-    youthAppeal: clamp(Number(traits.youthAppeal || 0.55), 0.1, 0.98),
-    identityBond: clamp(Number(traits.identityBond || 0.55), 0.1, 0.98),
-    institutionCapacity: clamp(Number(traits.institutionCapacity || 0.55), 0.1, 0.98)
-  };
+  const result = {};
+  for (const key of TRAIT_KEYS) {
+    result[key] = clamp(Number(traits[key] || 0.55), 0.1, 0.98);
+  }
+  return result;
 }
 
+const GOVERNANCE_KEYS = ['orthodoxy', 'antiProselytization', 'tribunalCapacity', 'dueProcess'];
+
 export function normalizeGovernance(governance = {}, fallback = {}) {
-  return {
-    orthodoxy: clamp(Number(governance.orthodoxy ?? fallback.orthodoxy ?? 0.55), 0.05, 0.98),
-    antiProselytization: clamp(
-      Number(governance.antiProselytization ?? fallback.antiProselytization ?? 0.55),
-      0.05,
-      0.98
-    ),
-    tribunalCapacity: clamp(
-      Number(governance.tribunalCapacity ?? fallback.tribunalCapacity ?? 0.55),
-      0.05,
-      0.98
-    ),
-    dueProcess: clamp(Number(governance.dueProcess ?? fallback.dueProcess ?? 0.55), 0.05, 0.98)
-  };
+  const result = {};
+  for (const key of GOVERNANCE_KEYS) {
+    result[key] = clamp(Number(governance[key] ?? fallback[key] ?? 0.55), 0.05, 0.98);
+  }
+  return result;
 }
 
 export function normalizeClassics(classics, fallback = []) {

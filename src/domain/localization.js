@@ -1,18 +1,22 @@
 import { DEFAULT_LOCALE, normalizeLocale } from '../config/runtime.js';
 import { clamp } from '../utils/math.js';
 
+function localizedLabel(labels, key, lang) {
+  return labels[key]?.[lang] || labels[key]?.en || key;
+}
+
+const STRATEGY_CHANNEL_LABELS = {
+  digital: { en: 'digital', 'zh-CN': '数字传播', ja: 'デジタル発信' },
+  service: { en: 'community service', 'zh-CN': '社群服务', ja: '地域奉仕' },
+  ritual: { en: 'ritual practice', 'zh-CN': '仪式实践', ja: '儀礼実践' },
+  intellectual: { en: 'public dialogue', 'zh-CN': '公共对话', ja: '公共対話' },
+  youth: { en: 'youth engagement', 'zh-CN': '青年触达', ja: '若年層接点' },
+  identity: { en: 'identity bonding', 'zh-CN': '身份凝聚', ja: 'アイデンティティ結束' },
+  institution: { en: 'institutional network', 'zh-CN': '组织网络', ja: '制度ネットワーク' }
+};
+
 export function localizedStrategyChannel(channel, locale = DEFAULT_LOCALE) {
-  const lang = normalizeLocale(locale);
-  const labels = {
-    digital: { en: 'digital', 'zh-CN': '数字传播', ja: 'デジタル発信' },
-    service: { en: 'community service', 'zh-CN': '社群服务', ja: '地域奉仕' },
-    ritual: { en: 'ritual practice', 'zh-CN': '仪式实践', ja: '儀礼実践' },
-    intellectual: { en: 'public dialogue', 'zh-CN': '公共对话', ja: '公共対話' },
-    youth: { en: 'youth engagement', 'zh-CN': '青年触达', ja: '若年層接点' },
-    identity: { en: 'identity bonding', 'zh-CN': '身份凝聚', ja: 'アイデンティティ結束' },
-    institution: { en: 'institutional network', 'zh-CN': '组织网络', ja: '制度ネットワーク' }
-  };
-  return labels[channel]?.[lang] || labels[channel]?.en || channel;
+  return localizedLabel(STRATEGY_CHANNEL_LABELS, channel, normalizeLocale(locale));
 }
 
 export function localActionText(agent, transfer, locale = DEFAULT_LOCALE) {
@@ -62,83 +66,31 @@ export function localActionText(agent, transfer, locale = DEFAULT_LOCALE) {
   return `${pick}.${focusText} ${movement}: ${Math.abs(transfer.net)} followers this round.`;
 }
 
+const REASON_LABELS = {
+  digital_spread: { en: 'Digital outreach expansion', 'zh-CN': '数字化传播扩散', ja: 'デジタル発信の拡張' },
+  community_service: { en: 'Community service attraction', 'zh-CN': '社群服务吸引', ja: '地域奉仕による吸引' },
+  identity_shift: { en: 'Identity realignment', 'zh-CN': '身份认同重组', ja: 'アイデンティティ再編' },
+  meaning_search: { en: 'Growing search for meaning', 'zh-CN': '意义感寻求增强', ja: '意味追求の高まり' },
+  youth_resonance: { en: 'Youth issue resonance', 'zh-CN': '青年议题共鸣', ja: '若年層課題との共鳴' },
+  institutional_pull: { en: 'Institutional network pull', 'zh-CN': '制度型组织吸纳', ja: '制度ネットワークの吸引' },
+  secular_shift: { en: 'Secular value drift', 'zh-CN': '世俗价值迁移', ja: '世俗価値への移行' },
+  polarization_alignment: { en: 'Polarized identity alignment', 'zh-CN': '极化身份趋同', ja: '分極化した同一性への整合' },
+  pluralism_dialogue: { en: 'Pluralism-driven dialogue', 'zh-CN': '多元对话吸引', ja: '多元対話による吸引' }
+};
+
+const JUDGMENT_REASON_LABELS = {
+  orthodoxy_enforcement: { en: 'Orthodoxy enforcement', 'zh-CN': '教义正统性执法', ja: '教義正統性の執行' },
+  anti_proselytization_guard: { en: 'Anti-proselytization guard', 'zh-CN': '反传教防护', ja: '改宗勧誘の抑制' },
+  identity_conflict: { en: 'Identity conflict control', 'zh-CN': '身份冲突管控', ja: 'アイデンティティ衝突の抑制' },
+  legal_restriction: { en: 'Regulatory restriction', 'zh-CN': '监管限制', ja: '規制制限' }
+};
+
 export function localizedReasonLabel(reasonKey, locale = DEFAULT_LOCALE) {
-  const lang = normalizeLocale(locale);
-  const labels = {
-    digital_spread: {
-      en: 'Digital outreach expansion',
-      'zh-CN': '数字化传播扩散',
-      ja: 'デジタル発信の拡張'
-    },
-    community_service: {
-      en: 'Community service attraction',
-      'zh-CN': '社群服务吸引',
-      ja: '地域奉仕による吸引'
-    },
-    identity_shift: {
-      en: 'Identity realignment',
-      'zh-CN': '身份认同重组',
-      ja: 'アイデンティティ再編'
-    },
-    meaning_search: {
-      en: 'Growing search for meaning',
-      'zh-CN': '意义感寻求增强',
-      ja: '意味追求の高まり'
-    },
-    youth_resonance: {
-      en: 'Youth issue resonance',
-      'zh-CN': '青年议题共鸣',
-      ja: '若年層課題との共鳴'
-    },
-    institutional_pull: {
-      en: 'Institutional network pull',
-      'zh-CN': '制度型组织吸纳',
-      ja: '制度ネットワークの吸引'
-    },
-    secular_shift: {
-      en: 'Secular value drift',
-      'zh-CN': '世俗价值迁移',
-      ja: '世俗価値への移行'
-    },
-    polarization_alignment: {
-      en: 'Polarized identity alignment',
-      'zh-CN': '极化身份趋同',
-      ja: '分極化した同一性への整合'
-    },
-    pluralism_dialogue: {
-      en: 'Pluralism-driven dialogue',
-      'zh-CN': '多元对话吸引',
-      ja: '多元対話による吸引'
-    }
-  };
-  return labels[reasonKey]?.[lang] || labels[reasonKey]?.en || reasonKey;
+  return localizedLabel(REASON_LABELS, reasonKey, normalizeLocale(locale));
 }
 
 export function localizedJudgmentReasonLabel(reasonKey, locale = DEFAULT_LOCALE) {
-  const lang = normalizeLocale(locale);
-  const labels = {
-    orthodoxy_enforcement: {
-      en: 'Orthodoxy enforcement',
-      'zh-CN': '教义正统性执法',
-      ja: '教義正統性の執行'
-    },
-    anti_proselytization_guard: {
-      en: 'Anti-proselytization guard',
-      'zh-CN': '反传教防护',
-      ja: '改宗勧誘の抑制'
-    },
-    identity_conflict: {
-      en: 'Identity conflict control',
-      'zh-CN': '身份冲突管控',
-      ja: 'アイデンティティ衝突の抑制'
-    },
-    legal_restriction: {
-      en: 'Regulatory restriction',
-      'zh-CN': '监管限制',
-      ja: '規制制限'
-    }
-  };
-  return labels[reasonKey]?.[lang] || labels[reasonKey]?.en || reasonKey;
+  return localizedLabel(JUDGMENT_REASON_LABELS, reasonKey, normalizeLocale(locale));
 }
 
 export function localJudgmentText(record, locale = DEFAULT_LOCALE) {
