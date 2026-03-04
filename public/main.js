@@ -10,6 +10,7 @@ import {
   SECRET_AGENDA_LIBRARY
 } from '/data/game-lab-config.js';
 import { NARRATIVE_CHAIN_LIBRARY, DECISION_OPTION_LIBRARY } from '/data/narrative-chains.js';
+import { CHARACTER_ROLE_LIBRARY, RELIGION_CHARACTER_POOL } from '/data/character-roles.js';
 
 const startBtn = document.getElementById('startBtn');
 const stopBtn = document.getElementById('stopBtn');
@@ -186,6 +187,8 @@ let chainRewardState = { ownerId: null, chainLength: 1, multiplier: 1, lastAward
 let metaProgress = loadMetaProgress();
 let dailyChallengeProfile = buildDailyChallengeProfile();
 let gameRun = createEmptyGameRun();
+let selectedCharacter = null;
+let characterCandidates = [];
 
 const GHOST_STORAGE_KEY = 'religion_sim_ghost_run_v1';
 
@@ -240,9 +243,11 @@ function escapeHtml(value) {
 }
 
 function syncBodyLock() {
+  const charModal = document.getElementById('characterSelectModal');
   const shouldLock =
     (modalEl && !modalEl.hidden) ||
-    (guideModalEl && !guideModalEl.hidden);
+    (guideModalEl && !guideModalEl.hidden) ||
+    (charModal && !charModal.hidden);
   document.body.style.overflow = shouldLock ? 'hidden' : '';
 }
 
@@ -780,13 +785,103 @@ function chooseSecretAgenda(seedBase) {
   };
 }
 
-function buildDeck(seedBase) {
-  const picked = shuffleWithSeed(DECK_CARD_LIBRARY, seedBase).slice(0, 5).map((card) => ({ ...card }));
+function buildDeck(seedBase, preferredCardIds = null) {
+  let pool;
+  if (preferredCardIds && preferredCardIds.length > 0) {
+    const preferred = preferredCardIds
+      .map((id) => DECK_CARD_LIBRARY.find((c) => c.id === id))
+      .filter(Boolean)
+      .map((c) => ({ ...c }));
+    const rest = DECK_CARD_LIBRARY
+      .filter((c) => !preferredCardIds.includes(c.id))
+      .map((c) => ({ ...c }));
+    const shuffledRest = shuffleWithSeed(rest, seedBase);
+    pool = [...preferred, ...shuffledRest].slice(0, 5);
+  } else {
+    pool = shuffleWithSeed(DECK_CARD_LIBRARY, seedBase).slice(0, 5).map((card) => ({ ...card }));
+  }
   return {
-    deck: picked.slice(3),
-    hand: picked.slice(0, 3),
+    deck: pool.slice(3),
+    hand: pool.slice(0, 3),
     discard: []
   };
+}
+
+function generateCharacterCandidates(count = 5) {
+  const religions = [...RELIGION_CHARACTER_POOL];
+  const roles = [...CHARACTER_ROLE_LIBRARY];
+  for (let i = religions.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [religions[i], religions[j]] = [religions[j], religions[i]];
+  }
+  for (let i = roles.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [roles[i], roles[j]] = [roles[j], roles[i]];
+  }
+  const candidates = [];
+  for (let i = 0; i < count; i++) {
+    const religion = religions[i % religions.length];
+    const role = roles[i % roles.length];
+    candidates.push({
+      religion,
+      religionLabel: i18n.religionName(religion, religion),
+      religionEmoji: RELIGION_EMOJI[religion] || '🕊️',
+      role: { ...role },
+      id: `${religion}_${role.id}`
+    });
+  }
+  return candidates;
+}
+
+function showCharacterSelect() {
+  return new Promise((resolve) => {
+    const modal = document.getElementById('characterSelectModal');
+    const grid = document.getElementById('characterSelectGrid');
+    const titleEl = document.getElementById('characterSelectTitle');
+    const subtitleEl = document.getElementById('characterSelectSubtitle');
+    if (!modal || !grid) { resolve(null); return; }
+
+    titleEl.textContent = i18n.locale === 'zh-CN' ? '选择你的角色' : i18n.locale === 'ja' ? 'キャラクター選択' : 'Choose Your Character';
+    subtitleEl.textContent = i18n.locale === 'zh-CN'
+      ? '每个角色拥有独特的宗教、职能、初始卡组与胜利目标。'
+      : i18n.locale === 'ja'
+        ? '各キャラクターは固有の宗教・役割・初期デッキ・勝利目標を持ちます。'
+        : 'Each character has a unique religion, role, starter deck, and win objective.';
+
+    characterCandidates = generateCharacterCandidates(5);
+
+    grid.innerHTML = characterCandidates.map((c, idx) => {
+      const roleLabel = localizedText(c.role.label, c.role.id);
+      const roleDesc = localizedText(c.role.description, '');
+      const goalLabel = localizedText(c.role.goal.label, '');
+      const intelLabel = i18n.locale === 'zh-CN' ? `初始情报 +${c.role.starterIntel}` : i18n.locale === 'ja' ? `初期Intel +${c.role.starterIntel}` : `Starter Intel +${c.role.starterIntel}`;
+      return `
+        <button class="character-card" type="button" data-char-idx="${idx}">
+          <div class="character-card-icon">${c.religionEmoji} ${c.role.icon}</div>
+          <div class="character-card-religion">${c.religionLabel}</div>
+          <div class="character-card-role">${roleLabel}</div>
+          <div class="character-card-desc">${roleDesc}</div>
+          <div class="character-card-goal">${goalLabel}</div>
+          <div class="character-card-intel">${intelLabel}</div>
+        </button>
+      `;
+    }).join('');
+
+    modal.hidden = false;
+    syncBodyLock();
+
+    const handler = (e) => {
+      const btn = e.target.closest('[data-char-idx]');
+      if (!btn) return;
+      const idx = Number(btn.dataset.charIdx);
+      selectedCharacter = characterCandidates[idx] || null;
+      modal.hidden = true;
+      syncBodyLock();
+      grid.removeEventListener('click', handler);
+      resolve(selectedCharacter);
+    };
+    grid.addEventListener('click', handler);
+  });
 }
 
 function buildSeedGhostRun() {
@@ -1427,6 +1522,56 @@ function resolveBetOptionLabel(option) {
   return option;
 }
 
+function evaluateCharacterGoal(state) {
+  if (!gameRun.character || gameRun.characterGoalDone) return;
+  const goal = gameRun.character.role?.goal;
+  if (!goal) return;
+
+  let met = false;
+  if (goal.signal && state.socialSignals) {
+    const val = Number(state.socialSignals[goal.signal] || 0);
+    met = goal.compare === 'gt' ? val > goal.threshold : val < goal.threshold;
+  } else if (goal.metric && state.roundMetrics) {
+    const val = Number(state.roundMetrics[goal.metric] || 0);
+    met = goal.compare === 'gt' ? val > goal.threshold : val < goal.threshold;
+  } else if (goal.type === 'regionControl' && state.regionControl) {
+    const dominant = [...(state.religions || [])].sort((a, b) => b.followers - a.followers)[0];
+    const controlled = state.regionControl.filter((rc) => rc.ownerId === dominant?.id).length;
+    met = controlled >= goal.threshold;
+  } else if (goal.type === 'cardsUsed') {
+    met = (gameRun.cardsUsed || 0) >= goal.threshold;
+  }
+
+  if (met) {
+    gameRun.characterGoalProgress = (gameRun.characterGoalProgress || 0) + 1;
+  } else if (goal.requiredRounds) {
+    gameRun.characterGoalProgress = 0;
+  }
+
+  const needed = goal.requiredRounds || 1;
+  if (gameRun.characterGoalProgress >= needed && !gameRun.characterGoalDone) {
+    gameRun.characterGoalDone = true;
+    const reward = 10;
+    intelPoints += reward;
+    comboScore += 15;
+    const charLabel = localizedText(gameRun.character.role.label, gameRun.character.role.id);
+    const goalLabel = localizedText(goal.label, '');
+    appendIntelBrief({
+      source: 'character',
+      title: i18n.locale === 'zh-CN' ? `角色目标达成！` : i18n.locale === 'ja' ? 'キャラクター目標達成！' : 'Character goal achieved!',
+      summary: `${charLabel}: ${goalLabel}`,
+      content: i18n.locale === 'zh-CN' ? `奖励 +${reward} 情报，+15 连击分。` : i18n.locale === 'ja' ? `報酬 +${reward} Intel、+15 コンボ。` : `Reward: +${reward} Intel, +15 combo score.`,
+      reward
+    });
+    appendGameplayLog({
+      source: 'character',
+      type: 'mission',
+      name: gameRun.character.religionLabel,
+      action: i18n.locale === 'zh-CN' ? `角色目标「${goalLabel}」已达成！` : i18n.locale === 'ja' ? `キャラクター目標「${goalLabel}」達成！` : `Character goal "${goalLabel}" achieved!`
+    });
+  }
+}
+
 function evaluateRegionChain(state) {
   const control = Array.isArray(state?.regionControl) ? state.regionControl : [];
   const byRegion = new Map(control.map((item) => [item.regionId, item]));
@@ -1475,7 +1620,8 @@ function initializeRunSystems() {
     progress: 0,
     valueText: '0'
   }));
-  const deckPack = buildDeck(seedBase + 41);
+  const charCards = gameRun.character?.role?.preferredCards || null;
+  const deckPack = buildDeck(seedBase + 41, charCards);
   const secretAgenda = chooseSecretAgenda(seedBase + 79);
   gameRun.objectives = selectedObjectives;
   gameRun.secretAgenda = secretAgenda;
@@ -2688,6 +2834,20 @@ function renderBossCrisisPanel(state) {
 }
 
 function renderGameplayHud() {
+  const charBadge = document.getElementById('characterBadge');
+  if (charBadge) {
+    if (gameRun.character) {
+      const c = gameRun.character;
+      const roleLabel = localizedText(c.role.label, c.role.id);
+      const done = gameRun.characterGoalDone;
+      charBadge.hidden = false;
+      charBadge.textContent = `${c.religionEmoji} ${c.role.icon} ${roleLabel}${done ? ' ✓' : ''}`;
+      charBadge.title = localizedText(c.role.goal.label, '');
+      charBadge.classList.toggle('goal-done', !!done);
+    } else {
+      charBadge.hidden = true;
+    }
+  }
   if (comboBadgeEl) {
     const hot = topComboEntry();
     const streak = hot?.streak || 0;
@@ -4377,6 +4537,7 @@ function renderAll(state) {
     if (runTelemetry.length > 80) {
       runTelemetry = runTelemetry.slice(-80);
     }
+    evaluateCharacterGoal(state);
     lastProcessedRound = state.round;
   }
   updateMapViewBounds(state);
@@ -4854,12 +5015,19 @@ async function startSimulation() {
     settleRunProgress(liveState, 'restart');
     archiveGhostRunFromState(liveState);
   }
+
+  const chosen = await showCharacterSelect();
+  if (!chosen) return;
+
   gameRun = createEmptyGameRun();
   gameRun.id = `run_${Date.now()}`;
   gameRun.startedAt = new Date().toISOString();
   gameRun.dailyChallenge = Boolean(dailyChallengeToggleEl?.checked);
   gameRun.ironman = Boolean(ironmanToggleEl?.checked);
   gameRun.scoreMultiplier = gameRun.dailyChallenge ? dailyChallengeProfile.scoreMultiplier : 1;
+  gameRun.character = chosen;
+  gameRun.characterGoalProgress = 0;
+  gameRun.characterGoalDone = false;
   initializeRunSystems();
   lastPersistedSnapshotRound = -1;
   saveRunRecordToIndexedDb(null, 'start').catch(() => {});
@@ -4922,11 +5090,30 @@ async function startSimulation() {
       reward: 6
     });
   }
+  if (gameRun.character?.role?.starterIntel) {
+    intelPoints += gameRun.character.role.starterIntel;
+    const charLabel = localizedText(gameRun.character.role.label, gameRun.character.role.id);
+    appendIntelBrief({
+      source: 'character',
+      title: i18n.locale === 'zh-CN'
+        ? `角色加成：${charLabel}`
+        : i18n.locale === 'ja'
+          ? `キャラクターボーナス：${charLabel}`
+          : `Character bonus: ${charLabel}`,
+      summary: i18n.locale === 'zh-CN'
+        ? `${gameRun.character.religionLabel} · ${charLabel} 已就绪。初始情报 +${gameRun.character.role.starterIntel}。`
+        : i18n.locale === 'ja'
+          ? `${gameRun.character.religionLabel} · ${charLabel} 準備完了。初期Intel +${gameRun.character.role.starterIntel}。`
+          : `${gameRun.character.religionLabel} · ${charLabel} ready. Starter Intel +${gameRun.character.role.starterIntel}.`,
+      content: localizedText(gameRun.character.role.goal.label, ''),
+      reward: gameRun.character.role.starterIntel
+    });
+  }
+
   stopBtn.disabled = Boolean(gameRun.ironman);
   renderAll(snapshot);
   saveRunRecordToIndexedDb(snapshot, 'running').catch(() => {});
   refreshRunStorageStats().catch(() => {});
-  // Always reset map framing on new game start for a stable first view.
   resetCameraView();
 }
 

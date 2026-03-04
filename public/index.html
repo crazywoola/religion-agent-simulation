@@ -108,6 +108,7 @@
           <div id="mapLegend" class="map-legend"></div>
         </div>
         <div id="gameplayHud" class="gameplay-hud">
+          <div id="characterBadge" class="gameplay-chip character-badge" hidden></div>
           <div id="comboBadge" class="gameplay-chip">Combo ×0</div>
           <div class="intel-popover">
             <div
@@ -289,6 +290,15 @@
             <canvas id="modalHistoryCanvas" class="modal-history" width="280" height="100"></canvas>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- ===== CHARACTER SELECTION MODAL ===== -->
+    <div id="characterSelectModal" class="character-select-overlay" hidden>
+      <div class="character-select-panel" role="dialog" aria-modal="true">
+        <div class="character-select-title" id="characterSelectTitle">Choose Your Character</div>
+        <div class="character-select-subtitle" id="characterSelectSubtitle">Each character has a unique religion, role, starter deck, and win objective.</div>
+        <div class="character-select-grid" id="characterSelectGrid"></div>
       </div>
     </div>
 

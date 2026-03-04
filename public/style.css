@@ -833,6 +833,17 @@ select:focus {
   gap: 8px;
 }
 
+.character-badge {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.9), rgba(99, 102, 241, 0.9));
+  color: #fff;
+  border-color: rgba(139, 92, 246, 0.6);
+}
+
+.character-badge.goal-done {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.9), rgba(5, 150, 105, 0.9));
+  border-color: rgba(16, 185, 129, 0.6);
+}
+
 .gameplay-chip {
   border: 2px solid #2e365f;
   border-radius: 999px;
@@ -2238,6 +2249,118 @@ select:focus {
   border-radius: 8px;
   background: rgba(255,255,255,0.5);
   margin-top: 4px;
+}
+
+/* ── Character selection modal ────────────────── */
+.character-select-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(10, 14, 35, 0.72);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.character-select-overlay[hidden] {
+  display: none;
+}
+
+.character-select-panel {
+  width: min(1100px, 96vw);
+  max-height: 90vh;
+  overflow-y: auto;
+  background: linear-gradient(160deg, #1a1d3a, #252850);
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 28px 24px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.character-select-title {
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: #e2e8f0;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.character-select-subtitle {
+  font-size: 0.82rem;
+  color: #94a3b8;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.character-select-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 14px;
+}
+
+.character-card {
+  position: relative;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 16px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.character-card:hover {
+  border-color: rgba(99, 102, 241, 0.5);
+  background: rgba(99, 102, 241, 0.08);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);
+}
+
+.character-card-icon {
+  font-size: 2.2rem;
+  text-align: center;
+  line-height: 1;
+}
+
+.character-card-religion {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #e2e8f0;
+  text-align: center;
+}
+
+.character-card-role {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #a78bfa;
+  text-align: center;
+}
+
+.character-card-desc {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.character-card-goal {
+  font-size: 0.66rem;
+  color: #fbbf24;
+  text-align: center;
+  padding: 4px 6px;
+  background: rgba(251, 191, 36, 0.08);
+  border-radius: 6px;
+  line-height: 1.35;
+}
+
+.character-card-intel {
+  font-size: 0.66rem;
+  color: #34d399;
+  text-align: center;
 }
 
 /* ── Guide book modal ─────────────────────────── */
