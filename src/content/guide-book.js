@@ -143,20 +143,8 @@ export const GUIDE_BOOK = {
             ]
           },
           {
-            title: 'Strategy Deck Presets (20 presets)',
-            kind: 'table',
-            headers: ['Preset', 'Theme', 'Difficulty', 'Play Style'],
-            rows: [
-              ['Iron Wall 🛡️', 'Defense & Stability', 'Normal', 'Trust + cooling + governance cards'],
-              ['Blitzkrieg ⚡', 'Aggressive Expansion', 'Hard', 'All tempo + outreach cards'],
-              ['Peace Weaver 🕊️', 'Diplomacy & Mediation', 'Normal', 'Dialogue + conflict resolution'],
-              ['Digital Dominion 💻', 'Technology & Platforms', 'Normal', 'Digital + media + apps'],
-              ['Holy Crusade ⚔️', 'Identity Warfare', 'Expert', 'Identity + territorial dominance'],
-              ['Crisis Manager 🚨', 'All Conditional Cards', 'Expert', 'Doubles in every crisis'],
-              ['Slow Burn 🕰️', 'All Sustained Cards', 'Hard', 'Compound value over rounds'],
-              ['Chaos Agent 🃏', 'Maximum Disruption', 'Expert', 'Watch the world burn'],
-              ['...and 12 more', '', '', 'Welfare, Scholar, Shadow, Revival, Youth, Legal, Migration, Populist, Balanced, Eco, Theocracy, Humanitarian']
-            ]
+            title: 'Strategy Deck Presets',
+            kind: 'strategy-cards'
           },
           {
             title: 'Event Response Checklist',
@@ -189,20 +177,8 @@ export const GUIDE_BOOK = {
             ]
           },
           {
-            title: 'Role Archetypes (sample)',
-            kind: 'table',
-            headers: ['Role', 'Icon', 'Intel', 'Goal Type'],
-            rows: [
-              ['Diplomat', '🕊️', '4', 'Keep pluralism above threshold for N rounds'],
-              ['Evangelist', '📢', '2', 'Reach high total transfer flow in one round'],
-              ['Inquisitor', '⚖️', '3', 'Maintain judgment ratio above threshold'],
-              ['Warlord', '⚔️', '1', 'Control 5+ regions simultaneously'],
-              ['Scholar', '📚', '5', 'Play 6+ strategy cards in a run'],
-              ['Prophet', '👁️', '4', 'Win 3 consecutive bets'],
-              ['Spy', '🕵️', '6', 'Hold 25+ Intel at round 10'],
-              ['Saint', '😇', '2', 'Complete all 3 stage objectives'],
-              ['...and 51 more', '', '', 'Healer, Guardian, Monk, Rebel, Sage, Templar, Witch, Technomancer, etc.']
-            ]
+            title: 'Role Cards',
+            kind: 'role-cards'
           }
         ]
       },
@@ -422,20 +398,8 @@ export const GUIDE_BOOK = {
             ]
           },
           {
-            title: '策略卡组预设（20 套）',
-            kind: 'table',
-            headers: ['预设', '主题', '难度', '风格'],
-            rows: [
-              ['铁壁防线 🛡️', '防御与稳定', '普通', '信任 + 降温 + 治理'],
-              ['闪电战 ⚡', '激进扩张', '困难', '全节奏 + 传播卡'],
-              ['和平编织者 🕊️', '外交与调解', '普通', '对话 + 冲突解决'],
-              ['数字帝国 💻', '技术与平台', '普通', '数字 + 媒体 + 应用'],
-              ['圣战 ⚔️', '身份战争', '专家', '身份 + 领地统治'],
-              ['危机管理者 🚨', '全条件卡', '专家', '每次危机翻倍'],
-              ['慢火煮 🕰️', '全持续卡', '困难', '多轮复利价值'],
-              ['混沌特工 🃏', '最大破坏', '专家', '看着世界燃烧'],
-              ['...另外 12 套', '', '', '福利、学者、暗影、复兴、青年、法律、迁移、民粹、均衡、生态、神权、人道']
-            ]
+            title: '策略卡组预设',
+            kind: 'strategy-cards'
           },
           {
             title: '事件应对清单',
@@ -468,20 +432,8 @@ export const GUIDE_BOOK = {
             ]
           },
           {
-            title: '职能类型（示例）',
-            kind: 'table',
-            headers: ['职能', '图标', 'Intel', '目标类型'],
-            rows: [
-              ['外交官', '🕊️', '4', '保持多元性高于阈值 N 轮'],
-              ['布道者', '📢', '2', '单轮高转化流量'],
-              ['审判官', '⚖️', '3', '维持高审判比'],
-              ['战争领主', '⚔️', '1', '同时控制 5+ 区域'],
-              ['学者', '📚', '5', '使用 6+ 策略卡'],
-              ['先知', '👁️', '4', '连续赢得 3 次下注'],
-              ['间谍', '🕵️', '6', '第 10 轮时持有 25+ Intel'],
-              ['圣者', '😇', '2', '完成全部 3 个阶段目标'],
-              ['...另外 51 种', '', '', '治愈者、守护者、僧侣、叛逆者、智者、圣殿骑士、巫师、技术法师等']
-            ]
+            title: '职业卡牌',
+            kind: 'role-cards'
           }
         ]
       },
@@ -701,20 +653,8 @@ export const GUIDE_BOOK = {
             ]
           },
           {
-            title: '戦略デッキプリセット（20種）',
-            kind: 'table',
-            headers: ['プリセット', 'テーマ', '難度', 'スタイル'],
-            rows: [
-              ['鉄壁防衛 🛡️', '防御と安定', '普通', '信頼+冷却+統治'],
-              ['電撃戦 ⚡', '攻撃的拡張', '難しい', 'テンポ+布教カード'],
-              ['平和の織り手 🕊️', '外交と調停', '普通', '対話+紛争解決'],
-              ['デジタル帝国 💻', 'テクノロジー', '普通', 'デジタル+メディア+アプリ'],
-              ['聖戦 ⚔️', 'ID戦争', 'エキスパート', 'ID+領域支配'],
-              ['危機管理者 🚨', '全条件カード', 'エキスパート', '全危機で倍増'],
-              ['スロー・バーン 🕰️', '全持続カード', '難しい', '複数ラウンド複利'],
-              ['カオス・エージェント 🃏', '最大攪乱', 'エキスパート', '世界が燃えるのを見守る'],
-              ['...他12種', '', '', '福祉、学者、シャドウ、復興、若者、法律、移動、ポピュリスト、バランス、エコ、神権、人道']
-            ]
+            title: '戦略デッキプリセット',
+            kind: 'strategy-cards'
           },
           {
             title: 'イベント対応チェック',
@@ -747,20 +687,8 @@ export const GUIDE_BOOK = {
             ]
           },
           {
-            title: '役割アーキタイプ（サンプル）',
-            kind: 'table',
-            headers: ['役割', 'アイコン', 'Intel', '目標タイプ'],
-            rows: [
-              ['外交官', '🕊️', '4', '多元性を閾値以上でNラウンド維持'],
-              ['伝道師', '📢', '2', '1ラウンドで高転化フロー達成'],
-              ['審問官', '⚖️', '3', '審判比率を閾値以上に維持'],
-              ['戦争領主', '⚔️', '1', '5地域以上を同時支配'],
-              ['学者', '📚', '5', '1ランで戦略カード6枚以上使用'],
-              ['預言者', '👁️', '4', '3連続ベット勝利'],
-              ['スパイ', '🕵️', '6', 'ラウンド10でIntel 25以上保有'],
-              ['聖者', '😇', '2', '3目標全て達成'],
-              ['...他51種', '', '', 'ヒーラー、守護者、修道士、反逆者、賢者、テンプル騎士、魔女、テクノマンサー等']
-            ]
+            title: '職業カード',
+            kind: 'role-cards'
           }
         ]
       },

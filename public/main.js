@@ -85,6 +85,7 @@ const dailyChallengeToggleEl = document.getElementById('dailyChallengeToggle');
 const dailyChallengeLabelEl = document.getElementById('dailyChallengeLabel');
 const ironmanToggleEl = document.getElementById('ironmanToggle');
 const ironmanLabelEl = document.getElementById('ironmanLabel');
+const characterBoardEl = document.getElementById('characterBoard');
 const objectiveBoardEl = document.getElementById('objectiveBoard');
 const secretAgendaBoardEl = document.getElementById('secretAgendaBoard');
 const chainRewardBoardEl = document.getElementById('chainRewardBoard');
@@ -152,6 +153,8 @@ let ghostRunData = null;
 let activeBossPanel = null;
 let runTelemetry = [];
 let guideChapterIndex = 0;
+const guideCardPages = new Map(); // section title → current page index
+const GUIDE_CARDS_PER_PAGE = 6;
 let gameLabCollapsed = false;
 let activeGameLabTab = 'mission';
 let runStorageDbPromise = null;
@@ -536,6 +539,13 @@ async function fetchGuideBook(locale) {
   return data;
 }
 
+function renderGuideDifficultyBadge(difficulty) {
+  const map = { normal: '#4caf50', hard: '#ff9800', expert: '#e53935' };
+  const color = map[difficulty] || '#666';
+  const label = difficulty ? difficulty.charAt(0).toUpperCase() + difficulty.slice(1) : '';
+  return label ? `<span class="guide-card-difficulty" style="background:${color}">${escapeHtml(label)}</span>` : '';
+}
+
 function renderGuideSection(section) {
   const title = `<div class="guide-section-title">${escapeHtml(section.title || '')}</div>`;
   if (section.kind === 'list') {
@@ -559,6 +569,79 @@ function renderGuideSection(section) {
     return `<article class="guide-section">${title}<div class="guide-tag-row">${(section.items || [])
       .map((item) => `<span class="guide-tag">${escapeHtml(item)}</span>`)
       .join('')}</div></article>`;
+  }
+  if (section.kind === 'role-cards') {
+    const sectionKey = `role-cards:${section.title}`;
+    const page = guideCardPages.get(sectionKey) || 0;
+    const roles = CHARACTER_ROLE_LIBRARY;
+    const total = roles.length;
+    const totalPages = Math.ceil(total / GUIDE_CARDS_PER_PAGE);
+    const clampedPage = Math.min(page, totalPages - 1);
+    if (guideCardPages.get(sectionKey) !== clampedPage) guideCardPages.set(sectionKey, clampedPage);
+    const pageRoles = roles.slice(clampedPage * GUIDE_CARDS_PER_PAGE, (clampedPage + 1) * GUIDE_CARDS_PER_PAGE);
+    const goalLabel = i18n.locale === 'zh-CN' ? '目标' : i18n.locale === 'ja' ? '目標' : 'Goal';
+    const intelLabel = i18n.locale === 'zh-CN' ? '情报' : i18n.locale === 'ja' ? 'Intel' : 'Intel';
+    const cardsHtml = pageRoles.map((role) => {
+      const name = localizedText(role.label, role.id);
+      const desc = localizedText(role.description, '');
+      const goal = localizedText(role.goal.label, '');
+      return `<div class="guide-role-card">
+        <div class="guide-role-card-icon">${role.icon}</div>
+        <div class="guide-role-card-name">${escapeHtml(name)}</div>
+        <div class="guide-role-card-desc">${escapeHtml(desc)}</div>
+        <div class="guide-role-card-intel">${intelLabel} +${role.starterIntel}</div>
+        <div class="guide-role-card-goal-label">${goalLabel}</div>
+        <div class="guide-role-card-goal">${escapeHtml(goal)}</div>
+      </div>`;
+    }).join('');
+    const prevDisabled = clampedPage <= 0 ? 'disabled' : '';
+    const nextDisabled = clampedPage >= totalPages - 1 ? 'disabled' : '';
+    const pageInfo = `${clampedPage + 1} / ${totalPages}`;
+    return `<article class="guide-section guide-section-cards" data-section-key="${escapeHtml(sectionKey)}">
+      ${title}
+      <div class="guide-role-cards-grid">${cardsHtml}</div>
+      <div class="guide-card-pagination">
+        <button class="guide-card-nav-btn" data-section-key="${escapeHtml(sectionKey)}" data-dir="-1" ${prevDisabled}>◀</button>
+        <span class="guide-card-page-info">${pageInfo} · ${total} roles</span>
+        <button class="guide-card-nav-btn" data-section-key="${escapeHtml(sectionKey)}" data-dir="1" ${nextDisabled}>▶</button>
+      </div>
+    </article>`;
+  }
+  if (section.kind === 'strategy-cards') {
+    const sectionKey = `strategy-cards:${section.title}`;
+    const page = guideCardPages.get(sectionKey) || 0;
+    const presets = STRATEGY_DECK_PRESETS;
+    const total = presets.length;
+    const PER_PAGE = 4;
+    const totalPages = Math.ceil(total / PER_PAGE);
+    const clampedPage = Math.min(page, totalPages - 1);
+    if (guideCardPages.get(sectionKey) !== clampedPage) guideCardPages.set(sectionKey, clampedPage);
+    const pagePresets = presets.slice(clampedPage * PER_PAGE, (clampedPage + 1) * PER_PAGE);
+    const cardsHtml = pagePresets.map((preset) => {
+      const name = localizedText(preset.label, preset.id);
+      const desc = localizedText(preset.description, '');
+      return `<div class="guide-strategy-card">
+        <div class="guide-strategy-card-head">
+          <span class="guide-strategy-card-icon">${preset.icon || '🃏'}</span>
+          <span class="guide-strategy-card-name">${escapeHtml(name)}</span>
+          ${renderGuideDifficultyBadge(preset.difficulty)}
+        </div>
+        <div class="guide-strategy-card-desc">${escapeHtml(desc)}</div>
+        <div class="guide-strategy-card-cards">${(preset.cards || []).slice(0, 6).map((c) => `<span class="guide-card-chip">${escapeHtml(c.replace(/_/g, ' '))}</span>`).join('')}${(preset.cards || []).length > 6 ? `<span class="guide-card-chip guide-card-chip-more">+${preset.cards.length - 6}</span>` : ''}</div>
+      </div>`;
+    }).join('');
+    const prevDisabled = clampedPage <= 0 ? 'disabled' : '';
+    const nextDisabled = clampedPage >= totalPages - 1 ? 'disabled' : '';
+    const pageInfo = `${clampedPage + 1} / ${totalPages}`;
+    return `<article class="guide-section guide-section-cards" data-section-key="${escapeHtml(sectionKey)}">
+      ${title}
+      <div class="guide-strategy-cards-grid">${cardsHtml}</div>
+      <div class="guide-card-pagination">
+        <button class="guide-card-nav-btn" data-section-key="${escapeHtml(sectionKey)}" data-dir="-1" ${prevDisabled}>◀</button>
+        <span class="guide-card-page-info">${pageInfo} · ${total} decks</span>
+        <button class="guide-card-nav-btn" data-section-key="${escapeHtml(sectionKey)}" data-dir="1" ${nextDisabled}>▶</button>
+      </div>
+    </article>`;
   }
   return `<article class="guide-section">${title}<p>${escapeHtml(section.text || '')}</p></article>`;
 }
@@ -599,6 +682,7 @@ function renderGuideBook() {
   for (const item of guideTocEl.querySelectorAll('[data-guide-index]')) {
     item.addEventListener('click', () => {
       guideChapterIndex = Number(item.dataset.guideIndex || 0);
+      guideCardPages.clear();
       renderGuideBook();
     });
   }
@@ -613,6 +697,15 @@ function renderGuideBook() {
     <p>${escapeHtml(active.intro || '')}</p>
     ${(active.sections || []).map((section) => renderGuideSection(section)).join('')}
   `;
+  for (const btn of guidePageEl.querySelectorAll('[data-section-key][data-dir]')) {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.sectionKey;
+      const dir = Number(btn.dataset.dir);
+      const cur = guideCardPages.get(key) || 0;
+      guideCardPages.set(key, Math.max(0, cur + dir));
+      renderGuideBook();
+    });
+  }
 }
 
 async function openGuideBook(chapterIndex = 0) {
@@ -2202,6 +2295,39 @@ function renderBetBoard(state) {
   }
 }
 
+function renderCharacterBoard() {
+  if (!characterBoardEl) return;
+  const title =
+    i18n.locale === 'zh-CN' ? '当前角色' : i18n.locale === 'ja' ? 'キャラクター' : 'Character';
+  if (!gameRun.character) {
+    characterBoardEl.innerHTML = `<div class="game-board-title">${title}</div><div class="character-board-empty">—</div>`;
+    return;
+  }
+  const c = gameRun.character;
+  const roleLabel = localizedText(c.role.label, c.role.id);
+  const roleDesc = localizedText(c.role.description, '');
+  const goalLabel = localizedText(c.role.goal.label, '');
+  const done = gameRun.characterGoalDone;
+  const intelLabel =
+    i18n.locale === 'zh-CN'
+      ? `初始情报 +${c.role.starterIntel}`
+      : i18n.locale === 'ja'
+        ? `初期Intel +${c.role.starterIntel}`
+        : `Starter Intel +${c.role.starterIntel}`;
+  const goalTitle =
+    i18n.locale === 'zh-CN' ? '目标' : i18n.locale === 'ja' ? '目標' : 'Goal';
+  characterBoardEl.innerHTML = `
+    <div class="game-board-title">${title}</div>
+    <div class="character-board-avatar">${c.religionEmoji} ${c.role.icon}</div>
+    <div class="character-board-religion">${escapeHtml(c.religionLabel)}</div>
+    <div class="character-board-role${done ? ' is-done' : ''}">${escapeHtml(roleLabel)}${done ? ' ✓' : ''}</div>
+    <div class="character-board-desc">${escapeHtml(roleDesc)}</div>
+    <div class="character-board-intel">${escapeHtml(intelLabel)}</div>
+    <div class="character-board-goal-label">${goalTitle}</div>
+    <div class="character-board-goal${done ? ' is-done' : ''}">${escapeHtml(goalLabel)}</div>
+  `;
+}
+
 function drawDeckCard() {
   if (gameRun.deck.length === 0) {
     if (gameRun.deckDiscard.length === 0) {
@@ -3353,6 +3479,7 @@ function setLocale(locale, rerender = true) {
   renderSecretAgendaBoard();
   renderChainRewardBoard(null);
   renderBetBoard(null);
+  renderCharacterBoard();
   renderDeckBoard();
 }
 
@@ -4655,6 +4782,7 @@ function renderAll(state) {
   renderSecretAgendaBoard();
   renderChainRewardBoard(state);
   renderBetBoard(state);
+  renderCharacterBoard();
   renderDeckBoard();
   renderMetaBoard();
 
@@ -5354,6 +5482,7 @@ if (guideCloseBtnEl) {
 if (guidePrevBtnEl) {
   guidePrevBtnEl.addEventListener('click', () => {
     guideChapterIndex = Math.max(guideChapterIndex - 1, 0);
+    guideCardPages.clear();
     renderGuideBook();
   });
 }
@@ -5361,6 +5490,7 @@ if (guideNextBtnEl) {
   guideNextBtnEl.addEventListener('click', () => {
     const chapterCount = currentGuideBook?.chapters?.length || 1;
     guideChapterIndex = Math.min(guideChapterIndex + 1, chapterCount - 1);
+    guideCardPages.clear();
     renderGuideBook();
   });
 }
@@ -5528,6 +5658,7 @@ renderObjectiveBoard(null);
 renderSecretAgendaBoard();
 renderChainRewardBoard(null);
 renderBetBoard(null);
+renderCharacterBoard();
 renderDeckBoard();
 renderMetaBoard();
 setGameLabCollapsed(false);
