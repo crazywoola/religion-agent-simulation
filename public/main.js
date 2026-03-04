@@ -60,6 +60,7 @@ const raceChartTitleEl = document.getElementById('raceChartTitle');
 const screenshotBtnEl = document.getElementById('screenshotBtn');
 const comboBadgeEl = document.getElementById('comboBadge');
 const intelBadgeEl = document.getElementById('intelBadge');
+const intelToggleBtnEl = document.getElementById('intelToggleBtn');
 const intelDropdownEl = document.getElementById('intelDropdown');
 const intelDropdownListEl = document.getElementById('intelDropdownList');
 const intelDropdownContentEl = document.getElementById('intelDropdownContent');
@@ -910,6 +911,15 @@ function applyStaticI18n() {
           ? '予測を解放'
           : 'Unlock Forecast';
   }
+  if (intelToggleBtnEl) {
+    intelToggleBtnEl.textContent = intelToggleText(intelDropdownOpen);
+    intelToggleBtnEl.title =
+      i18n.locale === 'zh-CN'
+        ? '点击展开或收起情报列表'
+        : i18n.locale === 'ja'
+          ? 'クリックして情報リストを開閉'
+          : 'Click to expand or collapse intel list';
+  }
   const drawerToggleBtnEl = document.getElementById('drawerToggleBtn');
   if (drawerToggleBtnEl) drawerToggleBtnEl.title = i18n.t('controls.drawerToggle');
   const drawerTabInsightsEl = document.getElementById('drawerTabInsights');
@@ -1176,13 +1186,25 @@ function intelSelectHintText() {
       : 'Click an item above to view intel details.';
 }
 
+function intelToggleText(expanded) {
+  const suffix = expanded ? '▴' : '▾';
+  if (i18n.locale === 'zh-CN') {
+    return `情报 ${suffix}`;
+  }
+  if (i18n.locale === 'ja') {
+    return `情報 ${suffix}`;
+  }
+  return `Intel ${suffix}`;
+}
+
 function setIntelDropdownOpen(open) {
   intelDropdownOpen = Boolean(open);
   if (intelDropdownEl) {
     intelDropdownEl.hidden = !intelDropdownOpen;
   }
-  if (intelBadgeEl) {
-    intelBadgeEl.setAttribute('aria-expanded', intelDropdownOpen ? 'true' : 'false');
+  if (intelToggleBtnEl) {
+    intelToggleBtnEl.setAttribute('aria-expanded', intelDropdownOpen ? 'true' : 'false');
+    intelToggleBtnEl.textContent = intelToggleText(intelDropdownOpen);
   }
   if (intelDropdownOpen) {
     renderIntelDropdown();
@@ -2548,10 +2570,13 @@ function renderGameplayHud() {
           : `Intel ${Math.floor(intelPoints)}`;
     intelBadgeEl.title =
       i18n.locale === 'zh-CN'
-        ? '点击查看情报列表'
+        ? '当前情报点数'
         : i18n.locale === 'ja'
-          ? 'クリックして情報一覧を表示'
-          : 'Click to open intel list';
+          ? '現在の情報ポイント'
+          : 'Current intel points';
+  }
+  if (intelToggleBtnEl) {
+    intelToggleBtnEl.textContent = intelToggleText(intelDropdownOpen);
   }
   renderIntelDropdown();
   if (intelUnlockBtnEl) {
@@ -4945,8 +4970,8 @@ if (intelUnlockBtnEl) {
     unlockNextForecast();
   });
 }
-if (intelBadgeEl) {
-  intelBadgeEl.addEventListener('click', (e) => {
+if (intelToggleBtnEl) {
+  intelToggleBtnEl.addEventListener('click', (e) => {
     e.stopPropagation();
     setIntelDropdownOpen(!intelDropdownOpen);
   });

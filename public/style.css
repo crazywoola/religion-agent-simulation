@@ -19,7 +19,7 @@
   --radius-md: 18px;
   --radius-sm: 14px;
   --game-lab-dock-collapsed: 86px;
-  --game-lab-dock-expanded: clamp(248px, 34vh, 370px);
+  --game-lab-dock-expanded: clamp(300px, 42vh, 500px);
   --game-lab-dock-height: var(--game-lab-dock-collapsed);
 }
 
@@ -279,6 +279,7 @@ select:focus {
 }
 
 .game-lab-dock {
+  width: 100%;
   height: var(--game-lab-dock-height);
   padding: 0 16px 10px;
   transition: height 0.22s ease;
@@ -290,7 +291,8 @@ select:focus {
   background: color-mix(in srgb, var(--surface) 95%, #ffffff 5%);
   box-shadow: 0 8px 0 rgba(46, 54, 95, 0.16), 0 18px 30px rgba(46, 54, 95, 0.18);
   overflow: hidden;
-  max-width: 1680px;
+  width: 100%;
+  max-width: none;
   margin: 0 auto;
   height: 100%;
   display: flex;
@@ -828,6 +830,7 @@ select:focus {
   position: relative;
   display: flex;
   align-items: center;
+  gap: 8px;
 }
 
 .gameplay-chip {
@@ -844,21 +847,35 @@ select:focus {
   text-align: center;
 }
 
-.intel-badge-btn {
+.intel-badge {
+  min-width: 86px;
+}
+
+.intel-toggle-btn {
+  border: 2px solid #2e365f;
+  border-radius: 999px;
+  background: linear-gradient(145deg, #f5f7ff, #e5edff);
+  color: #1f3253;
+  box-shadow: 0 4px 0 rgba(46, 54, 95, 0.16), 0 8px 14px rgba(24, 39, 75, 0.14);
+  padding: 5px 10px;
+  font-size: 0.72rem;
+  font-weight: 900;
   cursor: pointer;
+  min-width: 76px;
+  text-align: center;
   transition: transform 0.15s ease, filter 0.15s ease;
 }
 
-.intel-badge-btn:hover {
+.intel-toggle-btn:hover {
   transform: translateY(-1px);
   filter: saturate(1.05);
 }
 
-.intel-badge-btn:active {
+.intel-toggle-btn:active {
   transform: translateY(1px);
 }
 
-.intel-badge-btn[aria-expanded='true'] {
+.intel-toggle-btn[aria-expanded='true'] {
   background: linear-gradient(145deg, #fdf5cf, #ffe49c);
 }
 
@@ -2362,7 +2379,7 @@ select:focus {
 
 @media (max-width: 1260px) {
   :root {
-    --game-lab-dock-expanded: clamp(240px, 38vh, 430px);
+    --game-lab-dock-expanded: clamp(290px, 46vh, 560px);
   }
 
   .layout {
@@ -2416,7 +2433,7 @@ select:focus {
 @media (max-width: 740px) {
   :root {
     --game-lab-dock-collapsed: 78px;
-    --game-lab-dock-expanded: clamp(230px, 44vh, 460px);
+    --game-lab-dock-expanded: clamp(250px, 52vh, 560px);
   }
 
   .btn-row {

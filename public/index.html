@@ -110,16 +110,20 @@
         <div id="gameplayHud" class="gameplay-hud">
           <div id="comboBadge" class="gameplay-chip">Combo ×0</div>
           <div class="intel-popover">
-            <button
+            <div
               id="intelBadge"
-              class="gameplay-chip intel-badge-btn"
+              class="gameplay-chip intel-badge"
+            >
+              Intel 0
+            </div>
+            <button
+              id="intelToggleBtn"
+              class="intel-toggle-btn"
               type="button"
               aria-haspopup="listbox"
               aria-expanded="false"
               aria-controls="intelDropdown"
-            >
-              Intel 0
-            </button>
+            >Intel</button>
             <div id="intelDropdown" class="intel-dropdown" hidden>
               <div id="intelDropdownList" class="intel-dropdown-list"></div>
               <div id="intelDropdownContent" class="intel-dropdown-content"></div>
