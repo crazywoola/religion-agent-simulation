@@ -1874,12 +1874,12 @@ class ReligionSimulation {
       state.manualSignalOverrides = {};
     }
 
-    this.assignDominantRegionToAgents(state.agents, state.regions);
-    state.regionControl = this.refreshRegionControl(state.regionControl || [], state.regions || []);
-    this.applyTerritoryBonuses(state.agents, state.regions, state.regionControl);
     const prevRegionOwners = new Map(
       (state.regionControl || []).map((rc) => [rc.regionId, rc.ownerId])
     );
+    this.assignDominantRegionToAgents(state.agents, state.regions);
+    state.regionControl = this.refreshRegionControl(state.regionControl || [], state.regions || []);
+    this.applyTerritoryBonuses(state.agents, state.regions, state.regionControl);
     this.updateBossCrisis(state);
     const firedEvents = this.applyEvents(state);
     this.adaptAgentStrategies(state.agents, state.socialSignals);
