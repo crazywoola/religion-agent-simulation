@@ -4296,18 +4296,30 @@ function renderLogs(state) {
       const delta = formatSigned(log.delta);
       const isJudgment = log.type === 'judgment';
       const isDeck = log.source === 'deck';
+      const isEvent = log.type === 'event';
+      const isPassive = log.type === 'passive';
+      const isTerritory = log.type === 'territory';
+      const tagClass = isEvent ? 'log-tag-event' : isPassive ? 'log-tag-passive' : isTerritory ? 'log-tag-territory' : '';
       const net = isJudgment
         ? `${i18n.t('log.judgment')} · ${i18n.number(log.judgment?.blocked || log.transferOut || 0)}`
-        : i18n.t('log.net', {
-            delta,
-            inflow: log.transferIn,
-            outflow: log.transferOut
-          });
+        : (isEvent || isPassive || isTerritory)
+          ? ''
+          : i18n.t('log.net', {
+              delta,
+              inflow: log.transferIn,
+              outflow: log.transferOut
+            });
+      const tagHtml = isJudgment ? `<span class="log-tag">${i18n.t('log.judgment')}</span>`
+        : isDeck ? `<span class="log-tag log-tag-deck">${i18n.t('log.deck')}</span>`
+        : isEvent ? `<span class="log-tag ${tagClass}">${i18n.t('log.event')}</span>`
+        : isPassive ? `<span class="log-tag ${tagClass}">${i18n.t('log.passive')}</span>`
+        : isTerritory ? `<span class="log-tag ${tagClass}">${i18n.t('log.territory')}</span>`
+        : '';
       return `
-      <article class="log-item ${isJudgment ? 'is-judgment' : ''} ${isDeck ? 'is-deck' : ''}">
+      <article class="log-item ${isJudgment ? 'is-judgment' : ''} ${isDeck ? 'is-deck' : ''} ${isEvent ? 'is-event' : ''} ${isPassive ? 'is-passive' : ''} ${isTerritory ? 'is-territory' : ''}">
         <div class="log-meta">${title}</div>
-        <div>${isJudgment ? `<span class="log-tag">${i18n.t('log.judgment')}</span>` : ''}${isDeck ? `<span class="log-tag log-tag-deck">${i18n.t('log.deck')}</span>` : ''}${log.action}</div>
-        <div class="log-meta">${net}</div>
+        <div>${tagHtml}${log.action}</div>
+        ${net ? `<div class="log-meta">${net}</div>` : ''}
       </article>
     `;
     })

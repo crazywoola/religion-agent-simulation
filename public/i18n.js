@@ -164,12 +164,17 @@ const DICTIONARY = {
       net: 'Net: {delta} (In {inflow} / Out {outflow})',
       judgment: 'Judgment Record',
       deck: 'Strategy Deck',
+      event: 'Event',
+      passive: 'Passive',
+      territory: 'Territory',
       empty: 'No logs for current filter'
     },
     logFilter: {
       all: 'All',
       mission: 'Mission',
-      judgment: 'Judgment'
+      judgment: 'Judgment',
+      event: 'Event',
+      territory: 'Territory'
     },
     scenario: {
       balanced: 'Balanced',
@@ -360,12 +365,17 @@ const DICTIONARY = {
       net: '净变化：{delta}（流入 {inflow} / 流出 {outflow}）',
       judgment: '宗教审判记录',
       deck: '策略卡组',
+      event: '事件',
+      passive: '被动',
+      territory: '领地',
       empty: '当前筛选条件下暂无日志'
     },
     logFilter: {
       all: '全部',
       mission: '传教',
-      judgment: '审判'
+      judgment: '审判',
+      event: '事件',
+      territory: '领地'
     },
     scenario: {
       balanced: '平衡场景',
@@ -556,12 +566,17 @@ const DICTIONARY = {
       net: '純変化：{delta}（流入 {inflow} / 流出 {outflow}）',
       judgment: '宗教審判ログ',
       deck: '戦略デッキ',
+      event: 'イベント',
+      passive: 'パッシブ',
+      territory: '領域',
       empty: '現在のフィルターにログがありません'
     },
     logFilter: {
       all: 'すべて',
       mission: '布教',
-      judgment: '審判'
+      judgment: '審判',
+      event: 'イベント',
+      territory: '領域'
     },
     scenario: {
       balanced: 'バランス',

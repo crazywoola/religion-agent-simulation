@@ -444,6 +444,7 @@ class ReligionSimulation {
 
     this._applyEventReligionCoupling(state, fired);
     this._applyActiveEventShocks(state);
+    return fired;
   }
 
   _applyEventReligionCoupling(state, firedEvents) {
@@ -1876,9 +1877,11 @@ class ReligionSimulation {
     this.assignDominantRegionToAgents(state.agents, state.regions);
     state.regionControl = this.refreshRegionControl(state.regionControl || [], state.regions || []);
     this.applyTerritoryBonuses(state.agents, state.regions, state.regionControl);
+    const prevRegionOwners = new Map(
+      (state.regionControl || []).map((rc) => [rc.regionId, rc.ownerId])
+    );
     this.updateBossCrisis(state);
-    // Random event system
-    this.applyEvents(state);
+    const firedEvents = this.applyEvents(state);
     this.adaptAgentStrategies(state.agents, state.socialSignals);
     this.applyReligionPassives(state);
     for (const agent of state.agents) {
@@ -1965,13 +1968,17 @@ class ReligionSimulation {
       const action =
         actionMap?.get(agent.name) || localActionText(agent, { net: agent.delta }, activeLocale);
       agent.lastAction = action;
+      const topCorridorForAgent = state.topTransfers.find(
+        (t) => t.toId === agent.id || t.fromId === agent.id
+      );
+      const topReason = topCorridorForAgent?.reason || '';
       state.logs.push({
         type: 'mission',
         round: state.round,
         time: now,
         religionId: agent.id,
         name: agent.name,
-        action,
+        action: topReason ? `${action} [${topReason}]` : action,
         delta: agent.delta,
         transferIn: agent.transferIn,
         transferOut: agent.transferOut,
@@ -1979,12 +1986,53 @@ class ReligionSimulation {
       });
     }
 
-    if (state.logs.length > 460) {
-      state.logs = state.logs.slice(-460);
+    for (const ev of firedEvents) {
+      const shockDesc = Object.entries(ev.shock || {}).slice(0, 3)
+        .map(([k, v]) => `${k} ${v > 0 ? '+' : ''}${(v * 100).toFixed(0)}%`).join(', ');
+      state.logs.push({
+        type: 'event',
+        round: state.round,
+        time: now,
+        name: ev.id,
+        action: shockDesc,
+        delta: 0, transferIn: 0, transferOut: 0
+      });
+    }
+
+    const dominant = [...state.agents].sort((a, b) => b.followers - a.followers)[0];
+    if (dominant?.passive) {
+      state.logs.push({
+        type: 'passive',
+        round: state.round,
+        time: now,
+        religionId: dominant.id,
+        name: dominant.name,
+        action: `${dominant.passive.label?.en || dominant.passive.signal}: ${dominant.passive.effect > 0 ? '+' : ''}${(dominant.passive.effect * 100).toFixed(1)}%`,
+        delta: 0, transferIn: 0, transferOut: 0
+      });
+    }
+
+    if (state.logs.length > 520) {
+      state.logs = state.logs.slice(-520);
     }
 
     state.regions = this.buildRegionalLandscape(state.agents, state.socialSignals, state.regions);
     state.regionControl = this.refreshRegionControl(state.regionControl || [], state.regions || []);
+
+    for (const rc of state.regionControl) {
+      const prevOwner = prevRegionOwners.get(rc.regionId);
+      if (prevOwner && prevOwner !== rc.ownerId) {
+        state.logs.push({
+          type: 'territory',
+          round: state.round,
+          time: now,
+          religionId: rc.ownerId,
+          name: rc.ownerName,
+          action: `${rc.regionId}: ${prevOwner} → ${rc.ownerId}`,
+          delta: 0, transferIn: 0, transferOut: 0
+        });
+      }
+    }
     this.assignDominantRegionToAgents(state.agents, state.regions);
     this.applyTerritoryBonuses(state.agents, state.regions, state.regionControl);
     state.structureOutput = this.buildStructureOutput(
@@ -2059,7 +2107,7 @@ class ReligionSimulation {
       judgmentRecords: state.judgmentRecords.slice(-100),
       roundMetrics: state.roundMetrics,
       structureOutput: state.structureOutput,
-      logs: state.logs.slice(-160),
+      logs: state.logs.slice(-200),
       activeEvents: state.activeEvents || [],
       eventHistory: (state.eventHistory || []).slice(-40),
       bossCrisis: state.bossCrisis

@@ -1442,6 +1442,28 @@ select:focus {
   color: #1f4678;
 }
 
+.log-tag-event {
+  border-color: #7c3aed;
+  background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+  color: #5b21b6;
+}
+
+.log-tag-passive {
+  border-color: #059669;
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  color: #065f46;
+}
+
+.log-tag-territory {
+  border-color: #d97706;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #92400e;
+}
+
+.log-item.is-event { border-left: 3px solid #7c3aed; }
+.log-item.is-passive { border-left: 3px solid #059669; }
+.log-item.is-territory { border-left: 3px solid #d97706; }
+
 .log-item.is-deck {
   border-color: #7ba7d8;
   background: linear-gradient(180deg, #f4f9ff 0%, #e7f2ff 100%);
