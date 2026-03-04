@@ -1,7 +1,7 @@
 export const INITIAL_FOLLOWERS_PER_RELIGION = 10000;
 
-// 教义与传播规则：用于模拟同化效率、留存、社会适配和地区亲和度。
-// exitBarrier: 0-1，表示信众离开该宗教的社会/制度/心理成本（越高越难离开）
+// Doctrine and propagation rules: used to simulate assimilation efficiency, retention, social adaptation, and regional affinity.
+// exitBarrier: 0-1, represents the social/institutional/psychological cost for followers to leave (higher = harder to leave)
 export const RELIGION_DOCTRINES = [
   {
     id: 'buddhism',

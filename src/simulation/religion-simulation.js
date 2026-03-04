@@ -378,7 +378,7 @@ class ReligionSimulation {
     boss.objective = this.bossPhaseObjectiveText(boss.phase);
   }
 
-  // 随机事件系统：每 N 轮以概率触发事件，短期扰动社会信号
+  // Random event system: fires events probabilistically every N rounds, applying short-term social signal perturbations
   applyEvents(state) {
     const cfg = this.config.events;
     this._decayActiveEvents(state);
@@ -783,7 +783,7 @@ class ReligionSimulation {
       strategy.defensiveFocus * churn.defensiveFocus +
       strategy.fatigue * churn.fatigue;
 
-    // exitBarrier 降低信众流失率（宗教越难离开，流失越少）
+    // exitBarrier reduces follower churn rate (higher barrier = harder to leave = less churn)
     const barrierReduction =
       1 - clamp(Number(agent.exitBarrier || 0), 0, 0.9) * (this.config.exitBarrierWeight || 0.68);
     const inertiaBrake = 1 - clamp(Number(strategy.inertia || 0), 0.1, 0.94) * 0.18;
@@ -906,7 +906,7 @@ class ReligionSimulation {
       1
     );
 
-    // 世俗主义在高世俗化环境下获得额外吸引力加成
+    // Secularism gains an extra attractiveness bonus in highly secularized environments
     const secularBuff = source.isSecular
       ? clamp(socialSignals.secularization * (this.config.secularBuff || 1.55), 0.6, 1.9)
       : 1;
@@ -1256,7 +1256,7 @@ class ReligionSimulation {
         continue;
       }
 
-      // 世俗主义没有宗教法庭，不对其他宗教施加审判；其他宗教也难以通过宗教手段拦截世俗化
+      // Secularism has no religious tribunal and does not impose judgment on others; other religions also cannot block secularization through religious means
       if (fromAgent.isSecular || toAgent.isSecular) {
         moderatedEvents.push({ ...event, judgmentBlocked: 0 });
         continue;
@@ -1770,7 +1770,7 @@ class ReligionSimulation {
     state.socialSignals = blendSignalsToScenario(state.socialSignals, state.scenario);
     state.socialSignals = this.driftSocialSignals(state.socialSignals);
 
-    // 应用手动信号覆盖（用户通过滑块设置，单轮生效后自然衰减）
+    // Apply manual signal overrides (set by user via sliders, effective for one round then naturally decays)
     if (state.manualSignalOverrides && Object.keys(state.manualSignalOverrides).length > 0) {
       for (const [key, val] of Object.entries(state.manualSignalOverrides)) {
         if (key in state.socialSignals) {
@@ -1784,7 +1784,7 @@ class ReligionSimulation {
     state.regionControl = this.refreshRegionControl(state.regionControl || [], state.regions || []);
     this.applyTerritoryBonuses(state.agents, state.regions, state.regionControl);
     this.updateBossCrisis(state);
-    // 随机事件系统
+    // Random event system
     this.applyEvents(state);
     this.adaptAgentStrategies(state.agents, state.socialSignals);
     for (const agent of state.agents) {

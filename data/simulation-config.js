@@ -40,16 +40,16 @@ export const SIMULATION_CONFIG = {
   explainability: {
     topFactors: 3
   },
-  // exitBarrier: 系数，影响 computeAgentOutBudget 中流失率
+  // exitBarrier: coefficient affecting churn rate in computeAgentOutBudget
   exitBarrierWeight: 0.68,
-  // secularBuff: 世俗主义在世俗化信号高时的额外吸引力系数
+  // secularBuff: extra attractiveness multiplier for secularism when secularization signal is high
   secularBuff: 1.55,
-  // 随机事件系统
+  // Random event system
   events: {
     enabled: true,
-    checkEveryNRounds: 3,      // 每 N 轮检查一次
-    maxPerCheck: 2,            // 每次最多触发事件数
-    decayPerRound: 0.18,       // 每轮信号冲击衰减率
+    checkEveryNRounds: 3,      // check every N rounds
+    maxPerCheck: 2,            // max events triggered per check
+    decayPerRound: 0.18,       // signal shock decay rate per round
     pool: [
       {
         id: 'religious_scandal',
