@@ -159,6 +159,8 @@ function applyStaticI18n() {
   }
   if (signalResetBtnEl) signalResetBtnEl.textContent = i18n.t('controls.signalReset');
   if (screenshotBtnEl) screenshotBtnEl.title = i18n.t('controls.screenshot');
+  const reportBtnEl = document.getElementById('reportBtn');
+  if (reportBtnEl) reportBtnEl.title = i18n.t('controls.exportReport');
 
   for (const option of languageSelect.options) {
     option.textContent = getLocaleLabel(option.value);
@@ -550,6 +552,54 @@ function takeScreenshot() {
     'image/png',
     1
   );
+}
+
+// ─── Export AI Report ─────────────────────────────────────────────
+async function exportReport() {
+  const reportBtnEl = document.getElementById('reportBtn');
+  if (!liveState || !liveState.round) {
+    if (statusEl) statusEl.textContent = i18n.t('controls.reportFailed') || 'No simulation data';
+    return;
+  }
+
+  if (reportBtnEl) {
+    reportBtnEl.disabled = true;
+    reportBtnEl.classList.add('loading');
+  }
+  if (statusEl) statusEl.textContent = i18n.t('controls.generatingReport') || 'Generating report...';
+
+  try {
+    const resp = await fetch('/api/simulation/report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ locale: currentLocale })
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({ message: 'Unknown error' }));
+      throw new Error(err.message || `HTTP ${resp.status}`);
+    }
+
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `religion-analysis-round-${liveState.round}.pdf`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+    if (statusEl && liveState) {
+      renderAll(liveState);
+    }
+  } catch (err) {
+    console.error('Report export failed:', err);
+    if (statusEl) statusEl.textContent = `${i18n.t('controls.reportFailed') || 'Report failed'}: ${err.message}`;
+  } finally {
+    if (reportBtnEl) {
+      reportBtnEl.disabled = false;
+      reportBtnEl.classList.remove('loading');
+    }
+  }
 }
 
 function setLocale(locale, rerender = true) {
@@ -1602,6 +1652,10 @@ document.addEventListener('keydown', (e) => {
 
 // ── Screenshot ─────────────────────────────────────────────────────
 if (screenshotBtnEl) screenshotBtnEl.addEventListener('click', takeScreenshot);
+
+// ── Report export ──────────────────────────────────────────────────
+const reportBtnInit = document.getElementById('reportBtn');
+if (reportBtnInit) reportBtnInit.addEventListener('click', exportReport);
 
 // ── Signal reset ───────────────────────────────────────────────────
 if (signalResetBtnEl) {

@@ -20,6 +20,9 @@ const DICTIONARY = {
       logFilter: 'Log Filter',
       speed: 'Speed',
       screenshot: 'Screenshot',
+      exportReport: 'Export AI Analysis Report',
+      generatingReport: 'AI is generating report...',
+      reportFailed: 'Report generation failed',
       signalReset: 'Reset Signals'
     },
     section: {
@@ -188,6 +191,9 @@ const DICTIONARY = {
       logFilter: '日志筛选',
       speed: '速度',
       screenshot: '截图',
+      exportReport: '导出 AI 分析报告',
+      generatingReport: 'AI 正在生成报告...',
+      reportFailed: '报告生成失败',
       signalReset: '重置信号'
     },
     section: {
@@ -356,6 +362,9 @@ const DICTIONARY = {
       logFilter: 'ログフィルター',
       speed: '速度',
       screenshot: 'スクリーンショット',
+      exportReport: 'AI分析レポートをエクスポート',
+      generatingReport: 'AIがレポートを生成中...',
+      reportFailed: 'レポート生成に失敗しました',
       signalReset: 'シグナルリセット'
     },
     section: {

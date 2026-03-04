@@ -3,6 +3,7 @@ import express from 'express';
 import os from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import PDFDocument from 'pdfkit';
 import {
   INITIAL_FOLLOWERS_PER_RELIGION,
   RELIGION_DOCTRINES
@@ -100,6 +101,84 @@ function localeName(locale) {
     return 'Japanese';
   }
   return 'English';
+}
+
+function generatePdfBuffer(markdownText, metadata = {}) {
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({
+      size: 'A4',
+      margins: { top: 60, bottom: 60, left: 50, right: 50 },
+      info: {
+        Title: metadata.title || 'Religion Simulation Analysis Report',
+        Author: 'AI Multi-Agent Religion Simulation',
+        Subject: 'Academic analysis of religious dynamics',
+        Creator: 'Religion Agent Simulation System'
+      },
+      bufferPages: true
+    });
+
+    const chunks = [];
+    doc.on('data', (chunk) => chunks.push(chunk));
+    doc.on('end', () => resolve(Buffer.concat(chunks)));
+    doc.on('error', reject);
+
+    const lines = markdownText.split('\n');
+    const PAGE_WIDTH = 495;
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+
+      if (!trimmed) {
+        doc.moveDown(0.4);
+        continue;
+      }
+
+      if (trimmed.startsWith('# ')) {
+        doc.moveDown(0.8);
+        doc.fontSize(18).font('Helvetica-Bold').fillColor('#1a1a2e')
+          .text(trimmed.slice(2), { width: PAGE_WIDTH });
+        doc.moveDown(0.3);
+      } else if (trimmed.startsWith('## ')) {
+        doc.moveDown(0.6);
+        doc.fontSize(15).font('Helvetica-Bold').fillColor('#16213e')
+          .text(trimmed.slice(3), { width: PAGE_WIDTH });
+        doc.moveDown(0.2);
+      } else if (trimmed.startsWith('### ')) {
+        doc.moveDown(0.4);
+        doc.fontSize(13).font('Helvetica-Bold').fillColor('#0f3460')
+          .text(trimmed.slice(4), { width: PAGE_WIDTH });
+        doc.moveDown(0.15);
+      } else if (trimmed === '---') {
+        doc.moveDown(0.3);
+        const y = doc.y;
+        doc.moveTo(50, y).lineTo(545, y).strokeColor('#cccccc').lineWidth(0.5).stroke();
+        doc.moveDown(0.3);
+      } else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+        doc.fontSize(11).font('Helvetica').fillColor('#333333')
+          .text(`  \u2022  ${trimmed.slice(2)}`, { width: PAGE_WIDTH, lineGap: 3 });
+      } else if (/^\d+\.\s/.test(trimmed)) {
+        const match = trimmed.match(/^(\d+\.)\s(.*)$/);
+        doc.fontSize(11).font('Helvetica').fillColor('#333333')
+          .text(`  ${match[1]}  ${match[2]}`, { width: PAGE_WIDTH, lineGap: 3 });
+      } else {
+        doc.fontSize(11).font('Helvetica').fillColor('#333333')
+          .text(trimmed, { width: PAGE_WIDTH, lineGap: 3 });
+      }
+    }
+
+    const pageCount = doc.bufferedPageRange().count;
+    for (let i = 0; i < pageCount; i++) {
+      doc.switchToPage(i);
+      doc.fontSize(8).font('Helvetica').fillColor('#999999')
+        .text(
+          `${metadata.title || 'Religion Simulation Report'} — Page ${i + 1} / ${pageCount}`,
+          50, doc.page.height - 40,
+          { width: PAGE_WIDTH, align: 'center' }
+        );
+    }
+
+    doc.end();
+  });
 }
 
 function randomIn(min, max) {
@@ -1045,6 +1124,117 @@ religionState=${JSON.stringify(agentState)}`;
       return links.length ? links : null;
     } catch (err) {
       console.warn('AI transfer structure fallback:', formatErrorDetail(err));
+      return null;
+    }
+  }
+
+  async generateReport(snapshot, locale = DEFAULT_LOCALE) {
+    if (!this.enabled) {
+      return null;
+    }
+
+    const lang = normalizeLocale(locale);
+    const langName = localeName(lang);
+
+    const religionSummary = snapshot.religions.map((r) => ({
+      name: r.name,
+      followers: r.followers,
+      delta: r.delta,
+      transferIn: r.transferIn,
+      transferOut: r.transferOut,
+      exitBarrier: r.exitBarrier,
+      doctrine: r.doctrine,
+      doctrineLong: r.doctrineLong,
+      classics: r.classics,
+      metrics: r.metrics,
+      traits: r.traits,
+      governance: r.governance,
+      strategyFocus: r.strategyFocus,
+      strategy: r.strategy,
+      historyTrend: r.history
+        ? `start=${r.history[0]}, current=${r.history[r.history.length - 1]}, min=${Math.min(...r.history)}, max=${Math.max(...r.history)}, rounds=${r.history.length}`
+        : 'N/A'
+    }));
+
+    const systemPrompt = `You are a panel of three distinguished scholars collaborating on an academic research report analyzing religious dynamics:
+
+1. **Religious Studies Scholar (宗教学者)**: Expert in comparative religion, theology, missionary strategies, doctrine evolution, and faith retention mechanisms. You analyze how doctrinal appeal, ritual depth, community bonds, and institutional capacity affect religious growth and decline.
+
+2. **Historian (历史学家)**: Specialist in the history of civilizations, religious movements, geopolitical influences on faith, migration patterns, and socioeconomic forces. You analyze how external social signals—digitalization, economic stress, secularization, state regulation—shape religious landscapes over time.
+
+3. **Philosopher (哲学家)**: Focused on philosophy of religion, existentialism, meaning-making, identity construction, and the tension between modernity and tradition. You analyze the deeper human motivations behind religious conversion, apostasy, and the search for meaning in an increasingly fragmented world.
+
+Write the report in ${langName}. Use an academic tone with proper structure. The report must be data-driven, referencing specific numbers and trends from the simulation data provided. Format the output as Markdown.`;
+
+    const userPrompt = `Based on the following multi-agent religion simulation data (Round ${snapshot.round}, Scenario: ${snapshot.scenario}), produce a comprehensive academic analysis report.
+
+## Simulation Parameters
+
+**Social Signals (Global Environment):**
+${JSON.stringify(snapshot.socialSignals, null, 2)}
+
+**Transfer Engine:** ${snapshot.transferEngine}
+**Total Followers (Invariant):** ${snapshot.totalFollowers}
+
+## Religion States
+${JSON.stringify(religionSummary, null, 2)}
+
+## Key Transfer Events (Recent)
+${JSON.stringify((snapshot.topTransfers || []).slice(0, 15), null, 2)}
+
+## Religious Judgment Records (Blocking/Tribunal Actions)
+${JSON.stringify((snapshot.judgmentRecords || []).slice(0, 20), null, 2)}
+
+## Event History (Random Shocks)
+${JSON.stringify((snapshot.eventHistory || []).slice(0, 20), null, 2)}
+
+## Recent Mission Logs
+${JSON.stringify((snapshot.logs || []).slice(-30), null, 2)}
+
+---
+
+Please produce the report with the following structure:
+
+# 宗教兴衰更迭：多维度学术分析报告
+
+## 一、摘要
+(Brief executive summary of key findings, 150-200 words)
+
+## 二、数据概览
+(Comparative overview table of all religions: followers, growth/decline trends, key metrics)
+
+## 三、宗教学者视角分析
+### 3.1 教义吸引力与传教策略效果
+### 3.2 信仰保持机制与退出壁垒
+### 3.3 制度化能力与宗教裁判
+
+## 四、历史学家视角分析
+### 4.1 社会信号变迁与宗教格局
+### 4.2 数字化浪潮与传统信仰的碰撞
+### 4.3 人口迁移、经济压力与宗教版图重绘
+
+## 五、哲学家视角分析
+### 5.1 意义追寻：世俗化时代的精神需求
+### 5.2 身份认同危机与宗教回归
+### 5.3 多元主义困境与信仰的碎片化
+
+## 六、综合结论与展望
+(Synthesis of all three perspectives, key predictions, academic implications)
+
+## 七、参考数据附录
+(Key data points referenced in the analysis)`;
+
+    try {
+      const content = await this.chat(
+        [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        { temperature: 0.7, maxTokens: 4000, trace: `report_round_${snapshot.round}` }
+      );
+      return content;
+    } catch (err) {
+      console.warn('AI report generation failed:', formatErrorDetail(err));
       return null;
     }
   }
@@ -2539,6 +2729,43 @@ app.post('/api/simulation/signals', (req, res) => {
     res.json({ ok: true, socialSignals: state.socialSignals });
   } catch (err) {
     res.status(400).json({ message: err.message });
+  }
+});
+
+app.post('/api/simulation/report', async (req, res) => {
+  try {
+    const snapshot = simulation.snapshot();
+    const locale = normalizeLocale(req.body?.locale || snapshot.locale || DEFAULT_LOCALE);
+
+    if (!openaiClient.enabled) {
+      return res.status(400).json({ message: 'AI is not configured. Please set AI_API_KEY.' });
+    }
+
+    if (snapshot.round < 1) {
+      return res.status(400).json({ message: 'Simulation has not started or no rounds completed.' });
+    }
+
+    const markdown = await openaiClient.generateReport(snapshot, locale);
+    if (!markdown) {
+      return res.status(500).json({ message: 'AI failed to generate report content.' });
+    }
+
+    const langName = localeName(locale);
+    const title = locale === 'zh-CN'
+      ? `宗教兴衰更迭分析报告 — 第${snapshot.round}轮`
+      : locale === 'ja'
+        ? `宗教興亡分析レポート — ラウンド${snapshot.round}`
+        : `Religion Dynamics Analysis Report — Round ${snapshot.round}`;
+
+    const pdfBuffer = await generatePdfBuffer(markdown, { title });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="religion-analysis-round-${snapshot.round}.pdf"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.end(pdfBuffer);
+  } catch (err) {
+    console.error('Report generation error:', err);
+    res.status(500).json({ message: err.message });
   }
 });
 
