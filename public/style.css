@@ -625,6 +625,20 @@ select:focus {
   gap: 6px;
 }
 
+.deck-card-suite {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  font-size: 0.58rem;
+  font-weight: 900;
+  background: #2e365f;
+  color: #e2e8f0;
+  flex-shrink: 0;
+}
+
 .deck-card-rarity {
   border: 1px solid #6f86b1;
   border-radius: 999px;

@@ -791,7 +791,10 @@ function chooseSecretAgenda(seedBase) {
 }
 
 function buildDeck(seedBase, preferredCardIds = null) {
-  let pool;
+  const POOL_SIZE = 36;
+  const HAND_SIZE = 5;
+
+  let selected;
   if (preferredCardIds && preferredCardIds.length > 0) {
     const preferred = preferredCardIds
       .map((id) => DECK_CARD_LIBRARY.find((c) => c.id === id))
@@ -801,13 +804,15 @@ function buildDeck(seedBase, preferredCardIds = null) {
       .filter((c) => !preferredCardIds.includes(c.id))
       .map((c) => ({ ...c }));
     const shuffledRest = shuffleWithSeed(rest, seedBase);
-    pool = [...preferred, ...shuffledRest].slice(0, 5);
+    selected = [...preferred, ...shuffledRest].slice(0, POOL_SIZE);
   } else {
-    pool = shuffleWithSeed(DECK_CARD_LIBRARY, seedBase).slice(0, 5).map((card) => ({ ...card }));
+    selected = shuffleWithSeed(DECK_CARD_LIBRARY, seedBase).slice(0, POOL_SIZE).map((card) => ({ ...card }));
   }
+
+  const shuffled = shuffleWithSeed(selected, seedBase + 7);
   return {
-    deck: pool.slice(3),
-    hand: pool.slice(0, 3),
+    deck: shuffled.slice(HAND_SIZE),
+    hand: shuffled.slice(0, HAND_SIZE),
     discard: []
   };
 }
@@ -2312,7 +2317,8 @@ function renderDeckBoard() {
                 (card) => `
             <button class="deck-card-btn" type="button" data-card-id="${card.id}">
               <div class="deck-card-head">
-                <span class="deck-card-rarity">${escapeHtml(localizedText(card.rarity, i18n.locale === 'zh-CN' ? '战略' : i18n.locale === 'ja' ? '戦略' : 'Strategic'))}</span>
+                ${card.deck ? `<span class="deck-card-suite">${card.deck}</span>` : ''}
+                <span class="deck-card-rarity">${escapeHtml(localizedText(card.rarity, i18n.locale === 'zh-CN' ? '标准' : i18n.locale === 'ja' ? '標準' : 'Standard'))}</span>
                 <span class="deck-card-cost">${card.cost} ${costSuffix}</span>
               </div>
               <div class="deck-card-title">${escapeHtml(localizedText(card.title, card.id))}</div>

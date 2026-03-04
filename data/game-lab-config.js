@@ -1,734 +1,191 @@
 export const GAME_LAB_TAB_LIBRARY = [
-  {
-    id: 'mission',
-    label: {
-      en: 'Mission',
-      'zh-CN': '任务',
-      ja: '任務'
-    }
-  },
-  {
-    id: 'strategy',
-    label: {
-      en: 'Strategy',
-      'zh-CN': '策略',
-      ja: '戦略'
-    }
-  },
-  {
-    id: 'meta',
-    label: {
-      en: 'Meta',
-      'zh-CN': '成长',
-      ja: '成長'
-    }
-  }
+  { id: 'mission', label: { en: 'Mission', 'zh-CN': '任务', ja: '任務' } },
+  { id: 'strategy', label: { en: 'Strategy', 'zh-CN': '策略', ja: '戦略' } },
+  { id: 'meta', label: { en: 'Meta', 'zh-CN': '成长', ja: '成長' } }
 ];
 
 export const BET_OPTION_LIBRARY = [
-  {
-    id: 'dominant_hold',
-    short: { en: 'Hold', 'zh-CN': '守擂', ja: '防衛' },
-    label: {
-      en: 'Dominant religion keeps lead',
-      'zh-CN': '主导宗教保持领先',
-      ja: '優勢宗教が首位維持'
-    },
-    description: {
-      en: 'Win if the current top religion remains on top after 3 rounds.',
-      'zh-CN': '若当前第一宗教在 3 回合后仍第一则获胜。',
-      ja: '現在の首位宗教が 3 ラウンド後も首位なら勝利。'
-    }
-  },
-  {
-    id: 'fragmentation_drop',
-    short: { en: 'Drop', 'zh-CN': '降噪', ja: '低下' },
-    label: {
-      en: 'Fragmentation drops',
-      'zh-CN': '碎片化下降',
-      ja: '分断率が低下'
-    },
-    description: {
-      en: 'Win if social fragmentation is lower than the baseline after 3 rounds.',
-      'zh-CN': '若 3 回合后社会碎片化低于下注基线则获胜。',
-      ja: '3 ラウンド後に社会分断がベースラインより低ければ勝利。'
-    }
-  },
-  {
-    id: 'lines_growth',
-    short: { en: 'Grow', 'zh-CN': '扩链', ja: '増線' },
-    label: {
-      en: 'Active lines increase',
-      'zh-CN': '活跃链路增长',
-      ja: 'アクティブ線が増加'
-    },
-    description: {
-      en: 'Win if active corridors increase by at least 2 after 3 rounds.',
-      'zh-CN': '若 3 回合后活跃链路至少增加 2 条则获胜。',
-      ja: '3 ラウンド後にアクティブ線が 2 本以上増えれば勝利。'
-    }
-  },
-  {
-    id: 'trust_recovery',
-    short: { en: 'Trust', 'zh-CN': '信任', ja: '信頼' },
-    label: {
-      en: 'Trust rebounds',
-      'zh-CN': '信任回升',
-      ja: '信頼が回復'
-    },
-    description: {
-      en: 'Win if institutional trust is higher than the baseline after 3 rounds.',
-      'zh-CN': '若 3 回合后制度信任高于下注基线则获胜。',
-      ja: '3 ラウンド後に制度信頼がベースラインより高ければ勝利。'
-    }
-  },
-  {
-    id: 'polarization_cooldown',
-    short: { en: 'Cool', 'zh-CN': '冷却', ja: '冷却' },
-    label: {
-      en: 'Polarization drops',
-      'zh-CN': '极化下降',
-      ja: '分極化が低下'
-    },
-    description: {
-      en: 'Win if media polarization is lower than the baseline after 3 rounds.',
-      'zh-CN': '若 3 回合后媒体极化低于下注基线则获胜。',
-      ja: '3 ラウンド後にメディア分極化がベースラインより低ければ勝利。'
-    }
-  }
+  { id: 'dominant_hold', short: { en: 'Hold', 'zh-CN': '守擂', ja: '防衛' }, label: { en: 'Dominant religion keeps lead', 'zh-CN': '主导宗教保持领先', ja: '優勢宗教が首位維持' }, description: { en: 'Win if the current top religion remains on top after 3 rounds.', 'zh-CN': '若当前第一宗教在 3 回合后仍第一则获胜。', ja: '現在の首位宗教が 3 ラウンド後も首位なら勝利。' } },
+  { id: 'fragmentation_drop', short: { en: 'Drop', 'zh-CN': '降噪', ja: '低下' }, label: { en: 'Fragmentation drops', 'zh-CN': '碎片化下降', ja: '分断率が低下' }, description: { en: 'Win if social fragmentation is lower than the baseline after 3 rounds.', 'zh-CN': '若 3 回合后社会碎片化低于下注基线则获胜。', ja: '3 ラウンド後に社会分断がベースラインより低ければ勝利。' } },
+  { id: 'lines_growth', short: { en: 'Grow', 'zh-CN': '扩链', ja: '増線' }, label: { en: 'Active lines increase', 'zh-CN': '活跃链路增长', ja: 'アクティブ線が増加' }, description: { en: 'Win if active corridors increase by at least 2 after 3 rounds.', 'zh-CN': '若 3 回合后活跃链路至少增加 2 条则获胜。', ja: '3 ラウンド後にアクティブ線が 2 本以上増えれば勝利。' } },
+  { id: 'trust_recovery', short: { en: 'Trust', 'zh-CN': '信任', ja: '信頼' }, label: { en: 'Trust rebounds', 'zh-CN': '信任回升', ja: '信頼が回復' }, description: { en: 'Win if institutional trust is higher than the baseline after 3 rounds.', 'zh-CN': '若 3 回合后制度信任高于下注基线则获胜。', ja: '3 ラウンド後に制度信頼がベースラインより高ければ勝利。' } },
+  { id: 'polarization_cooldown', short: { en: 'Cool', 'zh-CN': '冷却', ja: '冷却' }, label: { en: 'Polarization drops', 'zh-CN': '极化下降', ja: '分極化が低下' }, description: { en: 'Win if media polarization is lower than the baseline after 3 rounds.', 'zh-CN': '若 3 回合后媒体极化低于下注基线则获胜。', ja: '3 ラウンド後にメディア分極化がベースラインより低ければ勝利。' } }
 ];
 
+// Card builder: generates a full card object from compact definition
+function card(id, deck, en, zh, ja, archEn, archZh, archJa, cost, deltas, opts = {}) {
+  const c = {
+    id, deck, cost, deltas,
+    title: { en: en[0], 'zh-CN': zh[0], ja: ja[0] },
+    desc: { en: en[1], 'zh-CN': zh[1], ja: ja[1] },
+    detail: { en: en[2], 'zh-CN': zh[2], ja: ja[2] },
+    archetype: { en: archEn, 'zh-CN': archZh, ja: archJa },
+    rarity: opts.condition ? { en: 'Conditional', 'zh-CN': '条件', ja: '条件付き' }
+      : opts.sustained ? { en: 'Sustained', 'zh-CN': '持续', ja: '持続' }
+      : { en: 'Standard', 'zh-CN': '标准', ja: '標準' },
+    timing: opts.sustained
+      ? { en: `Sustained (${opts.sustained}R)`, 'zh-CN': `持续（${opts.sustained}轮）`, ja: `持続（${opts.sustained}R）` }
+      : { en: 'Immediate', 'zh-CN': '即时', ja: '即時' },
+    tip: { en: en[3] || '', 'zh-CN': zh[3] || '', ja: ja[3] || '' }
+  };
+  if (opts.condition) c.condition = opts.condition;
+  if (opts.sustained) c.sustained = opts.sustained;
+  return c;
+}
+
+// 108 cards, 2 decks: A = Diplomacy & Stability (54), B = Expansion & Disruption (54)
 export const DECK_CARD_LIBRARY = [
-  {
-    id: 'bridge_dialogue',
-    title: { en: 'Bridge Dialogue', 'zh-CN': '跨域对话', ja: '越境対話' },
-    desc: {
-      en: '+Pluralism, -Polarization',
-      'zh-CN': '+法律多元，-舆论极化',
-      ja: '法的多元 + / 分極化 -'
-    },
-    detail: {
-      en: 'Host cross-faith dialogue assemblies and reduce narrative hostility in contested regions.',
-      'zh-CN': '在争议区域组织跨信仰协商，降低叙事对抗强度。',
-      ja: '競合地域で宗教横断の対話会を行い、敵対的ナラティブを抑制。'
-    },
-    archetype: {
-      en: 'Civic Diplomacy',
-      'zh-CN': '公共外交',
-      ja: '公共外交'
-    },
-    rarity: {
-      en: 'Strategic',
-      'zh-CN': '战略',
-      ja: '戦略'
-    },
-    timing: {
-      en: 'Immediate',
-      'zh-CN': '即时生效',
-      ja: '即時発動'
-    },
-    tip: {
-      en: 'Great against polarization bursts and tribunal pressure.',
-      'zh-CN': '适合应对极化激增与审判压力。',
-      ja: '分極化急騰や審判圧力への対抗に有効。'
-    },
-    cost: 4,
-    deltas: { legalPluralism: 0.06, mediaPolarization: -0.05 }
-  },
-  {
-    id: 'trust_grant',
-    title: { en: 'Trust Grant', 'zh-CN': '信任补助', ja: '信頼助成' },
-    desc: {
-      en: '+Trust, -Fragmentation',
-      'zh-CN': '+制度信任，-社会碎片化',
-      ja: '制度信頼 + / 社会分断 -'
-    },
-    detail: {
-      en: 'Inject institutional transparency initiatives and stabilize trust-sensitive communities.',
-      'zh-CN': '注入制度透明项目，稳定对信任敏感的人群。',
-      ja: '制度透明化施策を注入し、信頼に敏感な層を安定化。'
-    },
-    archetype: {
-      en: 'Governance Support',
-      'zh-CN': '治理支援',
-      ja: '統治支援'
-    },
-    rarity: {
-      en: 'Anchor',
-      'zh-CN': '锚定',
-      ja: 'アンカー'
-    },
-    timing: {
-      en: 'Immediate',
-      'zh-CN': '即时生效',
-      ja: '即時発動'
-    },
-    tip: {
-      en: 'Use before boss checks to reduce failure probability.',
-      'zh-CN': '建议在 Boss 阶段判定前使用，降低失败风险。',
-      ja: 'Boss 判定前に使うと失敗確率を下げやすい。'
-    },
-    cost: 5,
-    deltas: { institutionalTrust: 0.07, socialFragmentation: -0.04 }
-  },
-  {
-    id: 'youth_festival',
-    title: { en: 'Youth Festival', 'zh-CN': '青年节拍', ja: 'ユース祭典' },
-    desc: {
-      en: '+Youth, +Digital, +Volatility',
-      'zh-CN': '+青年压力，+数字化，+波动',
-      ja: '若年圧力 + / デジタル化 + / 変動 +'
-    },
-    detail: {
-      en: 'Launch youth-facing campaigns and online events to accelerate participation velocity.',
-      'zh-CN': '发起面向青年的线上活动，加速参与扩散速度。',
-      ja: '若年層向けキャンペーンを展開し、参加拡散速度を引き上げる。'
-    },
-    archetype: {
-      en: 'Audience Expansion',
-      'zh-CN': '受众扩张',
-      ja: 'オーディエンス拡張'
-    },
-    rarity: {
-      en: 'Aggressive',
-      'zh-CN': '激进',
-      ja: 'アグレッシブ'
-    },
-    timing: {
-      en: 'Immediate',
-      'zh-CN': '即时生效',
-      ja: '即時発動'
-    },
-    tip: {
-      en: 'High upside for combo rounds, but can increase social noise.',
-      'zh-CN': '在连击回合收益很高，但可能放大社会噪声。',
-      ja: 'コンボ回で高期待値だが、社会ノイズも増えやすい。'
-    },
-    cost: 4,
-    deltas: { youthPressure: 0.06, digitalization: 0.05, socialFragmentation: 0.02 }
-  },
-  {
-    id: 'ethics_audit',
-    title: { en: 'Ethics Audit', 'zh-CN': '伦理审计', ja: '倫理監査' },
-    desc: {
-      en: '-Judgment pressure, +Due space',
-      'zh-CN': '-审判压力，+公共空间',
-      ja: '審判圧力 - / 公共空間 +'
-    },
-    detail: {
-      en: 'Run accountability audits to cool coercive enforcement and recover procedural legitimacy.',
-      'zh-CN': '推进问责审计，降低强制执法温度并恢复程序合法性。',
-      ja: '説明責任監査を行い、強制的執行を抑えて手続的正統性を回復。'
-    },
-    archetype: {
-      en: 'Institutional Reset',
-      'zh-CN': '制度重置',
-      ja: '制度リセット'
-    },
-    rarity: {
-      en: 'Control',
-      'zh-CN': '控制',
-      ja: 'コントロール'
-    },
-    timing: {
-      en: 'Immediate',
-      'zh-CN': '即时生效',
-      ja: '即時発動'
-    },
-    tip: {
-      en: 'Best when legal pluralism is low and regulation is overheating.',
-      'zh-CN': '适合法律多元偏低、监管过热时使用。',
-      ja: '法的多元性が低く、規制過熱時に最適。'
-    },
-    cost: 6,
-    deltas: { stateRegulation: -0.04, legalPluralism: 0.04, mediaPolarization: -0.02 }
-  },
-  {
-    id: 'migration_corridor',
-    title: { en: 'Migration Corridor', 'zh-CN': '迁徙走廊', ja: '移動コリドー' },
-    desc: {
-      en: '+Mobility, +Integration',
-      'zh-CN': '+人口迁移，+社会融合',
-      ja: '人口移動 + / 社会統合 +'
-    },
-    detail: {
-      en: 'Open regulated mobility channels to improve integration and lower conflict friction.',
-      'zh-CN': '开放可监管迁移通道，提升融合并降低冲突摩擦。',
-      ja: '管理可能な移動回廊を開き、統合を高めつつ衝突摩擦を軽減。'
-    },
-    archetype: {
-      en: 'Mobility Policy',
-      'zh-CN': '迁移政策',
-      ja: '移動政策'
-    },
-    rarity: {
-      en: 'Adaptive',
-      'zh-CN': '适配',
-      ja: '適応'
-    },
-    timing: {
-      en: 'Immediate',
-      'zh-CN': '即时生效',
-      ja: '即時発動'
-    },
-    tip: {
-      en: 'Pairs well with trust cards when identity pressure is rising.',
-      'zh-CN': '身份压力升高时，可与信任类卡联动。',
-      ja: 'アイデンティティ圧力上昇時は信頼系カードとの併用が有効。'
-    },
-    cost: 5,
-    deltas: { migration: 0.06, socialFragmentation: -0.03, legalPluralism: 0.03 }
-  },
-  {
-    id: 'civic_mediation_lab',
-    title: { en: 'Civic Mediation Lab', 'zh-CN': '公民调解实验室', ja: '市民調停ラボ' },
-    desc: {
-      en: '+Trust, +Pluralism, -Identity conflict',
-      'zh-CN': '+制度信任，+法律多元，-身份冲突',
-      ja: '制度信頼 + / 法的多元 + / アイデンティティ対立 -'
-    },
-    detail: {
-      en: 'Pilot neighborhood mediation hubs that de-escalate identity disputes before they become media flashpoints.',
-      'zh-CN': '试点社区调解节点，在身份冲突升级为舆情热点前进行降温。',
-      ja: '地域調停ハブを試験導入し、対立がメディア炎上化する前に沈静化。'
-    },
-    archetype: {
-      en: 'Conflict Mediation',
-      'zh-CN': '冲突调停',
-      ja: '紛争調停'
-    },
-    rarity: {
-      en: 'Anchor',
-      'zh-CN': '锚定',
-      ja: 'アンカー'
-    },
-    timing: {
-      en: 'Immediate',
-      'zh-CN': '即时生效',
-      ja: '即時発動'
-    },
-    tip: {
-      en: 'Excellent when identity politics and media polarization rise together.',
-      'zh-CN': '当身份政治与舆论极化同步上升时收益最高。',
-      ja: 'アイデンティティ政治と分極化が同時上昇する局面で有効。'
-    },
-    cost: 6,
-    deltas: { institutionalTrust: 0.06, legalPluralism: 0.05, identityPolitics: -0.05 }
-  },
-  {
-    id: 'open_data_pulpit',
-    title: { en: 'Open Data Pulpit', 'zh-CN': '开放数据讲坛', ja: 'オープンデータ講壇' },
-    desc: {
-      en: '+Digital, +Trust, -Regulation heat',
-      'zh-CN': '+数字化，+制度信任，-监管热度',
-      ja: 'デジタル化 + / 制度信頼 + / 規制熱 -'
-    },
-    detail: {
-      en: 'Publish transparent dashboards for faith-linked civic projects, reducing suspicion and over-regulation pressure.',
-      'zh-CN': '公开宗教相关公益项目仪表盘，降低不信任与过度监管压力。',
-      ja: '宗教関連の公益施策を可視化し、不信と過剰規制圧力を軽減。'
-    },
-    archetype: {
-      en: 'Transparency Ops',
-      'zh-CN': '透明治理',
-      ja: '透明運用'
-    },
-    rarity: {
-      en: 'Utility',
-      'zh-CN': '功能',
-      ja: 'ユーティリティ'
-    },
-    timing: {
-      en: 'Immediate',
-      'zh-CN': '即时生效',
-      ja: '即時発動'
-    },
-    tip: {
-      en: 'Great pre-boss stabilizer if tribunal pressure is trending upward.',
-      'zh-CN': '若审判容量在上升，可作为 Boss 前稳定器。',
-      ja: '審判圧力が上向く前の安定化カードとして優秀。'
-    },
-    cost: 5,
-    deltas: { digitalization: 0.04, institutionalTrust: 0.05, stateRegulation: -0.04 }
-  },
-  {
-    id: 'meaning_retreat_program',
-    title: { en: 'Meaning Retreat Program', 'zh-CN': '意义共修营', ja: '意味リトリート計画' },
-    desc: {
-      en: '+Meaning search, +Youth reach, -Fragmentation',
-      'zh-CN': '+意义追寻，+青年触达，-社会碎片化',
-      ja: '意味追求 + / 若年接点 + / 社会分断 -'
-    },
-    detail: {
-      en: 'Run inter-community retreat programs to channel anxiety into constructive identity and shared rituals.',
-      'zh-CN': '开展跨社群共修计划，将焦虑导向建设性身份与共同实践。',
-      ja: '共同リトリートを実施し、不安を建設的な帰属と実践へ転換。'
-    },
-    archetype: {
-      en: 'Cohesion Build',
-      'zh-CN': '凝聚建设',
-      ja: '結束形成'
-    },
-    rarity: {
-      en: 'Strategic',
-      'zh-CN': '战略',
-      ja: '戦略'
-    },
-    timing: {
-      en: 'Immediate',
-      'zh-CN': '即时生效',
-      ja: '即時発動'
-    },
-    tip: {
-      en: 'Strong answer to climate anxiety and youth awakening events.',
-      'zh-CN': '可针对气候焦虑与青年觉醒事件打出反制。',
-      ja: '気候不安・若者覚醒イベントへの対抗札として有効。'
-    },
-    cost: 5,
-    deltas: { meaningSearch: 0.07, youthPressure: 0.04, socialFragmentation: -0.04 }
-  },
-  {
-    id: 'legal_aid_caravan',
-    title: { en: 'Legal Aid Caravan', 'zh-CN': '巡回法援行动', ja: '移動リーガル支援隊' },
-    desc: {
-      en: '+Pluralism, -Regulation pressure, -Judgment heat',
-      'zh-CN': '+法律多元，-监管压力，-审判热度',
-      ja: '法的多元 + / 規制圧 - / 審判熱 -'
-    },
-    detail: {
-      en: 'Deploy mobile legal aid teams to reduce procedural panic and preserve fair participation across groups.',
-      'zh-CN': '部署巡回法律援助队，缓解程序恐慌并维护跨群体公平参与。',
-      ja: '移動型法支援チームで手続不安を下げ、公平な参加を確保。'
-    },
-    archetype: {
-      en: 'Rule-of-Law',
-      'zh-CN': '法治干预',
-      ja: '法治介入'
-    },
-    rarity: {
-      en: 'Control',
-      'zh-CN': '控制',
-      ja: 'コントロール'
-    },
-    timing: {
-      en: 'Immediate',
-      'zh-CN': '即时生效',
-      ja: '即時発動'
-    },
-    tip: {
-      en: 'Use after political persecution spikes to reopen safe transfer corridors.',
-      'zh-CN': '政治迫害事件后使用，可重新打开安全转化通道。',
-      ja: '政治的迫害イベント後に使うと安全な転化回廊を再建しやすい。'
-    },
-    cost: 6,
-    deltas: { legalPluralism: 0.06, stateRegulation: -0.05, mediaPolarization: -0.03 }
-  },
-  {
-    id: 'calm_media',
-    title: { en: 'Calm Media', 'zh-CN': '媒体冷却', ja: 'メディア冷却' },
-    desc: {
-      en: '-Polarization, -Identity heat',
-      'zh-CN': '-舆论极化，-身份冲突',
-      ja: '分極化 - / アイデンティティ対立 -'
-    },
-    detail: {
-      en: 'Deploy fact-check and moderation bundles to cool amplification loops in media spaces.',
-      'zh-CN': '部署核验与节流组合，降低媒体放大回路的过热。',
-      ja: 'ファクトチェックと節流施策で、メディア増幅ループを冷却。'
-    },
-    archetype: {
-      en: 'Narrative Cooling',
-      'zh-CN': '叙事降温',
-      ja: 'ナラティブ冷却'
-    },
-    rarity: {
-      en: 'Stability',
-      'zh-CN': '稳态',
-      ja: '安定'
-    },
-    timing: {
-      en: 'Immediate',
-      'zh-CN': '即时生效',
-      ja: '即時発動'
-    },
-    tip: {
-      en: 'Use in crisis windows to suppress spillover cascades.',
-      'zh-CN': '在危机窗口使用，可抑制外溢级联。',
-      ja: '危機ウィンドウで使うと外溢れ連鎖の抑制に有効。'
-    },
-    cost: 4,
-    deltas: { mediaPolarization: -0.06, identityPolitics: -0.04 }
-  },
-  {
-    id: 'crisis_pivot',
-    title: { en: 'Crisis Pivot', 'zh-CN': '危机转向', ja: '危機ピボット' },
-    desc: {
-      en: 'Double effect if Polarization > 60%',
-      'zh-CN': '极化 > 60% 时双倍效果',
-      ja: '分極化 > 60% で効果倍増'
-    },
-    detail: {
-      en: 'Redirect polarized energy into constructive reform. More effective when tensions are already high.',
-      'zh-CN': '将极化能量导向建设性改革。紧张局势越高效果越强。',
-      ja: '分極化のエネルギーを建設的改革へ転換。緊張が高いほど効果的。'
-    },
-    archetype: { en: 'Crisis Management', 'zh-CN': '危机管理', ja: '危機管理' },
-    rarity: { en: 'Conditional', 'zh-CN': '条件', ja: '条件付き' },
-    timing: { en: 'Immediate', 'zh-CN': '即时生效', ja: '即時発動' },
-    tip: {
-      en: 'Hold this card until polarization spikes — the payoff doubles.',
-      'zh-CN': '等极化飙升时再打出——收益翻倍。',
-      ja: '分極化が急増するまで温存——リターンが倍になる。'
-    },
-    cost: 5,
-    deltas: { mediaPolarization: -0.04, institutionalTrust: 0.03, legalPluralism: 0.02 },
-    condition: { signal: 'mediaPolarization', threshold: 0.6, compare: 'gt', multiplier: 2 }
-  },
-  {
-    id: 'solidarity_surge',
-    title: { en: 'Solidarity Surge', 'zh-CN': '团结浪潮', ja: '連帯サージ' },
-    desc: {
-      en: 'Double effect if Economic Stress > 50%',
-      'zh-CN': '经济压力 > 50% 时双倍效果',
-      ja: '経済ストレス > 50% で効果倍増'
-    },
-    detail: {
-      en: 'Rally communities around mutual aid during hardship. Most powerful when economic pressure is acute.',
-      'zh-CN': '在困难时期动员社区互助。经济压力越大效果越强。',
-      ja: '困難な時期にコミュニティ互助を呼びかける。経済圧力が深刻なほど効果的。'
-    },
-    archetype: { en: 'Community Rally', 'zh-CN': '社区动员', ja: 'コミュニティ結集' },
-    rarity: { en: 'Conditional', 'zh-CN': '条件', ja: '条件付き' },
-    timing: { en: 'Immediate', 'zh-CN': '即时生效', ja: '即時発動' },
-    tip: {
-      en: 'Best played during or right after economic crisis events.',
-      'zh-CN': '最适合在经济危机事件期间或之后打出。',
-      ja: '経済危機イベント中または直後に最適。'
-    },
-    cost: 5,
-    deltas: { economicStress: -0.05, socialFragmentation: -0.03, institutionalTrust: 0.03 },
-    condition: { signal: 'economicStress', threshold: 0.5, compare: 'gt', multiplier: 2 }
-  },
-  {
-    id: 'digital_fast',
-    title: { en: 'Digital Fast', 'zh-CN': '数字斋戒', ja: 'デジタル断食' },
-    desc: {
-      en: 'Double effect if Digitalization > 70%',
-      'zh-CN': '数字化 > 70% 时双倍效果',
-      ja: 'デジタル化 > 70% で効果倍増'
-    },
-    detail: {
-      en: 'Encourage communities to step back from digital discourse. Most effective when digital saturation is high.',
-      'zh-CN': '鼓励社群退出数字话语。数字化饱和度越高效果越强。',
-      ja: 'コミュニティにデジタル言説からの退避を促す。デジタル飽和度が高いほど効果的。'
-    },
-    archetype: { en: 'Digital Rebalance', 'zh-CN': '数字再平衡', ja: 'デジタル再均衡' },
-    rarity: { en: 'Conditional', 'zh-CN': '条件', ja: '条件付き' },
-    timing: { en: 'Immediate', 'zh-CN': '即时生效', ja: '即時発動' },
-    tip: {
-      en: 'Great counter to algorithmic echo burst and digital revival events.',
-      'zh-CN': '适合反制算法回音室和数字复兴事件。',
-      ja: 'アルゴリズムバーストやデジタル復興イベントへの対抗に最適。'
-    },
-    cost: 4,
-    deltas: { digitalization: -0.03, meaningSearch: 0.04, mediaPolarization: -0.03 },
-    condition: { signal: 'digitalization', threshold: 0.7, compare: 'gt', multiplier: 2 }
-  },
-  {
-    id: 'silent_diplomacy',
-    title: { en: 'Silent Diplomacy', 'zh-CN': '静默外交', ja: '沈黙外交' },
-    desc: {
-      en: 'Sustained: effects last 2 rounds',
-      'zh-CN': '持续：效果持续 2 轮',
-      ja: '持続：効果が 2 ラウンド続く'
-    },
-    detail: {
-      en: 'Back-channel negotiations between communities that gradually de-escalate tensions over multiple rounds.',
-      'zh-CN': '社区间的幕后谈判，在多个回合中逐步降低紧张。',
-      ja: 'コミュニティ間の裏チャンネル交渉で、数ラウンドにわたり緊張を緩和。'
-    },
-    archetype: { en: 'Sustained Diplomacy', 'zh-CN': '持续外交', ja: '持続外交' },
-    rarity: { en: 'Sustained', 'zh-CN': '持续', ja: '持続' },
-    timing: {
-      en: 'Sustained (2 rounds)',
-      'zh-CN': '持续生效（2 轮）',
-      ja: '持続発動（2ラウンド）'
-    },
-    tip: {
-      en: 'Excellent long-term value. Play early for compounding benefit.',
-      'zh-CN': '长期价值极佳。尽早打出以获取复利效果。',
-      ja: '長期的価値が高い。早めにプレイして複利効果を得よう。'
-    },
-    cost: 6,
-    deltas: { identityPolitics: -0.03, socialFragmentation: -0.02, legalPluralism: 0.03 },
-    sustained: 2
-  },
-  {
-    id: 'grassroots_network',
-    title: { en: 'Grassroots Network', 'zh-CN': '草根网络', ja: '草の根ネットワーク' },
-    desc: {
-      en: 'Sustained: effects last 3 rounds',
-      'zh-CN': '持续：效果持续 3 轮',
-      ja: '持続：効果が 3 ラウンド続く'
-    },
-    detail: {
-      en: 'Build lasting community networks from the ground up. Slow to start but compounds trust and stability.',
-      'zh-CN': '从基层构建持久社区网络。启动缓慢但不断积累信任与稳定。',
-      ja: '草の根から持続的なコミュニティネットワークを構築。立ち上がりは遅いが信頼と安定が蓄積。'
-    },
-    archetype: { en: 'Community Build', 'zh-CN': '社区构建', ja: 'コミュニティ構築' },
-    rarity: { en: 'Sustained', 'zh-CN': '持续', ja: '持続' },
-    timing: {
-      en: 'Sustained (3 rounds)',
-      'zh-CN': '持续生效（3 轮）',
-      ja: '持続発動（3ラウンド）'
-    },
-    tip: {
-      en: 'Play before boss phases for multi-round stabilization.',
-      'zh-CN': '在 Boss 阶段前打出以获取多轮稳定效果。',
-      ja: 'Boss フェーズ前にプレイして複数ラウンドの安定化を得よう。'
-    },
-    cost: 6,
-    deltas: { institutionalTrust: 0.02, socialFragmentation: -0.02, economicStress: -0.02 },
-    sustained: 3
-  }
+  // ═══════════════════════════════════════════════════════════
+  // DECK A — Diplomacy & Stability (54 cards)
+  // ═══════════════════════════════════════════════════════════
+
+  // A: Trust & Governance (18 cards)
+  card('bridge_dialogue', 'A', ['Bridge Dialogue', '+Pluralism, -Polarization', 'Host cross-faith dialogue assemblies and reduce narrative hostility.', 'Great against polarization bursts.'], ['跨域对话', '+法律多元，-极化', '组织跨信仰对话降低叙事对抗。', '适合应对极化激增。'], ['越境対話', '+多元, -分極化', '宗教横断の対話で敵対ナラティブを抑制。', '分極化急騰時に有効。'], 'Civic Diplomacy', '公共外交', '公共外交', 4, { legalPluralism: 0.06, mediaPolarization: -0.05 }),
+  card('trust_grant', 'A', ['Trust Grant', '+Trust, -Fragmentation', 'Inject institutional transparency to stabilize trust-sensitive communities.', 'Use before boss checks.'], ['信任补助', '+信任, -碎片化', '注入制度透明稳定敏感人群。', 'Boss前使用。'], ['信頼助成', '+信頼, -分断', '制度透明化で信頼敏感層を安定化。', 'Boss判定前に。'], 'Governance', '治理', '統治', 5, { institutionalTrust: 0.07, socialFragmentation: -0.04 }),
+  card('ethics_audit', 'A', ['Ethics Audit', '-Regulation, +Pluralism', 'Run accountability audits to cool coercive enforcement.', 'Best when regulation overheats.'], ['伦理审计', '-监管, +多元', '推进问责审计降低强制执法温度。', '监管过热时使用。'], ['倫理監査', '-規制, +多元', '説明責任監査で強制執行を抑制。', '規制過熱時に。'], 'Institutional', '制度', '制度', 6, { stateRegulation: -0.04, legalPluralism: 0.04, mediaPolarization: -0.02 }),
+  card('civic_mediation_lab', 'A', ['Civic Mediation Lab', '+Trust, +Pluralism, -Identity', 'Pilot neighborhood mediation hubs to de-escalate disputes.', 'When identity and polarization rise together.'], ['调解实验室', '+信任, +多元, -身份', '试点社区调解节点。', '身份与极化同升时。'], ['調停ラボ', '+信頼, +多元, -ID', '地域調停ハブで対立を沈静化。', 'ID政治と分極化同時上昇時。'], 'Mediation', '调停', '調停', 6, { institutionalTrust: 0.06, legalPluralism: 0.05, identityPolitics: -0.05 }),
+  card('legal_aid_caravan', 'A', ['Legal Aid Caravan', '+Pluralism, -Regulation', 'Deploy mobile legal aid to preserve fair participation.', 'After persecution events.'], ['巡回法援', '+多元, -监管', '部署巡回法律援助。', '迫害事件后使用。'], ['法支援隊', '+多元, -規制', '移動法支援で公平参加を確保。', '迫害イベント後に。'], 'Rule of Law', '法治', '法治', 6, { legalPluralism: 0.06, stateRegulation: -0.05, mediaPolarization: -0.03 }),
+  card('open_data_pulpit', 'A', ['Open Data Pulpit', '+Digital, +Trust', 'Publish transparent dashboards for faith-linked civic projects.', 'Pre-boss stabilizer.'], ['数据讲坛', '+数字, +信任', '公开宗教公益仪表盘。', 'Boss前稳定器。'], ['データ講壇', '+デジタル, +信頼', '信仰関連公益を可視化。', 'Boss前安定化に。'], 'Transparency', '透明', '透明', 5, { digitalization: 0.04, institutionalTrust: 0.05, stateRegulation: -0.04 }),
+  card('covenant_renewal', 'A', ['Covenant Renewal', '+Trust, +Meaning', 'Renew social contracts between faith communities and institutions.', 'Rebuilds trust after scandal events.'], ['盟约更新', '+信任, +意义', '更新信仰社群与制度间的社会契约。', '丑闻后重建信任。'], ['契約更新', '+信頼, +意味', '信仰コミュニティと制度間の社会契約を更新。', 'スキャンダル後の信頼再建に。'], 'Governance', '治理', '統治', 5, { institutionalTrust: 0.06, meaningSearch: 0.03, socialFragmentation: -0.02 }),
+  card('transparency_act', 'A', ['Transparency Act', '+Trust, -Regulation', 'Legislative transparency reduces suspicion and over-regulation.', 'Strong when regulation is high.'], ['透明法案', '+信任, -监管', '立法透明降低疑虑与过度监管。', '监管高时有效。'], ['透明法', '+信頼, -規制', '立法透明化で疑念と過剰規制を軽減。', '規制が高い時に有効。'], 'Law', '法律', '法律', 4, { institutionalTrust: 0.05, stateRegulation: -0.05 }),
+  card('due_process_reform', 'A', ['Due Process Reform', '+Pluralism, -Judgment pressure', 'Strengthen procedural safeguards to limit arbitrary tribunals.', 'Reduces judgment ratio.'], ['正当程序改革', '+多元, -审判压力', '加强程序保障限制任意审判。', '降低审判比。'], ['適正手続改革', '+多元, -審判圧', '手続的保障を強化し恣意的審判を制限。', '審判比率を低下。'], 'Reform', '改革', '改革', 5, { legalPluralism: 0.05, institutionalTrust: 0.03, stateRegulation: -0.03 }),
+  card('anti_corruption_drive', 'A', ['Anti-Corruption Drive', '+Trust, -Economic stress', 'Root out institutional corruption to restore public confidence.', 'After economic crisis events.'], ['反腐行动', '+信任, -经济压力', '根除制度腐败恢复公众信心。', '经济危机后。'], ['反腐敗運動', '+信頼, -経済圧', '制度的腐敗を根絶し公衆の信頼を回復。', '経済危機後に。'], 'Governance', '治理', '統治', 5, { institutionalTrust: 0.06, economicStress: -0.04 }),
+  card('interfaith_council', 'A', ['Interfaith Council', '+Pluralism, -Identity conflict', 'Establish a standing council for cross-faith dialogue and dispute resolution.', 'Long-term identity stabilizer.'], ['跨信仰理事会', '+多元, -身份冲突', '建立常设跨信仰对话与争端解决机制。', '身份长期稳定器。'], ['宗教間評議会', '+多元, -ID対立', '宗教横断の対話と紛争解決の常設機関を設立。', '長期的ID安定化に。'], 'Diplomacy', '外交', '外交', 6, { legalPluralism: 0.05, identityPolitics: -0.05, mediaPolarization: -0.02 }),
+  card('heritage_preservation', 'A', ['Heritage Preservation', '+Meaning, -Secularization', 'Fund preservation of sacred sites and cultural artifacts.', 'Counters secularization pressure.'], ['遗产保护', '+意义, -世俗化', '资助圣地与文化文物保护。', '对抗世俗化压力。'], ['遺産保全', '+意味, -世俗化', '聖地と文化財の保全を支援。', '世俗化圧力への対抗に。'], 'Culture', '文化', '文化', 4, { meaningSearch: 0.05, secularization: -0.04 }),
+  card('peace_accord', 'A', ['Peace Accord', '-Fragmentation, -Polarization', 'Broker a formal peace agreement between competing factions.', 'High cost but powerful stabilization.'], ['和平协议', '-碎片化, -极化', '在竞争派系间促成正式和平协议。', '高成本但强力稳定。'], ['和平協定', '-分断, -分極化', '競合勢力間の正式な和平合意を仲介。', '高コストだが強力な安定化。'], 'Diplomacy', '外交', '外交', 7, { socialFragmentation: -0.06, mediaPolarization: -0.05, identityPolitics: -0.03 }),
+  card('judicial_oversight', 'A', ['Judicial Oversight', '+Pluralism, +Trust', 'Independent courts oversee religious governance disputes.', 'Strengthens legal framework.'], ['司法监督', '+多元, +信任', '独立法院监督宗教治理争端。', '强化法律框架。'], ['司法監督', '+多元, +信頼', '独立裁判所が宗教統治の紛争を監督。', '法的枠組みの強化に。'], 'Law', '法律', '法律', 5, { legalPluralism: 0.05, institutionalTrust: 0.04, stateRegulation: -0.02 }),
+  card('amnesty_program', 'A', ['Amnesty Program', '-Regulation, -Identity conflict', 'Offer amnesty to ease tensions after persecution periods.', 'Post-persecution recovery.'], ['特赦计划', '-监管, -身份冲突', '提供特赦以缓解迫害后的紧张。', '迫害后恢复。'], ['恩赦プログラム', '-規制, -ID対立', '迫害期間後の緊張緩和のための恩赦。', '迫害後の回復に。'], 'Humanitarian', '人道', '人道', 5, { stateRegulation: -0.05, identityPolitics: -0.04, legalPluralism: 0.03 }),
+  card('trust_fund', 'A', ['Trust Fund', '+Trust, -Economic stress', 'Establish a community trust fund for social stability.', 'Pairs with economic relief.'], ['信托基金', '+信任, -经济压力', '建立社区信托基金促进社会稳定。', '与经济救济搭配。'], ['信託基金', '+信頼, -経済圧', 'コミュニティ信託基金で社会安定を促進。', '経済救済と組み合わせて。'], 'Finance', '金融', '金融', 5, { institutionalTrust: 0.05, economicStress: -0.04, socialFragmentation: -0.02 }),
+  card('mediation_summit', 'A', ['Mediation Summit', '-Polarization, +Trust', 'High-level summit to de-escalate factional media wars.', 'Effective during polarization spikes.'], ['调解峰会', '-极化, +信任', '高层峰会化解派系媒体战。', '极化激增时有效。'], ['調停サミット', '-分極化, +信頼', '派閥メディア戦争を沈静化するハイレベル会談。', '分極化急増時に有効。'], 'Diplomacy', '外交', '外交', 5, { mediaPolarization: -0.06, institutionalTrust: 0.04 }),
+  card('social_contract', 'A', ['Social Contract', '+Trust, +Pluralism, -Fragmentation', 'Draft a new social contract that includes all faith traditions.', 'Expensive but comprehensive.'], ['社会契约', '+信任, +多元, -碎片化', '起草包含所有信仰传统的新社会契约。', '昂贵但全面。'], ['社会契約', '+信頼, +多元, -分断', '全信仰伝統を含む新社会契約を起草。', '高コストだが包括的。'], 'Governance', '治理', '統治', 7, { institutionalTrust: 0.05, legalPluralism: 0.04, socialFragmentation: -0.04 }),
+
+  // A: Cooling & Defense (18 cards)
+  card('calm_media', 'A', ['Calm Media', '-Polarization, -Identity heat', 'Deploy fact-check bundles to cool media amplification loops.', 'Use in crisis windows.'], ['媒体冷却', '-极化, -身份冲突', '部署核验组合降低媒体放大。', '危机窗口使用。'], ['メディア冷却', '-分極化, -ID熱', 'ファクトチェックでメディア増幅を冷却。', '危機ウィンドウで。'], 'Narrative', '叙事', 'ナラティブ', 4, { mediaPolarization: -0.06, identityPolitics: -0.04 }),
+  card('meaning_retreat', 'A', ['Meaning Retreat', '+Meaning, +Youth, -Fragmentation', 'Run inter-community retreats to channel anxiety into shared rituals.', 'Counter climate anxiety events.'], ['意义共修', '+意义, +青年, -碎片化', '开展跨社群共修引导焦虑。', '对抗气候焦虑。'], ['意味リトリート', '+意味, +若年, -分断', '共同リトリートで不安を共有実践へ転換。', '気候不安への対抗に。'], 'Cohesion', '凝聚', '結束', 5, { meaningSearch: 0.07, youthPressure: 0.04, socialFragmentation: -0.04 }),
+  card('narrative_shield', 'A', ['Narrative Shield', '-Polarization, +Trust', 'Counter disinformation with institutional credibility campaigns.', 'Effective against echo burst.'], ['叙事护盾', '-极化, +信任', '以制度公信力反击虚假信息。', '对抗回音室有效。'], ['ナラティブシールド', '-分極化, +信頼', '制度的信頼キャンペーンで偽情報に対抗。', 'エコーバーストに有効。'], 'Defense', '防御', '防衛', 5, { mediaPolarization: -0.05, institutionalTrust: 0.04 }),
+  card('community_watch', 'A', ['Community Watch', '-Fragmentation, +Trust', 'Neighborhood monitoring programs that build local trust networks.', 'Grassroots defense.'], ['社区守望', '-碎片化, +信任', '邻里监测计划建立本地信任网络。', '基层防御。'], ['コミュニティ監視', '-分断, +信頼', '地域見守りで信頼ネットワークを構築。', '草の根防衛。'], 'Defense', '防御', '防衛', 4, { socialFragmentation: -0.04, institutionalTrust: 0.03 }),
+  card('emotional_release', 'A', ['Emotional Release', '-Youth pressure, +Meaning', 'Create safe spaces for emotional expression and grief processing.', 'After traumatic events.'], ['情绪释放', '-青年压力, +意义', '创建安全空间处理情绪与悲伤。', '创伤事件后。'], ['感情解放', '-若年圧, +意味', '感情表現と悲嘆処理の安全な空間を創出。', 'トラウマイベント後に。'], 'Wellbeing', '关怀', 'ウェルビーイング', 4, { youthPressure: -0.05, meaningSearch: 0.04 }),
+  card('ceasefire_pact', 'A', ['Ceasefire Pact', '-Polarization, -Identity', 'Mutual restraint agreement between competing faith media.', 'Temporary but strong cooling.'], ['停火协定', '-极化, -身份', '竞争信仰媒体间的互相克制协议。', '暂时但强力降温。'], ['停戦協定', '-分極化, -ID', '競合する信仰メディア間の相互抑制合意。', '一時的だが強力な冷却。'], 'Diplomacy', '外交', '外交', 5, { mediaPolarization: -0.06, identityPolitics: -0.04, legalPluralism: -0.02 }),
+  card('sanctuary_city', 'A', ['Sanctuary City', '-Regulation, +Migration', 'Declare safe harbor zones where religious minorities can practice freely.', 'Counters persecution.'], ['庇护城市', '-监管, +迁移', '宣布安全港区让宗教少数自由实践。', '对抗迫害。'], ['サンクチュアリ都市', '-規制, +移動', '宗教的少数派が自由に実践できる安全地帯を宣言。', '迫害への対抗に。'], 'Humanitarian', '人道', '人道', 5, { stateRegulation: -0.04, migration: 0.04, legalPluralism: 0.03 }),
+  card('conflict_resolution', 'A', ['Conflict Resolution', '-Identity, -Fragmentation', 'Professional mediation teams deploy to flashpoint communities.', 'Identity conflict reducer.'], ['冲突解决', '-身份, -碎片化', '专业调解团队部署到冲突热点。', '身份冲突降低器。'], ['紛争解決', '-ID, -分断', '専門調停チームをフラッシュポイントに配備。', 'ID対立の低減に。'], 'Mediation', '调停', '調停', 5, { identityPolitics: -0.05, socialFragmentation: -0.04 }),
+  card('cultural_festival', 'A', ['Cultural Festival', '+Meaning, -Fragmentation', 'Organize multi-faith cultural celebrations.', 'Builds bridges naturally.'], ['文化节庆', '+意义, -碎片化', '组织多信仰文化庆典。', '自然搭建桥梁。'], ['文化祭', '+意味, -分断', '多宗教文化祝典を組織。', '自然な橋渡し。'], 'Culture', '文化', '文化', 4, { meaningSearch: 0.05, socialFragmentation: -0.04 }),
+  card('relief_network', 'A', ['Relief Network', '+Trust, -Economic stress', 'Faith-based disaster relief builds community trust.', 'During economic crisis.'], ['救援网络', '+信任, -经济压力', '信仰灾害救援建立社区信任。', '经济危机时。'], ['救援ネットワーク', '+信頼, -経済圧', '信仰ベースの災害救援がコミュニティの信頼を構築。', '経済危機時に。'], 'Humanitarian', '人道', '人道', 4, { institutionalTrust: 0.05, economicStress: -0.04 }),
+  card('deradicalization', 'A', ['Deradicalization', '-Identity, -Youth pressure', 'Programs to disengage youth from extremist networks.', 'Youth + identity reducer.'], ['去激进化', '-身份, -青年压力', '项目帮助青年脱离极端网络。', '青年+身份降低。'], ['脱過激化', '-ID, -若年圧', '若者を過激派ネットワークから離脱させるプログラム。', '若年+ID低減。'], 'Security', '安全', 'セキュリティ', 5, { identityPolitics: -0.04, youthPressure: -0.04 }),
+  card('water_sharing', 'A', ['Water Sharing', '-Economic stress, -Fragmentation', 'Cross-community resource sharing during scarcity.', 'Pairs with economic cards.'], ['水源共享', '-经济压力, -碎片化', '匮乏时期跨社群资源共享。', '与经济卡搭配。'], ['水資源共有', '-経済圧, -分断', '欠乏時のコミュニティ間資源共有。', '経済カードと組合せて。'], 'Resource', '资源', 'リソース', 4, { economicStress: -0.04, socialFragmentation: -0.03 }),
+  card('memorial_project', 'A', ['Memorial Project', '+Meaning, +Trust', 'Build shared memorials that honor all faith traditions.', 'Healing after conflicts.'], ['纪念工程', '+意义, +信任', '建设纪念全部信仰传统的共享纪念碑。', '冲突后愈合。'], ['追悼プロジェクト', '+意味, +信頼', '全信仰伝統を敬う共有記念碑を建設。', '紛争後の癒しに。'], 'Culture', '文化', '文化', 5, { meaningSearch: 0.04, institutionalTrust: 0.04, identityPolitics: -0.02 }),
+  card('elder_council', 'A', ['Elder Council', '+Trust, -Youth pressure', 'Convene respected elders for intergenerational dialogue.', 'Stabilizes youth tensions.'], ['长老会议', '+信任, -青年压力', '召集受尊敬的长者进行代际对话。', '稳定青年紧张。'], ['長老会議', '+信頼, -若年圧', '尊敬される長老を招集し世代間対話を実施。', '若者の緊張を安定化。'], 'Tradition', '传统', '伝統', 4, { institutionalTrust: 0.04, youthPressure: -0.04 }),
+  card('eco_stewardship', 'A', ['Eco-Stewardship', '-Economic stress, +Meaning', 'Faith-based environmental stewardship programs.', 'Counters climate anxiety.'], ['生态管家', '-经济压力, +意义', '信仰环保管理项目。', '对抗气候焦虑。'], ['エコ・スチュワード', '-経済圧, +意味', '信仰ベースの環境管理プログラム。', '気候不安への対抗に。'], 'Ecology', '生态', 'エコロジー', 4, { economicStress: -0.03, meaningSearch: 0.04, socialFragmentation: -0.02 }),
+  card('ritual_renewal', 'A', ['Ritual Renewal', '+Meaning, -Secularization', 'Modernize sacred rituals to engage contemporary audiences.', 'Retention booster.'], ['仪式更新', '+意义, -世俗化', '现代化神圣仪式吸引当代受众。', '留存增强器。'], ['儀礼刷新', '+意味, -世俗化', '神聖な儀礼を現代化し当代の聴衆を引き付ける。', '保持率向上。'], 'Ritual', '仪式', '儀礼', 4, { meaningSearch: 0.05, secularization: -0.04 }),
+  card('interfaith_sport', 'A', ['Interfaith Sports', '-Identity, -Youth pressure', 'Cross-faith sports leagues that build shared identity.', 'Youth engagement tool.'], ['跨信仰体育', '-身份, -青年压力', '跨信仰体育联赛建立共同身份。', '青年参与工具。'], ['宗教間スポーツ', '-ID, -若年圧', '宗教横断のスポーツリーグで共有アイデンティティを構築。', '若者参加ツール。'], 'Community', '社区', 'コミュニティ', 4, { identityPolitics: -0.04, youthPressure: -0.03, socialFragmentation: -0.02 }),
+  card('prayer_vigil', 'A', ['Prayer Vigil', '+Meaning, +Trust, -Polarization', 'Mass interfaith prayer events for social healing.', 'After traumatic events.'], ['祈祷守夜', '+意义, +信任, -极化', '大型跨信仰祈祷活动促进社会愈合。', '创伤事件后。'], ['祈りの夜', '+意味, +信頼, -分極化', '大規模な宗教間祈祷イベントで社会を癒す。', 'トラウマイベント後に。'], 'Spiritual', '灵性', 'スピリチュアル', 5, { meaningSearch: 0.04, institutionalTrust: 0.03, mediaPolarization: -0.03 }),
+
+  // A: Conditional cards (9 cards)
+  card('crisis_pivot', 'A', ['Crisis Pivot', 'x2 if Polarization > 60%', 'Redirect polarized energy into constructive reform.', 'Hold until polarization spikes.'], ['危机转向', '极化>60%时x2', '将极化能量导向建设性改革。', '等极化飙升再打。'], ['危機ピボット', '分極化>60%でx2', '分極化エネルギーを建設的改革へ転換。', '分極化急増まで温存。'], 'Crisis', '危机', '危機', 5, { mediaPolarization: -0.04, institutionalTrust: 0.03, legalPluralism: 0.02 }, { condition: { signal: 'mediaPolarization', threshold: 0.6, compare: 'gt', multiplier: 2 } }),
+  card('solidarity_surge', 'A', ['Solidarity Surge', 'x2 if Economic Stress > 50%', 'Rally communities around mutual aid during hardship.', 'During economic crisis.'], ['团结浪潮', '经济压力>50%时x2', '在困难时期动员社区互助。', '经济危机期间。'], ['連帯サージ', '経済圧>50%でx2', '困難時にコミュニティ互助を呼びかける。', '経済危機中に。'], 'Community', '社区', 'コミュニティ', 5, { economicStress: -0.05, socialFragmentation: -0.03, institutionalTrust: 0.03 }, { condition: { signal: 'economicStress', threshold: 0.5, compare: 'gt', multiplier: 2 } }),
+  card('trust_restoration', 'A', ['Trust Restoration', 'x2 if Trust < 35%', 'Emergency trust rebuilding when institutions have collapsed.', 'When trust is critically low.'], ['信任修复', '信任<35%时x2', '制度崩溃时紧急重建信任。', '信任极低时。'], ['信頼修復', '信頼<35%でx2', '制度崩壊時の緊急信頼再建。', '信頼が極めて低い時に。'], 'Emergency', '紧急', '緊急', 6, { institutionalTrust: 0.06, socialFragmentation: -0.03 }, { condition: { signal: 'institutionalTrust', threshold: 0.35, compare: 'lt', multiplier: 2 } }),
+  card('identity_bridge', 'A', ['Identity Bridge', 'x2 if Identity > 70%', 'Cross-community identity programs when tensions peak.', 'When identity politics is extreme.'], ['身份桥梁', '身份>70%时x2', '紧张局势达峰时的跨社群身份计划。', '身份政治极端时。'], ['IDブリッジ', 'ID>70%でx2', '緊張がピークの時の越境IDプログラム。', 'ID政治が極端な時に。'], 'Bridge', '桥梁', '橋渡し', 5, { identityPolitics: -0.05, socialFragmentation: -0.03, legalPluralism: 0.02 }, { condition: { signal: 'identityPolitics', threshold: 0.7, compare: 'gt', multiplier: 2 } }),
+  card('regulation_relief', 'A', ['Regulation Relief', 'x2 if Regulation > 65%', 'Push back against over-regulation when state control peaks.', 'Counter high regulation scenarios.'], ['监管减压', '监管>65%时x2', '国家管控达峰时反制过度监管。', '高监管场景对策。'], ['規制緩和', '規制>65%でx2', '国家統制がピーク時に過剰規制を押し返す。', '高規制シナリオへの対抗。'], 'Policy', '政策', '政策', 5, { stateRegulation: -0.05, legalPluralism: 0.04 }, { condition: { signal: 'stateRegulation', threshold: 0.65, compare: 'gt', multiplier: 2 } }),
+  card('anxiety_response', 'A', ['Anxiety Response', 'x2 if Meaning > 75%', 'Channel existential anxiety into constructive spiritual practice.', 'During meaning search spikes.'], ['焦虑回应', '意义>75%时x2', '将存在焦虑引导为建设性灵性实践。', '意义追寻激增时。'], ['不安応答', '意味>75%でx2', '実存的不安を建設的な霊性実践へ導く。', '意味追求急増時に。'], 'Spiritual', '灵性', 'スピリチュアル', 5, { meaningSearch: -0.03, socialFragmentation: -0.04, youthPressure: -0.02 }, { condition: { signal: 'meaningSearch', threshold: 0.75, compare: 'gt', multiplier: 2 } }),
+  card('fragmentation_repair', 'A', ['Fragmentation Repair', 'x2 if Fragmentation > 70%', 'Emergency community cohesion programs.', 'When society is deeply fragmented.'], ['碎片修复', '碎片化>70%时x2', '紧急社群凝聚力计划。', '社会深度碎片化时。'], ['分断修復', '分断>70%でx2', '緊急コミュニティ結束プログラム。', '社会が深刻に分断された時に。'], 'Emergency', '紧急', '緊急', 6, { socialFragmentation: -0.06, institutionalTrust: 0.02 }, { condition: { signal: 'socialFragmentation', threshold: 0.7, compare: 'gt', multiplier: 2 } }),
+  card('youth_dialogue', 'A', ['Youth Dialogue', 'x2 if Youth > 65%', 'Structured youth dialogue programs when generational pressure peaks.', 'Counter youth awakening.'], ['青年对话', '青年>65%时x2', '青年压力达峰时的结构化对话项目。', '对抗青年觉醒。'], ['ユース対話', '若年圧>65%でx2', '世代間圧力がピーク時の構造化対話。', '若者覚醒への対抗。'], 'Youth', '青年', '若者', 5, { youthPressure: -0.05, meaningSearch: 0.03, digitalization: 0.02 }, { condition: { signal: 'youthPressure', threshold: 0.65, compare: 'gt', multiplier: 2 } }),
+  card('pluralism_shield', 'A', ['Pluralism Shield', 'x2 if Pluralism < 40%', 'Emergency pluralism protection when rights are under threat.', 'When pluralism is critically low.'], ['多元护盾', '多元<40%时x2', '权利受威胁时紧急保护多元主义。', '多元极低时。'], ['多元性シールド', '多元<40%でx2', '権利が脅かされた時の緊急多元性保護。', '多元性が極めて低い時に。'], 'Emergency', '紧急', '緊急', 6, { legalPluralism: 0.06, stateRegulation: -0.03 }, { condition: { signal: 'legalPluralism', threshold: 0.4, compare: 'lt', multiplier: 2 } }),
+
+  // A: Sustained cards (9 cards)
+  card('silent_diplomacy', 'A', ['Silent Diplomacy', 'Sustained 2R', 'Back-channel negotiations gradually de-escalate tensions.', 'Excellent long-term value.'], ['静默外交', '持续2轮', '幕后谈判逐步降低紧张。', '长期价值极佳。'], ['沈黙外交', '持続2R', '裏チャンネル交渉で緊張を段階的に緩和。', '長期的価値が高い。'], 'Diplomacy', '外交', '外交', 6, { identityPolitics: -0.03, socialFragmentation: -0.02, legalPluralism: 0.03 }, { sustained: 2 }),
+  card('grassroots_network', 'A', ['Grassroots Network', 'Sustained 3R', 'Build lasting community networks. Slow start, compounds over time.', 'Play before boss phases.'], ['草根网络', '持续3轮', '构建持久社区网络。启动慢但持续积累。', 'Boss前打出。'], ['草の根', '持続3R', '持続的なコミュニティネットワークを構築。', 'Bossフェーズ前に。'], 'Community', '社区', 'コミュニティ', 6, { institutionalTrust: 0.02, socialFragmentation: -0.02, economicStress: -0.02 }, { sustained: 3 }),
+  card('peace_process', 'A', ['Peace Process', 'Sustained 3R', 'Multi-round peace negotiations that compound trust over time.', 'Slow but deep stabilization.'], ['和平进程', '持续3轮', '多轮和平谈判随时间积累信任。', '缓慢但深层稳定。'], ['和平プロセス', '持続3R', '時間をかけて信頼を積み上げる多段和平交渉。', '遅いが深い安定化。'], 'Diplomacy', '外交', '外交', 7, { institutionalTrust: 0.03, mediaPolarization: -0.02, socialFragmentation: -0.02 }, { sustained: 3 }),
+  card('mentorship_program', 'A', ['Mentorship Program', 'Sustained 2R', 'Cross-faith mentorship pairs that build lasting bonds.', 'Youth stabilizer.'], ['导师计划', '持续2轮', '跨信仰导师配对建立持久纽带。', '青年稳定器。'], ['メンタープログラム', '持続2R', '宗教横断のメンター制度で持続的な絆を構築。', '若者安定化に。'], 'Youth', '青年', '若者', 5, { youthPressure: -0.03, meaningSearch: 0.02, identityPolitics: -0.02 }, { sustained: 2 }),
+  card('healing_circle', 'A', ['Healing Circle', 'Sustained 2R', 'Community healing sessions that gradually restore social fabric.', 'Post-crisis recovery.'], ['疗愈圈', '持续2轮', '社区疗愈课程逐步修复社会肌理。', '危机后恢复。'], ['ヒーリングサークル', '持続2R', 'コミュニティ癒しセッションで社会の絆を段階的に修復。', '危機後の回復に。'], 'Wellbeing', '关怀', 'ウェルビーイング', 5, { socialFragmentation: -0.02, meaningSearch: 0.02, economicStress: -0.01 }, { sustained: 2 }),
+  card('governance_reform', 'A', ['Governance Reform', 'Sustained 3R', 'Deep structural reform that compounds trust over multiple rounds.', 'High cost, compounding value.'], ['治理改革', '持续3轮', '深层结构改革在多轮中积累信任。', '高成本，复利价值。'], ['統治改革', '持続3R', '多ラウンドにわたり信頼を複利で積み上げる深層構造改革。', '高コスト、複利価値。'], 'Governance', '治理', '統治', 7, { institutionalTrust: 0.02, legalPluralism: 0.02, stateRegulation: -0.02 }, { sustained: 3 }),
+  card('cultural_exchange', 'A', ['Cultural Exchange', 'Sustained 2R', 'Ongoing cultural exchange programs that reduce barriers.', 'Identity bridge.'], ['文化交流', '持续2轮', '持续文化交流项目降低障碍。', '身份桥梁。'], ['文化交流', '持続2R', '障壁を減らす継続的な文化交流プログラム。', 'IDの橋渡しに。'], 'Culture', '文化', '文化', 5, { identityPolitics: -0.02, meaningSearch: 0.02, socialFragmentation: -0.02 }, { sustained: 2 }),
+  card('monitoring_mission', 'A', ['Monitoring Mission', 'Sustained 2R', 'Independent observers that keep governance accountable.', 'Sustains transparency.'], ['监测任务', '持续2轮', '独立观察员保持治理问责。', '持续透明。'], ['監視ミッション', '持続2R', '独立オブザーバーがガバナンスの説明責任を維持。', '透明性の持続に。'], 'Oversight', '监督', '監視', 5, { institutionalTrust: 0.02, stateRegulation: -0.02, legalPluralism: 0.02 }, { sustained: 2 }),
+  card('scholarship_fund', 'A', ['Scholarship Fund', 'Sustained 3R', 'Long-term interfaith education investment.', 'Compounds knowledge and tolerance.'], ['奖学金基金', '持续3轮', '长期跨信仰教育投资。', '积累知识与包容。'], ['奨学金基金', '持続3R', '長期的な宗教間教育投資。', '知識と寛容の蓄積。'], 'Education', '教育', '教育', 6, { meaningSearch: 0.02, youthPressure: -0.01, secularization: 0.01 }, { sustained: 3 }),
+
+  // ═══════════════════════════════════════════════════════════
+  // DECK B — Expansion & Disruption (54 cards)
+  // ═══════════════════════════════════════════════════════════
+
+  // B: Expansion & Tempo (18 cards)
+  card('youth_festival', 'B', ['Youth Festival', '+Youth, +Digital, +Volatility', 'Launch youth campaigns to accelerate participation velocity.', 'High combo potential.'], ['青年节拍', '+青年, +数字, +波动', '面向青年线上活动加速参与。', '高连击潜力。'], ['ユース祭典', '+若年, +デジタル, +変動', '若年層キャンペーンで参加速度を加速。', '高コンボ潜在力。'], 'Expansion', '扩张', '拡張', 4, { youthPressure: 0.06, digitalization: 0.05, socialFragmentation: 0.02 }),
+  card('migration_corridor', 'B', ['Migration Corridor', '+Mobility, +Integration', 'Open regulated mobility channels for integration.', 'Pairs with trust cards.'], ['迁徙走廊', '+迁移, +融合', '开放可监管迁移通道。', '与信任卡搭配。'], ['移動コリドー', '+移動, +統合', '管理可能な移動回廊を開設。', '信頼カードと組合せて。'], 'Mobility', '迁移', '移動', 5, { migration: 0.06, socialFragmentation: -0.03, legalPluralism: 0.03 }),
+  card('viral_campaign', 'B', ['Viral Campaign', '+Digital, +Youth', 'High-impact social media campaigns that go viral.', 'Risk of noise amplification.'], ['病毒传播', '+数字, +青年', '高影响力社交媒体病毒传播。', '有噪声放大风险。'], ['バイラル', '+デジタル, +若年', '高インパクトのバイラルSNSキャンペーン。', 'ノイズ増幅リスクあり。'], 'Digital', '数字', 'デジタル', 3, { digitalization: 0.06, youthPressure: 0.04, mediaPolarization: 0.02 }),
+  card('tent_revival', 'B', ['Tent Revival', '+Meaning, +Zeal', 'Old-school mass gathering events that ignite passion.', 'Amplifies identity bonds.'], ['帐篷复兴', '+意义, +热忱', '老派大型聚会活动点燃热情。', '放大身份纽带。'], ['テント復興', '+意味, +熱意', '情熱を燃やすオールドスクールの大集会。', 'IDの絆を増幅。'], 'Expansion', '扩张', '拡張', 4, { meaningSearch: 0.06, identityPolitics: 0.04, youthPressure: 0.02 }),
+  card('street_preaching', 'B', ['Street Preaching', '+Migration, +Identity', 'Public preaching in migration corridors.', 'Increases both mobility and identity.'], ['街头布道', '+迁移, +身份', '在迁移走廊进行公开布道。', '同时增加流动性与身份。'], ['路上伝道', '+移動, +ID', '移動回廊での公開布教。', '流動性とIDの両方を増加。'], 'Outreach', '传播', '布教', 3, { migration: 0.04, identityPolitics: 0.04, secularization: -0.02 }),
+  card('podcast_network', 'B', ['Podcast Network', '+Digital, -Secularization', 'Build a faith-focused podcast network reaching secular audiences.', 'Digital counter to secularization.'], ['播客网络', '+数字, -世俗化', '建立面向世俗受众的信仰播客网络。', '数字化反世俗化。'], ['ポッドキャスト', '+デジタル, -世俗化', '世俗層にリーチする信仰ポッドキャストネットワーク。', '世俗化へのデジタル対抗。'], 'Digital', '数字', 'デジタル', 4, { digitalization: 0.05, secularization: -0.04 }),
+  card('charity_blitz', 'B', ['Charity Blitz', '+Trust, -Economic stress', 'Massive short-term charitable giving campaign.', 'Quick economic relief.'], ['慈善闪击', '+信任, -经济压力', '大规模短期慈善捐赠活动。', '快速经济救济。'], ['チャリティ電撃', '+信頼, -経済圧', '大規模短期慈善キャンペーン。', '迅速な経済救済。'], 'Charity', '慈善', '慈善', 4, { institutionalTrust: 0.04, economicStress: -0.05 }),
+  card('campus_mission', 'B', ['Campus Mission', '+Youth, +Digital', 'Deploy missionary teams to universities and colleges.', 'Youth pipeline.'], ['校园传教', '+青年, +数字', '向大学部署传教团队。', '青年管道。'], ['キャンパス伝道', '+若年, +デジタル', '大学にミッショナリーチームを配備。', '若者パイプライン。'], 'Youth', '青年', '若者', 4, { youthPressure: 0.05, digitalization: 0.04, meaningSearch: 0.02 }),
+  card('diaspora_rally', 'B', ['Diaspora Rally', '+Migration, +Identity', 'Mobilize diaspora communities for political and spiritual solidarity.', 'Strong in migration contexts.'], ['侨民集会', '+迁移, +身份', '动员侨民社群政治与灵性团结。', '迁移环境下有效。'], ['ディアスポラ', '+移動, +ID', 'ディアスポラの政治的・霊的連帯を動員。', '移動文脈で強力。'], 'Identity', '身份', 'アイデンティティ', 5, { migration: 0.05, identityPolitics: 0.05, socialFragmentation: 0.02 }),
+  card('economic_mission', 'B', ['Economic Mission', '-Economic stress, +Trust', 'Faith-based micro-lending and job creation programs.', 'Builds economic resilience.'], ['经济使命', '-经济压力, +信任', '信仰微贷与就业创造项目。', '建设经济韧性。'], ['経済ミッション', '-経済圧, +信頼', '信仰ベースのマイクロ融資と雇用創出。', '経済的レジリエンスを構築。'], 'Economy', '经济', '経済', 5, { economicStress: -0.05, institutionalTrust: 0.04 }),
+  card('music_worship', 'B', ['Music Worship', '+Youth, +Meaning', 'Contemporary worship music events that draw youth.', 'Powerful youth attractor.'], ['音乐敬拜', '+青年, +意义', '当代敬拜音乐活动吸引青年。', '强力青年吸引器。'], ['音楽礼拝', '+若年, +意味', '若者を引き付ける現代礼拝音楽イベント。', '強力な若者アトラクター。'], 'Culture', '文化', '文化', 3, { youthPressure: 0.05, meaningSearch: 0.04 }),
+  card('media_blitz', 'B', ['Media Blitz', '+Digital, +Polarization', 'Aggressive media campaign that dominates the narrative but adds noise.', 'High risk, high reward.'], ['媒体闪击', '+数字, +极化', '激进媒体运动主导叙事但增加噪声。', '高风险高回报。'], ['メディア電撃', '+デジタル, +分極化', '攻撃的メディアキャンペーンがナラティブを支配するがノイズも増加。', 'ハイリスク・ハイリターン。'], 'Media', '媒体', 'メディア', 3, { digitalization: 0.06, mediaPolarization: 0.04, youthPressure: 0.02 }),
+  card('pilgrimage_route', 'B', ['Pilgrimage Route', '+Meaning, +Migration', 'Open new pilgrimage routes that drive spiritual tourism.', 'Migration + meaning combo.'], ['朝圣之路', '+意义, +迁移', '开辟新朝圣路线推动灵性旅游。', '迁移+意义组合。'], ['巡礼の道', '+意味, +移動', '新しい巡礼ルートでスピリチュアル・ツーリズムを推進。', '移動+意味コンボ。'], 'Spiritual', '灵性', 'スピリチュアル', 4, { meaningSearch: 0.05, migration: 0.04 }),
+  card('social_enterprise', 'B', ['Social Enterprise', '-Economic stress, +Digital', 'Faith-linked social enterprises and startups.', 'Economic + digital boost.'], ['社会企业', '-经济压力, +数字', '信仰关联社会企业与创业。', '经济+数字双提升。'], ['社会的企業', '-経済圧, +デジタル', '信仰関連のソーシャルエンタープライズ。', '経済+デジタルブースト。'], 'Economy', '经济', '経済', 5, { economicStress: -0.04, digitalization: 0.04, institutionalTrust: 0.02 }),
+  card('prayer_app', 'B', ['Prayer App', '+Digital, +Youth, +Meaning', 'Launch a viral prayer/meditation app.', 'Triple signal boost, slight cost.'], ['祈祷应用', '+数字, +青年, +意义', '发布病毒式祈祷冥想应用。', '三重信号提升。'], ['祈りアプリ', '+デジタル, +若年, +意味', 'バイラルな祈り/瞑想アプリをリリース。', '3重シグナルブースト。'], 'Technology', '技术', 'テクノロジー', 4, { digitalization: 0.04, youthPressure: 0.03, meaningSearch: 0.03 }),
+  card('outreach_surge', 'B', ['Outreach Surge', '+Migration, -Secularization', 'Massive missionary outreach across regions.', 'Broad expansion tool.'], ['传播浪潮', '+迁移, -世俗化', '大规模跨区域传教活动。', '广泛扩张工具。'], ['布教サージ', '+移動, -世俗化', '地域を越えた大規模布教活動。', '広範な拡張ツール。'], 'Outreach', '传播', '布教', 5, { migration: 0.05, secularization: -0.04, identityPolitics: 0.02 }),
+  card('holy_alliance', 'B', ['Holy Alliance', '+Identity, +Trust', 'Form a strategic alliance between compatible faiths.', 'Strengthens both identity and trust.'], ['神圣同盟', '+身份, +信任', '在兼容信仰间建立战略联盟。', '同时强化身份与信任。'], ['聖なる同盟', '+ID, +信頼', '互換性のある信仰間で戦略的同盟を形成。', 'IDと信頼の両方を強化。'], 'Alliance', '联盟', '同盟', 5, { identityPolitics: 0.04, institutionalTrust: 0.04, socialFragmentation: -0.02 }),
+  card('prosperity_gospel', 'B', ['Prosperity Gospel', '-Economic stress, +Polarization', 'Promise material blessing through faith. Popular but divisive.', 'Quick economic fix, social cost.'], ['成功神学', '-经济压力, +极化', '以信仰许诺物质祝福。流行但分裂。', '快速经济修复，社会代价。'], ['繁栄の福音', '-経済圧, +分極化', '信仰による物質的祝福を約束。人気だが分裂的。', '迅速な経済修復、社会的コスト。'], 'Economy', '经济', '経済', 3, { economicStress: -0.06, mediaPolarization: 0.04, identityPolitics: 0.02 }),
+
+  // B: Disruption & Risk (18 cards)
+  card('digital_fast', 'B', ['Digital Fast', 'x2 if Digital > 70%', 'Encourage stepping back from digital discourse.', 'Counter echo burst.'], ['数字斋戒', '数字>70%时x2', '鼓励退出数字话语。', '对抗回音室。'], ['デジタル断食', 'デジタル>70%でx2', 'デジタル言説からの退避を促す。', 'エコーバーストへの対抗。'], 'Rebalance', '再平衡', '再均衡', 4, { digitalization: -0.03, meaningSearch: 0.04, mediaPolarization: -0.03 }, { condition: { signal: 'digitalization', threshold: 0.7, compare: 'gt', multiplier: 2 } }),
+  card('identity_surge', 'B', ['Identity Surge', 'x2 if Secularization > 65%', 'Amplify identity bonds when secularization threatens tradition.', 'Counter secularization.'], ['身份浪潮', '世俗化>65%时x2', '世俗化威胁传统时放大身份纽带。', '对抗世俗化。'], ['IDサージ', '世俗化>65%でx2', '世俗化が伝統を脅かす時にIDの絆を増幅。', '世俗化への対抗。'], 'Identity', '身份', 'アイデンティティ', 5, { identityPolitics: 0.04, meaningSearch: 0.04, secularization: -0.03 }, { condition: { signal: 'secularization', threshold: 0.65, compare: 'gt', multiplier: 2 } }),
+  card('migration_surge', 'B', ['Migration Surge', 'x2 if Migration < 40%', 'Open flood gates when migration is low.', 'Breaks static patterns.'], ['迁移浪潮', '迁移<40%时x2', '迁移低时打开闸门。', '打破静态模式。'], ['移動サージ', '移動<40%でx2', '移動が低い時に堰を開く。', '静的パターンを打破。'], 'Mobility', '迁移', '移動', 4, { migration: 0.06, socialFragmentation: 0.02, economicStress: 0.02 }, { condition: { signal: 'migration', threshold: 0.4, compare: 'lt', multiplier: 2 } }),
+  card('meaning_crisis', 'B', ['Meaning Crisis', 'x2 if Meaning < 40%', 'Exploit existential crisis to drive spiritual seeking.', 'When meaning is critically low.'], ['意义危机', '意义<40%时x2', '利用存在危机驱动灵性追寻。', '意义极低时。'], ['意味の危機', '意味<40%でx2', '実存的危機を利用して霊性探求を駆動。', '意味が極めて低い時に。'], 'Spiritual', '灵性', 'スピリチュアル', 5, { meaningSearch: 0.06, youthPressure: 0.03 }, { condition: { signal: 'meaningSearch', threshold: 0.4, compare: 'lt', multiplier: 2 } }),
+  card('polarization_weapon', 'B', ['Polarization Weapon', 'x2 if Fragmentation > 65%', 'Use existing divisions to strengthen in-group loyalty.', 'Dangerous but powerful.'], ['极化武器', '碎片化>65%时x2', '利用现有分裂强化内群忠诚。', '危险但强力。'], ['分極化兵器', '分断>65%でx2', '既存の分断を利用して内集団の忠誠を強化。', '危険だが強力。'], 'Risk', '风险', 'リスク', 4, { identityPolitics: 0.05, mediaPolarization: 0.03, socialFragmentation: -0.02 }, { condition: { signal: 'socialFragmentation', threshold: 0.65, compare: 'gt', multiplier: 2 } }),
+  card('digital_crusade', 'B', ['Digital Crusade', 'x2 if Youth > 60%', 'Launch aggressive online campaigns targeting youth.', 'High youth engagement.'], ['数字圣战', '青年>60%时x2', '发起针对青年的激进线上运动。', '高青年参与。'], ['デジタル聖戦', '若年圧>60%でx2', '若者をターゲットにした攻撃的オンラインキャンペーン。', '高い若者参加率。'], 'Digital', '数字', 'デジタル', 4, { digitalization: 0.05, youthPressure: 0.04, meaningSearch: 0.02 }, { condition: { signal: 'youthPressure', threshold: 0.6, compare: 'gt', multiplier: 2 } }),
+  card('economic_leverage', 'B', ['Economic Leverage', 'x2 if Economic > 60%', 'Use economic influence to expand faith networks.', 'During economic pressure.'], ['经济杠杆', '经济>60%时x2', '利用经济影响力扩展信仰网络。', '经济压力期间。'], ['経済レバレッジ', '経済圧>60%でx2', '経済的影響力で信仰ネットワークを拡大。', '経済圧力時に。'], 'Economy', '经济', '経済', 5, { economicStress: -0.04, institutionalTrust: 0.03, identityPolitics: 0.02 }, { condition: { signal: 'economicStress', threshold: 0.6, compare: 'gt', multiplier: 2 } }),
+  card('counter_secular', 'B', ['Counter-Secular', 'x2 if Secular > 70%', 'Organized resistance to secularization trends.', 'Anti-secularization tool.'], ['反世俗化', '世俗化>70%时x2', '有组织地抵抗世俗化趋势。', '反世俗化工具。'], ['反世俗化', '世俗化>70%でx2', '世俗化トレンドへの組織的抵抗。', '反世俗化ツール。'], 'Resistance', '抵抗', '抵抗', 5, { secularization: -0.06, meaningSearch: 0.04, identityPolitics: 0.02 }, { condition: { signal: 'secularization', threshold: 0.7, compare: 'gt', multiplier: 2 } }),
+  card('regime_change', 'B', ['Regime Change', '-Regulation, +Volatility', 'Support political changes that reduce religious regulation.', 'High volatility play.'], ['政权更迭', '-监管, +波动', '支持减少宗教监管的政治变革。', '高波动打法。'], ['体制変革', '-規制, +変動', '宗教規制を緩和する政治変革を支援。', '高変動プレイ。'], 'Political', '政治', '政治', 5, { stateRegulation: -0.06, socialFragmentation: 0.03, legalPluralism: 0.03 }),
+  card('propaganda_wave', 'B', ['Propaganda Wave', '+Digital, +Identity, +Polarization', 'Mass propaganda campaign. Effective but polarizing.', 'Extreme risk play.'], ['宣传攻势', '+数字, +身份, +极化', '大规模宣传运动。有效但极化。', '极端风险打法。'], ['プロパガンダ', '+デジタル, +ID, +分極化', '大規模プロパガンダ。効果的だが分極化。', '極端リスクプレイ。'], 'Media', '媒体', 'メディア', 3, { digitalization: 0.04, identityPolitics: 0.04, mediaPolarization: 0.04 }),
+  card('schism_exploit', 'B', ['Schism Exploit', '+Identity, -Trust', 'Exploit internal divisions in competing faiths.', 'Offensive but risky.'], ['裂教利用', '+身份, -信任', '利用竞争信仰的内部分裂。', '进攻性但有风险。'], ['分裂利用', '+ID, -信頼', '競合する信仰の内部分裂を利用。', '攻撃的だがリスクあり。'], 'Offense', '进攻', '攻撃', 3, { identityPolitics: 0.05, institutionalTrust: -0.03, socialFragmentation: 0.02 }),
+  card('underground_network', 'B', ['Underground Network', '+Identity, -Regulation', 'Build clandestine faith networks that resist state control.', 'Under persecution.'], ['地下网络', '+身份, -监管', '建立抵抗国家控制的秘密信仰网络。', '迫害环境下。'], ['地下ネットワーク', '+ID, -規制', '国家統制に抵抗する秘密の信仰ネットワークを構築。', '迫害下に。'], 'Resistance', '抵抗', '抵抗', 4, { identityPolitics: 0.05, stateRegulation: -0.04 }),
+  card('apocalypse_preaching', 'B', ['Apocalypse Preaching', '+Meaning, +Youth, +Polarization', 'End-times messaging that drives urgency and conversion.', 'Powerful but polarizing.'], ['末日布道', '+意义, +青年, +极化', '末世信息推动紧迫感与转化。', '强力但极化。'], ['終末説教', '+意味, +若年, +分極化', '終末メッセージが緊迫感と改宗を駆動。', '強力だが分極化。'], 'Expansion', '扩张', '拡張', 4, { meaningSearch: 0.05, youthPressure: 0.03, mediaPolarization: 0.03 }),
+  card('sabotage', 'B', ['Sabotage', '-Trust, -Regulation', 'Undermine institutional credibility of rivals.', 'Offensive move.'], ['破坏', '-信任, -监管', '破坏对手的制度信誉。', '进攻行动。'], ['妨害工作', '-信頼, -規制', '競合の制度的信頼性を毀損。', '攻撃的行動。'], 'Offense', '进攻', '攻撃', 3, { institutionalTrust: -0.04, stateRegulation: -0.03, mediaPolarization: 0.03 }),
+  card('holy_war', 'B', ['Holy War', '+Identity, +Polarization, -Pluralism', 'Declare ideological war on competing worldviews.', 'Maximum aggression.'], ['圣战', '+身份, +极化, -多元', '对竞争世界观宣战。', '最大攻击性。'], ['聖戦', '+ID, +分極化, -多元', '競合する世界観に思想的戦争を宣言。', '最大攻撃性。'], 'War', '战争', '戦争', 4, { identityPolitics: 0.06, mediaPolarization: 0.05, legalPluralism: -0.04 }),
+  card('faith_tax', 'B', ['Faith Tax', '+Regulation, +Trust', 'Support state religious tax that funds faith institutions.', 'Institutional power play.'], ['信仰税', '+监管, +信任', '支持为信仰机构提供资金的国家宗教税。', '制度权力博弈。'], ['信仰税', '+規制, +信頼', '信仰機関に資金を提供する国家宗教税を支持。', '制度的権力プレイ。'], 'Political', '政治', '政治', 4, { stateRegulation: 0.04, institutionalTrust: 0.04, secularization: -0.03 }),
+  card('martyrdom_narrative', 'B', ['Martyrdom Narrative', '+Identity, +Meaning', 'Frame persecution as sacred sacrifice to strengthen resolve.', 'Identity amplifier.'], ['殉道叙事', '+身份, +意义', '将迫害框定为神圣牺牲以强化决心。', '身份放大器。'], ['殉教ナラティブ', '+ID, +意味', '迫害を聖なる犠牲として位置づけ決意を強化。', 'IDアンプリファイア。'], 'Narrative', '叙事', 'ナラティブ', 4, { identityPolitics: 0.05, meaningSearch: 0.04, socialFragmentation: 0.02 }),
+  card('resource_raid', 'B', ['Resource Raid', '-Economic stress, +Identity', 'Redirect resources from rival institutions.', 'Aggressive economic play.'], ['资源突袭', '-经济压力, +身份', '从对手机构重新分配资源。', '激进经济打法。'], ['資源レイド', '-経済圧, +ID', '競合機関からリソースをリダイレクト。', '攻撃的経済プレイ。'], 'Economy', '经济', '経済', 4, { economicStress: -0.04, identityPolitics: 0.04, institutionalTrust: -0.02 }),
+
+  // B: Sustained expansion cards (9 cards)
+  card('revival_tour', 'B', ['Revival Tour', 'Sustained 3R', 'Multi-round revival tour sweeping across regions.', 'Massive expansion potential.'], ['复兴巡回', '持续3轮', '跨区域多轮复兴巡回。', '巨大扩张潜力。'], ['リバイバルツアー', '持続3R', '地域を席巻する複数ラウンドのリバイバルツアー。', '巨大な拡張ポテンシャル。'], 'Expansion', '扩张', '拡張', 6, { meaningSearch: 0.02, youthPressure: 0.02, migration: 0.02 }, { sustained: 3 }),
+  card('digital_empire', 'B', ['Digital Empire', 'Sustained 3R', 'Build a multi-platform digital presence over time.', 'Compounds digital reach.'], ['数字帝国', '持续3轮', '逐步构建多平台数字存在。', '积累数字影响力。'], ['デジタル帝国', '持続3R', '時間をかけて多プラットフォームデジタルプレゼンスを構築。', 'デジタルリーチの蓄積。'], 'Digital', '数字', 'デジタル', 6, { digitalization: 0.03, youthPressure: 0.01, mediaPolarization: 0.01 }, { sustained: 3 }),
+  card('territory_campaign', 'B', ['Territory Campaign', 'Sustained 2R', 'Sustained campaign to establish dominance in target regions.', 'Territory expansion.'], ['领地攻势', '持续2轮', '持续攻势在目标区域建立主导地位。', '领地扩张。'], ['領域キャンペーン', '持続2R', '目標地域で優位を確立するための持続キャンペーン。', '領域拡張。'], 'Territory', '领地', '領域', 6, { migration: 0.03, identityPolitics: 0.02, socialFragmentation: 0.01 }, { sustained: 2 }),
+  card('education_offensive', 'B', ['Education Offensive', 'Sustained 3R', 'Long-term faith education programs in schools.', 'Shapes next generation.'], ['教育攻势', '持续3轮', '长期学校信仰教育项目。', '塑造下一代。'], ['教育攻勢', '持続3R', '学校での長期信仰教育プログラム。', '次世代を形成。'], 'Education', '教育', '教育', 6, { youthPressure: 0.02, meaningSearch: 0.02, secularization: -0.01 }, { sustained: 3 }),
+  card('media_network', 'B', ['Media Network', 'Sustained 2R', 'Build a faith-owned media network over multiple rounds.', 'Controls narrative.'], ['媒体网络', '持续2轮', '多轮建设信仰自有媒体网络。', '控制叙事。'], ['メディアネットワーク', '持続2R', '信仰所有のメディアネットワークを構築。', 'ナラティブの制御。'], 'Media', '媒体', 'メディア', 5, { digitalization: 0.03, mediaPolarization: 0.02, identityPolitics: 0.01 }, { sustained: 2 }),
+  card('economic_network', 'B', ['Economic Network', 'Sustained 2R', 'Faith-based economic cooperation networks.', 'Long-term economic strength.'], ['经济网络', '持续2轮', '信仰经济合作网络。', '长期经济实力。'], ['経済ネットワーク', '持続2R', '信仰ベースの経済協力ネットワーク。', '長期的経済力。'], 'Economy', '经济', '経済', 5, { economicStress: -0.03, institutionalTrust: 0.02 }, { sustained: 2 }),
+  card('identity_forge', 'B', ['Identity Forge', 'Sustained 2R', 'Multi-round identity-building programs that harden group bonds.', 'Deep identity investment.'], ['身份熔炉', '持续2轮', '多轮身份建设项目硬化群体纽带。', '深层身份投资。'], ['IDの炉', '持続2R', 'グループの絆を鍛える複数ラウンドのID構築プログラム。', '深いID投資。'], 'Identity', '身份', 'アイデンティティ', 5, { identityPolitics: 0.03, meaningSearch: 0.02, socialFragmentation: 0.01 }, { sustained: 2 }),
+  card('training_pipeline', 'B', ['Training Pipeline', 'Sustained 3R', 'Systematic leadership training across generations.', 'Institutional capacity builder.'], ['培训管道', '持续3轮', '跨代系统化领导力培训。', '制度能力建设者。'], ['研修パイプライン', '持続3R', '世代を超えた体系的リーダーシップ研修。', '制度的能力構築。'], 'Institution', '制度', '制度', 6, { institutionalTrust: 0.02, youthPressure: -0.01, meaningSearch: 0.01 }, { sustained: 3 }),
+  card('counter_intelligence', 'B', ['Counter-Intelligence', 'Sustained 2R', 'Sustained information operations to protect and advance interests.', 'Shadow warfare.'], ['反情报', '持续2轮', '持续信息行动保护和推进利益。', '影子战争。'], ['対情報', '持続2R', '利益の保護と推進のための持続的情報作戦。', 'シャドウ・ウォーフェア。'], 'Intelligence', '情报', '情報', 5, { mediaPolarization: -0.02, identityPolitics: 0.02, stateRegulation: -0.02 }, { sustained: 2 }),
+
+  // B: Remaining expansion immediate cards (9 cards)
+  card('conversion_sprint', 'B', ['Conversion Sprint', '+Migration, +Youth', 'Rapid conversion outreach in underserved regions.', 'Quick expansion.'], ['转化冲刺', '+迁移, +青年', '在服务不足地区快速转化传播。', '快速扩张。'], ['改宗スプリント', '+移動, +若年', '未開拓地域での急速な改宗布教。', '迅速な拡張。'], 'Outreach', '传播', '布教', 3, { migration: 0.05, youthPressure: 0.04 }),
+  card('faith_academy', 'B', ['Faith Academy', '+Meaning, -Secularization', 'Establish faith-based educational academies.', 'Long-term investment.'], ['信仰学院', '+意义, -世俗化', '建立信仰教育学院。', '长期投资。'], ['信仰学院', '+意味, -世俗化', '信仰ベースの教育学院を設立。', '長期投資。'], 'Education', '教育', '教育', 5, { meaningSearch: 0.05, secularization: -0.04 }),
+  card('night_vigil', 'B', ['Night Vigil', '+Meaning, +Identity', 'Mass prayer vigils that strengthen communal bonds.', 'Identity + meaning.'], ['夜间守望', '+意义, +身份', '大规模祈祷守夜强化社群纽带。', '身份+意义。'], ['夜の守り', '+意味, +ID', '共同体の絆を強化する大規模祈祷。', 'ID+意味。'], 'Spiritual', '灵性', 'スピリチュアル', 4, { meaningSearch: 0.04, identityPolitics: 0.04 }),
+  card('food_bank', 'B', ['Food Bank', '-Economic stress, +Trust', 'Community food banks that demonstrate faith in action.', 'Basic needs + trust.'], ['食物银行', '-经济压力, +信任', '社区食物银行展示信仰实践。', '基本需求+信任。'], ['フードバンク', '-経済圧, +信頼', 'コミュニティフードバンクで信仰を実践。', '基本ニーズ+信頼。'], 'Charity', '慈善', '慈善', 3, { economicStress: -0.04, institutionalTrust: 0.03 }),
+  card('liberation_theology', 'B', ['Liberation Theology', '-Economic stress, +Youth', 'Theology of liberation addressing social inequality.', 'Radical economic justice.'], ['解放神学', '-经济压力, +青年', '关注社会不平等的解放神学。', '激进经济正义。'], ['解放の神学', '-経済圧, +若年', '社会的不平等に取り組む解放の神学。', 'ラディカルな経済正義。'], 'Theology', '神学', '神学', 5, { economicStress: -0.05, youthPressure: 0.04, identityPolitics: 0.02 }),
+  card('sacred_art', 'B', ['Sacred Art', '+Meaning, +Digital', 'Commission sacred art and digital experiences.', 'Cultural + digital reach.'], ['神圣艺术', '+意义, +数字', '委托创作神圣艺术与数字体验。', '文化+数字触达。'], ['聖なる芸術', '+意味, +デジタル', '聖なる芸術とデジタル体験を委託制作。', '文化+デジタルリーチ。'], 'Culture', '文化', '文化', 4, { meaningSearch: 0.04, digitalization: 0.04 }),
+  card('exile_network', 'B', ['Exile Network', '+Migration, +Identity', 'Support networks for faith communities in exile.', 'Diaspora empowerment.'], ['流亡网络', '+迁移, +身份', '支持流亡信仰社群的网络。', '侨民赋权。'], ['亡命ネットワーク', '+移動, +ID', '亡命中の信仰コミュニティを支援するネットワーク。', 'ディアスポラの力。'], 'Support', '支持', 'サポート', 4, { migration: 0.05, identityPolitics: 0.04, socialFragmentation: 0.01 }),
+  card('truth_commission', 'B', ['Truth Commission', '+Trust, -Polarization', 'Public truth and reconciliation process.', 'Post-conflict healing.'], ['真相委员会', '+信任, -极化', '公开真相与和解进程。', '冲突后愈合。'], ['真実委員会', '+信頼, -分極化', '公開の真実と和解のプロセス。', '紛争後の癒し。'], 'Justice', '正义', '正義', 6, { institutionalTrust: 0.05, mediaPolarization: -0.04, identityPolitics: -0.02 }),
+  card('frontier_mission', 'B', ['Frontier Mission', '+Migration, +Meaning', 'Pioneer missions to unreached territories.', 'Maximum reach expansion.'], ['前线传教', '+迁移, +意义', '向未触及领地的先锋传教。', '最大范围扩张。'], ['フロンティア伝道', '+移動, +意味', '未到達領域への先駆的宣教。', '最大範囲拡張。'], 'Frontier', '前线', 'フロンティア', 5, { migration: 0.05, meaningSearch: 0.04, secularization: -0.02 })
 ];
 
 export const SECRET_AGENDA_LIBRARY = [
-  {
-    id: 'combo_director',
-    label: { en: 'Combo Director', 'zh-CN': '连锁导演', ja: 'コンボ演出家' },
-    description: {
-      en: 'Reach Combo streak 4+ once before round 14.',
-      'zh-CN': '第 14 轮前至少触发一次 4 连击。',
-      ja: 'ラウンド14までにコンボ4以上を1回達成。'
-    },
-    reward: 8
-  },
-  {
-    id: 'quiet_court',
-    label: { en: 'Quiet Court', 'zh-CN': '静默法庭', ja: '静かな法廷' },
-    description: {
-      en: 'Keep judgment ratio under 30% at round 10+.',
-      'zh-CN': '第 10 轮后保持审判比低于 30%。',
-      ja: 'ラウンド10以降で審判比率30%未満を維持。'
-    },
-    reward: 10
-  },
-  {
-    id: 'ghost_slayer',
-    label: { en: 'Ghost Slayer', 'zh-CN': '影子猎手', ja: 'ゴースト撃破' },
-    description: {
-      en: 'Lead the ghost comparison by +800 at round 12+.',
-      'zh-CN': '第 12 轮后 Ghost 对照领先 +800。',
-      ja: 'ラウンド12以降でゴースト比 +800 を達成。'
-    },
-    reward: 9
-  },
-  {
-    id: 'card_master',
-    label: { en: 'Card Master', 'zh-CN': '卡牌大师', ja: 'カードマスター' },
-    description: {
-      en: 'Play 5+ strategy cards in a single run.',
-      'zh-CN': '单局中使用 5 张以上策略卡。',
-      ja: '1ランで戦略カードを5枚以上使用。'
-    },
-    reward: 7
-  },
-  {
-    id: 'peace_broker',
-    label: { en: 'Peace Broker', 'zh-CN': '和平经纪人', ja: 'ピースブローカー' },
-    description: {
-      en: 'Keep social fragmentation below 60% for 5 consecutive rounds after round 8.',
-      'zh-CN': '第 8 轮后连续 5 轮保持社会碎片化低于 60%。',
-      ja: 'ラウンド8以降、5連続ラウンドで社会分断を60%未満に維持。'
-    },
-    reward: 12
-  }
+  { id: 'combo_director', label: { en: 'Combo Director', 'zh-CN': '连锁导演', ja: 'コンボ演出家' }, description: { en: 'Reach Combo streak 4+ once before round 14.', 'zh-CN': '第 14 轮前至少触发一次 4 连击。', ja: 'ラウンド14までにコンボ4以上を1回達成。' }, reward: 8 },
+  { id: 'quiet_court', label: { en: 'Quiet Court', 'zh-CN': '静默法庭', ja: '静かな法廷' }, description: { en: 'Keep judgment ratio under 30% at round 10+.', 'zh-CN': '第 10 轮后保持审判比低于 30%。', ja: 'ラウンド10以降で審判比率30%未満を維持。' }, reward: 10 },
+  { id: 'ghost_slayer', label: { en: 'Ghost Slayer', 'zh-CN': '影子猎手', ja: 'ゴースト撃破' }, description: { en: 'Lead the ghost comparison by +800 at round 12+.', 'zh-CN': '第 12 轮后 Ghost 对照领先 +800。', ja: 'ラウンド12以降でゴースト比 +800 を達成。' }, reward: 9 },
+  { id: 'card_master', label: { en: 'Card Master', 'zh-CN': '卡牌大师', ja: 'カードマスター' }, description: { en: 'Play 5+ strategy cards in a single run.', 'zh-CN': '单局中使用 5 张以上策略卡。', ja: '1ランで戦略カードを5枚以上使用。' }, reward: 7 },
+  { id: 'peace_broker', label: { en: 'Peace Broker', 'zh-CN': '和平经纪人', ja: 'ピースブローカー' }, description: { en: 'Keep social fragmentation below 60% for 5 consecutive rounds after round 8.', 'zh-CN': '第 8 轮后连续 5 轮保持社会碎片化低于 60%。', ja: 'ラウンド8以降、5連続ラウンドで社会分断を60%未満に維持。' }, reward: 12 }
 ];
 
 export const OBJECTIVE_LIBRARY = [
-  {
-    id: 'round_advance',
-    label: { en: 'Reach round 12', 'zh-CN': '到达第 12 轮', ja: 'ラウンド12到達' },
-    description: {
-      en: 'Survive and advance the simulation to round 12 without pausing or resetting.',
-      'zh-CN': '在不暂停或重置的情况下推进模拟到第 12 轮。',
-      ja: '一時停止やリセットなしでシミュレーションをラウンド12まで進行。'
-    }
-  },
-  {
-    id: 'stability_window',
-    label: {
-      en: 'Keep fragmentation below 78%',
-      'zh-CN': '社会碎片化低于 78%',
-      ja: '社会分断を 78% 未満に維持'
-    },
-    description: {
-      en: 'Maintain social fragmentation below the 78% threshold at the time of evaluation.',
-      'zh-CN': '在评估时保持社会碎片化低于 78% 的阈值。',
-      ja: '評価時に社会分断を78%の閾値未満に維持。'
-    }
-  },
-  {
-    id: 'region_chain',
-    label: {
-      en: 'Build a region chain of 3+',
-      'zh-CN': '形成 3 连区域控制链',
-      ja: '地域連鎖 3 以上'
-    },
-    description: {
-      en: 'Establish at least 3 connected regions dominated by the same religion.',
-      'zh-CN': '建立至少 3 个由同一宗教主导的连续区域。',
-      ja: '同じ宗教が優勢な3つ以上の連続地域を確立。'
-    }
-  }
+  { id: 'round_advance', label: { en: 'Reach round 12', 'zh-CN': '到达第 12 轮', ja: 'ラウンド12到達' }, description: { en: 'Survive and advance the simulation to round 12.', 'zh-CN': '推进模拟到第 12 轮。', ja: 'シミュレーションをラウンド12まで進行。' } },
+  { id: 'stability_window', label: { en: 'Keep fragmentation below 78%', 'zh-CN': '碎片化低于 78%', ja: '分断78%未満を維持' }, description: { en: 'Maintain social fragmentation below 78%.', 'zh-CN': '保持社会碎片化低于 78%。', ja: '社会分断を78%未満に維持。' } },
+  { id: 'region_chain', label: { en: 'Build a region chain of 3+', 'zh-CN': '形成 3 连区域链', ja: '地域連鎖3以上' }, description: { en: 'Establish 3+ connected regions dominated by the same religion.', 'zh-CN': '建立 3+ 个同一宗教主导的连续区域。', ja: '同宗教優勢の3連続地域を確立。' } }
 ];
 
 export const ACHIEVEMENT_LIBRARY = [
-  {
-    id: 'combo_king',
-    label: { en: 'Combo King', 'zh-CN': '连击之王', ja: 'コンボ王' },
-    description: {
-      en: 'Reach a combo streak of 6+ in a single run.',
-      'zh-CN': '单局中达成 6 连击以上。',
-      ja: '1ランでコンボストリーク6以上を達成。'
-    }
-  },
-  {
-    id: 'raid_stable',
-    label: { en: 'Raid Stabilizer', 'zh-CN': '危机稳态者', ja: '危機安定者' },
-    description: {
-      en: 'Clear a Boss Crisis with zero failed stages (victory outcome).',
-      'zh-CN': 'Boss 危机中零失败阶段通关（胜利结局）。',
-      ja: 'Boss危機を失敗段階ゼロでクリア（勝利結果）。'
-    }
-  },
-  {
-    id: 'oracle',
-    label: { en: 'Bet Oracle', 'zh-CN': '预判先知', ja: '予測の賢者' },
-    description: {
-      en: 'Win 3 consecutive bets in a single run.',
-      'zh-CN': '单局中连续赢得 3 次下注。',
-      ja: '1ランで3連続の賭けに勝利。'
-    }
-  },
-  {
-    id: 'deck_scholar',
-    label: { en: 'Deck Scholar', 'zh-CN': '卡组学者', ja: 'デッキ学者' },
-    description: {
-      en: 'Play at least 8 unique strategy cards across all runs.',
-      'zh-CN': '在所有对局中累计使用 8 种不同的策略卡。',
-      ja: '全ランを通じて8種類以上の戦略カードを使用。'
-    }
-  },
-  {
-    id: 'iron_legend',
-    label: { en: 'Iron Legend', 'zh-CN': '铁人传说', ja: '鉄人伝説' },
-    description: {
-      en: 'Complete an Ironman run with 3 stars.',
-      'zh-CN': '在铁人模式中以 3 星完成对局。',
-      ja: 'アイアンマンモードで3スターを獲得。'
-    }
-  }
+  { id: 'combo_king', label: { en: 'Combo King', 'zh-CN': '连击之王', ja: 'コンボ王' }, description: { en: 'Reach a combo streak of 6+ in a single run.', 'zh-CN': '单局中达成 6 连击以上。', ja: '1ランでコンボ6以上を達成。' } },
+  { id: 'raid_stable', label: { en: 'Raid Stabilizer', 'zh-CN': '危机稳态者', ja: '危機安定者' }, description: { en: 'Clear a Boss Crisis with zero failed stages.', 'zh-CN': 'Boss 危机零失败通关。', ja: 'Boss危機を失敗ゼロでクリア。' } },
+  { id: 'oracle', label: { en: 'Bet Oracle', 'zh-CN': '预判先知', ja: '予測の賢者' }, description: { en: 'Win 3 consecutive bets in a single run.', 'zh-CN': '单局连续赢得 3 次下注。', ja: '1ランで3連続ベット勝利。' } },
+  { id: 'deck_scholar', label: { en: 'Deck Scholar', 'zh-CN': '卡组学者', ja: 'デッキ学者' }, description: { en: 'Play at least 8 unique strategy cards across all runs.', 'zh-CN': '累计使用 8 种不同策略卡。', ja: '全ラン通じて8種以上のカードを使用。' } },
+  { id: 'iron_legend', label: { en: 'Iron Legend', 'zh-CN': '铁人传说', ja: '鉄人伝説' }, description: { en: 'Complete an Ironman run with 3 stars.', 'zh-CN': '铁人模式 3 星通关。', ja: 'アイアンマンで3スター。' } }
 ];
