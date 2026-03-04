@@ -798,6 +798,7 @@ class OpenAIClient {
       messages
     };
     const maxAttempts = this.maxRetries + 1;
+    const timeoutMs = options.timeoutMs ?? this.timeoutMs;
 
     this.log('request.start', {
       callId,
@@ -809,7 +810,7 @@ class OpenAIClient {
       messageCount: messages.length,
       temperature: requestBody.temperature,
       maxTokens: requestBody.max_tokens,
-      timeoutMs: this.timeoutMs,
+      timeoutMs,
       maxAttempts
     });
 
@@ -832,7 +833,7 @@ class OpenAIClient {
       try {
         timeoutHandle = setTimeout(() => {
           controller.abort();
-        }, this.timeoutMs);
+        }, timeoutMs);
         response = await fetch(url, {
           method: 'POST',
           headers: {
@@ -1128,13 +1129,10 @@ religionState=${JSON.stringify(agentState)}`;
     }
   }
 
-  async generateReport(snapshot, locale = DEFAULT_LOCALE) {
+  async generateReport(snapshot) {
     if (!this.enabled) {
       return null;
     }
-
-    const lang = normalizeLocale(locale);
-    const langName = localeName(lang);
 
     const religionSummary = snapshot.religions.map((r) => ({
       name: r.name,
@@ -1158,13 +1156,13 @@ religionState=${JSON.stringify(agentState)}`;
 
     const systemPrompt = `You are a panel of three distinguished scholars collaborating on an academic research report analyzing religious dynamics:
 
-1. **Religious Studies Scholar (宗教学者)**: Expert in comparative religion, theology, missionary strategies, doctrine evolution, and faith retention mechanisms. You analyze how doctrinal appeal, ritual depth, community bonds, and institutional capacity affect religious growth and decline.
+1. **Religious Studies Scholar**: Expert in comparative religion, theology, missionary strategies, doctrine evolution, and faith retention mechanisms. You analyze how doctrinal appeal, ritual depth, community bonds, and institutional capacity affect religious growth and decline.
 
-2. **Historian (历史学家)**: Specialist in the history of civilizations, religious movements, geopolitical influences on faith, migration patterns, and socioeconomic forces. You analyze how external social signals—digitalization, economic stress, secularization, state regulation—shape religious landscapes over time.
+2. **Historian**: Specialist in the history of civilizations, religious movements, geopolitical influences on faith, migration patterns, and socioeconomic forces. You analyze how external social signals—digitalization, economic stress, secularization, state regulation—shape religious landscapes over time.
 
-3. **Philosopher (哲学家)**: Focused on philosophy of religion, existentialism, meaning-making, identity construction, and the tension between modernity and tradition. You analyze the deeper human motivations behind religious conversion, apostasy, and the search for meaning in an increasingly fragmented world.
+3. **Philosopher**: Focused on philosophy of religion, existentialism, meaning-making, identity construction, and the tension between modernity and tradition. You analyze the deeper human motivations behind religious conversion, apostasy, and the search for meaning in an increasingly fragmented world.
 
-Write the report in ${langName}. Use an academic tone with proper structure. The report must be data-driven, referencing specific numbers and trends from the simulation data provided. Format the output as Markdown.`;
+Write the report in English. Use an academic tone with proper structure. The report must be data-driven, referencing specific numbers and trends from the simulation data provided. Format the output as Markdown. Be thorough and detailed in each section.`;
 
     const userPrompt = `Based on the following multi-agent religion simulation data (Round ${snapshot.round}, Scenario: ${snapshot.scenario}), produce a comprehensive academic analysis report.
 
@@ -1195,33 +1193,33 @@ ${JSON.stringify((snapshot.logs || []).slice(-30), null, 2)}
 
 Please produce the report with the following structure:
 
-# 宗教兴衰更迭：多维度学术分析报告
+# The Rise and Fall of Religions: A Multi-Perspective Academic Analysis
 
-## 一、摘要
-(Brief executive summary of key findings, 150-200 words)
+## 1. Executive Summary
+(Brief executive summary of key findings, 200-300 words)
 
-## 二、数据概览
+## 2. Data Overview
 (Comparative overview table of all religions: followers, growth/decline trends, key metrics)
 
-## 三、宗教学者视角分析
-### 3.1 教义吸引力与传教策略效果
-### 3.2 信仰保持机制与退出壁垒
-### 3.3 制度化能力与宗教裁判
+## 3. Religious Studies Perspective
+### 3.1 Doctrinal Appeal and Missionary Strategy Effectiveness
+### 3.2 Faith Retention Mechanisms and Exit Barriers
+### 3.3 Institutional Capacity and Religious Tribunals
 
-## 四、历史学家视角分析
-### 4.1 社会信号变迁与宗教格局
-### 4.2 数字化浪潮与传统信仰的碰撞
-### 4.3 人口迁移、经济压力与宗教版图重绘
+## 4. Historian's Perspective
+### 4.1 Social Signal Shifts and the Religious Landscape
+### 4.2 The Digital Wave vs. Traditional Faith
+### 4.3 Migration, Economic Pressure, and the Redrawing of Religious Boundaries
 
-## 五、哲学家视角分析
-### 5.1 意义追寻：世俗化时代的精神需求
-### 5.2 身份认同危机与宗教回归
-### 5.3 多元主义困境与信仰的碎片化
+## 5. Philosopher's Perspective
+### 5.1 The Search for Meaning in a Secular Age
+### 5.2 Identity Crisis and Religious Resurgence
+### 5.3 The Pluralism Dilemma and Fragmentation of Faith
 
-## 六、综合结论与展望
+## 6. Synthesis and Outlook
 (Synthesis of all three perspectives, key predictions, academic implications)
 
-## 七、参考数据附录
+## 7. Data Appendix
 (Key data points referenced in the analysis)`;
 
     try {
@@ -1230,7 +1228,7 @@ Please produce the report with the following structure:
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
-        { temperature: 0.7, maxTokens: 4000, trace: `report_round_${snapshot.round}` }
+        { temperature: 0.7, maxTokens: 8000, timeoutMs: 120000, trace: `report_round_${snapshot.round}` }
       );
       return content;
     } catch (err) {
@@ -2736,7 +2734,6 @@ app.post('/api/simulation/signals', (req, res) => {
 app.post('/api/simulation/report', async (req, res) => {
   try {
     const snapshot = simulation.snapshot();
-    const locale = normalizeLocale(req.body?.locale || snapshot.locale || DEFAULT_LOCALE);
 
     if (!openaiClient.enabled) {
       return res.status(400).json({ message: 'AI is not configured. Please set AI_API_KEY.' });
@@ -2746,17 +2743,12 @@ app.post('/api/simulation/report', async (req, res) => {
       return res.status(400).json({ message: 'Simulation has not started or no rounds completed.' });
     }
 
-    const markdown = await openaiClient.generateReport(snapshot, locale);
+    const markdown = await openaiClient.generateReport(snapshot);
     if (!markdown) {
       return res.status(500).json({ message: 'AI failed to generate report content.' });
     }
 
-    const langName = localeName(locale);
-    const title = locale === 'zh-CN'
-      ? `宗教兴衰更迭分析报告 — 第${snapshot.round}轮`
-      : locale === 'ja'
-        ? `宗教興亡分析レポート — ラウンド${snapshot.round}`
-        : `Religion Dynamics Analysis Report — Round ${snapshot.round}`;
+    const title = `Religion Dynamics Analysis Report — Round ${snapshot.round}`;
 
     const pdfBuffer = await generatePdfBuffer(markdown, { title });
 

@@ -105,6 +105,9 @@
       </aside>
     </div>
 
+    <!-- ===== EVENT BANNER (top of page, auto-fades) ===== -->
+    <div id="eventBanner" class="event-banner" hidden></div>
+
     <!-- ===== DRAWER (Insights + Logs) ===== -->
     <div id="drawerOverlay" class="drawer-overlay" hidden>
       <aside class="drawer">
@@ -117,17 +120,28 @@
         </div>
         <div class="drawer-body">
           <div class="drawer-tab-panel active" data-panel="insights">
-            <h2 id="insightSectionTitle">Map Insights</h2>
-            <div id="insightBoard" class="insight-board"></div>
+            <div class="insight-subtabs">
+              <button class="insight-subtab active" data-subtab="assimilation" id="subtabAssimilation">Assimilation</button>
+              <button class="insight-subtab" data-subtab="regions" id="subtabRegions">Regions</button>
+              <button class="insight-subtab" data-subtab="events" id="subtabEvents">Events</button>
+            </div>
 
-            <h2 id="eventSectionTitle">Breaking Events</h2>
-            <div id="eventFeed" class="event-feed"></div>
+            <div class="insight-subpanel active" data-subpanel="assimilation">
+              <h2 id="insightSectionTitle">Map Insights</h2>
+              <div id="insightBoard" class="insight-board"></div>
+              <h2 id="transferSectionTitle">Key Assimilation Links</h2>
+              <div id="transferBoard" class="transfer-board"></div>
+            </div>
 
-            <h2 id="regionSectionTitle">Regional Landscape</h2>
-            <div id="regionBoard" class="region-board"></div>
+            <div class="insight-subpanel" data-subpanel="regions">
+              <h2 id="regionSectionTitle">Regional Landscape</h2>
+              <div id="regionBoard" class="region-board"></div>
+            </div>
 
-            <h2 id="transferSectionTitle">Key Assimilation Links</h2>
-            <div id="transferBoard" class="transfer-board"></div>
+            <div class="insight-subpanel" data-subpanel="events">
+              <h2 id="eventSectionTitle">Breaking Events</h2>
+              <div id="eventFeed" class="event-feed"></div>
+            </div>
           </div>
           <div class="drawer-tab-panel" data-panel="logs">
             <h2 id="logSectionTitle">Mission Logs</h2>

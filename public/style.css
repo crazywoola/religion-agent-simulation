@@ -678,31 +678,111 @@ select:focus {
 }
 
 .drawer-close-btn {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  border: 2px solid var(--line);
-  background: rgba(255,255,255,0.8);
-  font-size: 1rem;
+  border: 2px solid #2e365f;
+  background: rgba(255,255,255,0.88);
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #2e365f;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.15s;
+  flex-shrink: 0;
+  transition: transform 0.15s, background 0.15s;
+  box-shadow: 0 3px 0 rgba(46,54,95,0.15);
 }
-.drawer-close-btn:hover { transform: scale(1.1); }
+.drawer-close-btn:hover { transform: scale(1.1); background: #ffe0e6; }
 
 .drawer-body {
   flex: 1;
   overflow: auto;
   padding: 16px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .drawer-tab-panel {
   display: none;
 }
 .drawer-tab-panel.active {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Inside drawer, log list fills remaining space */
+.drawer-tab-panel .log-list {
+  max-height: none;
+  flex: 1;
+  overflow: auto;
+}
+
+/* ── Insight sub-tabs ────────────────────────── */
+.insight-subtabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+.insight-subtab {
+  padding: 4px 12px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border-radius: 999px;
+  background: linear-gradient(145deg, #eceef4, #dde0ec);
+  border: 1.5px solid #3a4270;
+  color: #3a4270;
+  cursor: pointer;
+  transition: transform 0.15s, background 0.15s;
+}
+.insight-subtab:hover { transform: translateY(-1px); }
+.insight-subtab.active {
+  background: linear-gradient(145deg, var(--brand), var(--brand-strong));
+  color: #fff;
+  border-color: color-mix(in srgb, var(--brand-strong) 72%, #1a2145 28%);
+}
+
+.insight-subpanel {
+  display: none;
+}
+.insight-subpanel.active {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* ── Event banner (top of page) ──────────────── */
+.event-banner {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  min-width: 320px;
+  max-width: 600px;
+  padding: 10px 20px;
+  border-radius: 0 0 var(--radius) var(--radius);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-align: center;
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+  animation: banner-fade 5s ease-in-out forwards;
+  pointer-events: none;
+}
+.event-banner[hidden] { display: none; }
+.event-banner .event-banner-label { font-size: 0.9rem; }
+.event-banner .event-banner-shock { font-size: 0.72rem; opacity: 0.85; margin-top: 2px; }
+
+@keyframes banner-fade {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(-100%); }
+  8%   { opacity: 1; transform: translateX(-50%) translateY(0); }
+  75%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
 }
 
 /* ── History chart ────────────────────────────── */

@@ -43,6 +43,7 @@ const historyChartEl = document.getElementById('historyChart');
 const raceChartEl = document.getElementById('raceChart');
 const eventFeedEl = document.getElementById('eventFeed');
 const eventSectionTitleEl = document.getElementById('eventSectionTitle');
+const eventBannerEl = document.getElementById('eventBanner');
 const historySectionTitleEl = document.getElementById('historySectionTitle');
 const raceChartTitleEl = document.getElementById('raceChartTitle');
 const screenshotBtnEl = document.getElementById('screenshotBtn');
@@ -164,6 +165,12 @@ function applyStaticI18n() {
   if (drawerTabInsightsEl) drawerTabInsightsEl.textContent = i18n.t('drawer.insights');
   const drawerTabLogsEl = document.getElementById('drawerTabLogs');
   if (drawerTabLogsEl) drawerTabLogsEl.textContent = i18n.t('drawer.logs');
+  const subtabAssimilationEl = document.getElementById('subtabAssimilation');
+  const subtabRegionsEl = document.getElementById('subtabRegions');
+  const subtabEventsEl = document.getElementById('subtabEvents');
+  if (subtabAssimilationEl) subtabAssimilationEl.textContent = i18n.t('section.subtabAssimilation');
+  if (subtabRegionsEl) subtabRegionsEl.textContent = i18n.t('section.subtabRegions');
+  if (subtabEventsEl) subtabEventsEl.textContent = i18n.t('section.subtabEvents');
 
   for (const option of languageSelect.options) {
     option.textContent = getLocaleLabel(option.value);
@@ -286,6 +293,15 @@ function renderEventFeed(state) {
   }
 
   const activeStartRounds = new Set(active.map((a) => `${a.id}_${a.startRound}`));
+
+  // Show banner for new events
+  for (const ev of history) {
+    const key = `${ev.id}_${ev.round}`;
+    if (!shownBannerEvents.has(key)) {
+      shownBannerEvents.add(key);
+      showEventBanner(ev);
+    }
+  }
 
   const recentHistory = [...history].reverse().slice(0, 8);
   eventFeedEl.innerHTML = recentHistory
@@ -1677,6 +1693,43 @@ for (const tab of document.querySelectorAll('.drawer-tab')) {
     const panel = document.querySelector(`.drawer-tab-panel[data-panel="${tab.dataset.tab}"]`);
     if (panel) panel.classList.add('active');
   });
+}
+
+// ── Insight sub-tabs ──────────────────────────────────────────────
+for (const subtab of document.querySelectorAll('.insight-subtab')) {
+  subtab.addEventListener('click', () => {
+    document.querySelectorAll('.insight-subtab').forEach((t) => t.classList.remove('active'));
+    document.querySelectorAll('.insight-subpanel').forEach((p) => p.classList.remove('active'));
+    subtab.classList.add('active');
+    const panel = document.querySelector(`.insight-subpanel[data-subpanel="${subtab.dataset.subtab}"]`);
+    if (panel) panel.classList.add('active');
+  });
+}
+
+// ── Event banner ──────────────────────────────────────────────────
+const shownBannerEvents = new Set();
+let bannerTimeout = null;
+
+function showEventBanner(ev) {
+  if (!eventBannerEl) return;
+  const color = EVENT_COLORS[ev.id] || '#607d8b';
+  const label = i18n.t(`event.${ev.id}`);
+  const shockText = Object.entries(ev.shock || {})
+    .slice(0, 3)
+    .map(([k, v]) => `${i18n.t(`signal.${k}`)} ${v > 0 ? '+' : ''}${(v * 100).toFixed(0)}%`)
+    .join('  ');
+
+  eventBannerEl.style.background = `linear-gradient(135deg, ${color}, color-mix(in srgb, ${color} 70%, #1a1a2e 30%))`;
+  eventBannerEl.innerHTML = `<div class="event-banner-label">${label}</div><div class="event-banner-shock">${shockText}</div>`;
+  eventBannerEl.hidden = false;
+  eventBannerEl.style.animation = 'none';
+  void eventBannerEl.offsetHeight;
+  eventBannerEl.style.animation = '';
+
+  if (bannerTimeout) clearTimeout(bannerTimeout);
+  bannerTimeout = setTimeout(() => {
+    eventBannerEl.hidden = true;
+  }, 5200);
 }
 
 // ── Fetch provider info from server ───────────────────────────────

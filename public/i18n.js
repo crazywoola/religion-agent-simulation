@@ -37,7 +37,10 @@ const DICTIONARY = {
       logs: 'Mission Logs',
       events: 'Breaking Events',
       signals: 'Signal Control',
-      history: 'Follower Trend'
+      history: 'Follower Trend',
+      subtabAssimilation: 'Assimilation',
+      subtabRegions: 'Regions',
+      subtabEvents: 'Events'
     },
     modal: {
       traits: 'Trait Radar',
@@ -212,7 +215,10 @@ const DICTIONARY = {
       logs: '传教日志',
       events: '突发事件',
       signals: '信号调控',
-      history: '信众趋势'
+      history: '信众趋势',
+      subtabAssimilation: '同化链路',
+      subtabRegions: '区域格局',
+      subtabEvents: '突发事件'
     },
     modal: {
       traits: '特质雷达',
@@ -387,7 +393,10 @@ const DICTIONARY = {
       logs: '布教ログ',
       events: '突発イベント',
       signals: 'シグナル操作',
-      history: '信徒トレンド'
+      history: '信徒トレンド',
+      subtabAssimilation: '同化',
+      subtabRegions: '地域',
+      subtabEvents: 'イベント'
     },
     modal: {
       traits: '特性レーダー',
