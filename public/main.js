@@ -4,6 +4,7 @@ import { SUPPORTED_LOCALES, createI18n, getLocaleLabel, getPreferredLocale, norm
 
 const startBtn = document.getElementById('startBtn');
 const stopBtn = document.getElementById('stopBtn');
+const restartBtn = document.getElementById('restartBtn');
 const tickInput = document.getElementById('tickInput');
 const openaiToggle = document.getElementById('openaiToggle');
 const providerDisplayEl = document.getElementById('providerDisplay');
@@ -54,7 +55,15 @@ const intelUnlockBtnEl = document.getElementById('intelUnlockBtn');
 const eventDecisionCardEl = document.getElementById('eventDecisionCard');
 const timingBurstCardEl = document.getElementById('timingBurstCard');
 const bossCrisisPanelEl = document.getElementById('bossCrisisPanel');
+const gameSettingsPanelEl = document.getElementById('gameSettingsPanel');
+const settingsTitleEl = document.getElementById('settingsTitle');
+const storageStatsLabelEl = document.getElementById('storageStatsLabel');
+const storageStatsEl = document.getElementById('storageStats');
+const clearDataBtnEl = document.getElementById('clearDataBtn');
 const gameLabTitleEl = document.getElementById('gameLabTitle');
+const gameLabPanelEl = document.getElementById('gameLabPanel');
+const gameLabBodyEl = document.getElementById('gameLabBody');
+const gameLabToggleBtnEl = document.getElementById('gameLabToggleBtn');
 const starBadgeEl = document.getElementById('starBadge');
 const dailyChallengeToggleEl = document.getElementById('dailyChallengeToggle');
 const dailyChallengeLabelEl = document.getElementById('dailyChallengeLabel');
@@ -127,9 +136,17 @@ let ghostRunData = null;
 let activeBossPanel = null;
 let runTelemetry = [];
 let guideChapterIndex = 0;
+let gameLabCollapsed = false;
+let runStorageDbPromise = null;
+let runStorageStats = { runs: 0, snapshots: 0, available: typeof indexedDB !== 'undefined' };
+let lastPersistedSnapshotRound = -1;
 
 const META_STORAGE_KEY = 'religion_sim_meta_v2';
 const DAILY_CHALLENGE_KEY_PREFIX = 'religion_sim_daily_';
+const RUN_STORAGE_DB_NAME = 'religion_sim_runs_v1';
+const RUN_STORAGE_DB_VERSION = 1;
+const RUN_STORAGE_RUNS = 'runs';
+const RUN_STORAGE_SNAPSHOTS = 'snapshots';
 const REGION_CHAIN_GRAPH = {
   north_america: ['latin_america', 'europe', 'global_online'],
   latin_america: ['north_america', 'europe'],
@@ -471,30 +488,29 @@ const GUIDE_BOOK = {
         ]
       },
       {
-        id: 'export_api',
-        label: '6. Export & API',
-        intro: 'The app supports visual capture and report export with simulation endpoints.',
+        id: 'settings_data',
+        label: '6. Settings & Data',
+        intro: 'Use in-game settings and local archive tools to manage each run.',
         sections: [
           {
-            title: 'Actions',
+            title: 'Interface Actions',
             kind: 'table',
             headers: ['Action', 'Type', 'Output'],
             rows: [
               ['Screenshot button', 'Canvas export', 'PNG file named by round.'],
-              ['Report button', 'Server export', 'Academic-style PDF report.'],
+              ['Report button', 'Document export', 'Academic-style PDF report.'],
               ['Guide book', 'In-app docs', 'Operational and parameter explanations.']
             ]
           },
           {
-            title: 'Main API Endpoints',
+            title: 'Settings & Storage',
             kind: 'table',
-            headers: ['Endpoint', 'Method', 'Purpose'],
+            headers: ['Item', 'Type', 'Explanation'],
             rows: [
-              ['/api/simulation/start', 'POST', 'Initialize or reset simulation state.'],
-              ['/api/simulation/tick', 'POST', 'Advance one round.'],
-              ['/api/simulation/state', 'GET', 'Get current snapshot.'],
-              ['/api/simulation/signals', 'POST', 'Apply manual signal overrides.'],
-              ['/api/simulation/report', 'POST', 'Generate PDF report.']
+              ['Game Settings', 'Panel', 'Language, AI usage, simulation speed, and scenario controls.'],
+              ['Restart button', 'Action', 'Start a fresh run while preserving archived records.'],
+              ['Run Storage', 'IndexedDB', 'Store run records and round snapshots on this device.'],
+              ['Clear Saved Data', 'Action', 'Remove local run data, snapshots, and meta progression.']
             ]
           }
         ]
@@ -647,30 +663,29 @@ const GUIDE_BOOK = {
         ]
       },
       {
-        id: 'export_api',
-        label: '6. 导出与接口',
-        intro: '项目支持画面导出、报告生成和完整的模拟 API。',
+        id: 'settings_data',
+        label: '6. 设置与存档',
+        intro: '通过游戏设置与本地存档管理不同对局和快照。',
         sections: [
           {
-            title: '导出能力',
+            title: '界面操作',
             kind: 'table',
             headers: ['操作', '类型', '输出'],
             rows: [
               ['截图按钮', 'Canvas 导出', '以回合命名的 PNG 文件。'],
-              ['报告按钮', '服务端导出', '学术风格 PDF 报告。'],
+              ['报告按钮', '文档导出', '学术风格 PDF 报告。'],
               ['指南手册', '内置文档', '操作、类型、参数解释。']
             ]
           },
           {
-            title: '主要 API',
+            title: '设置与数据',
             kind: 'table',
-            headers: ['接口', '方法', '用途'],
+            headers: ['项目', '类型', '说明'],
             rows: [
-              ['/api/simulation/start', 'POST', '初始化或重置模拟。'],
-              ['/api/simulation/tick', 'POST', '推进 1 轮。'],
-              ['/api/simulation/state', 'GET', '获取当前快照。'],
-              ['/api/simulation/signals', 'POST', '应用手动信号覆盖。'],
-              ['/api/simulation/report', 'POST', '生成 PDF 报告。']
+              ['游戏设置', '设置面板', '集中管理语言、AI 开关、速度与场景配置。'],
+              ['Restart 按钮', '操作按钮', '立刻重开新局，并保留历史对局记录。'],
+              ['对局存档', 'IndexedDB', '在本地保存不同对局与每轮快照。'],
+              ['清除数据', '操作按钮', '一键清除本地对局存档、快照与成长数据。']
             ]
           }
         ]
@@ -814,30 +829,29 @@ const GUIDE_BOOK = {
         ]
       },
       {
-        id: 'export_api',
-        label: '6. 出力とAPI',
-        intro: '画面出力とレポート生成、主要APIをサポートします。',
+        id: 'settings_data',
+        label: '6. 設定と保存',
+        intro: 'ゲーム設定とローカル保存でラン履歴とスナップショットを管理します。',
         sections: [
           {
-            title: '出力機能',
+            title: '画面アクション',
             kind: 'table',
             headers: ['操作', 'タイプ', '出力'],
             rows: [
               ['スクリーンショット', 'Canvas出力', 'ラウンド名付き PNG。'],
-              ['レポート', 'サーバー生成', '学術スタイル PDF。'],
+              ['レポート', '文書出力', '学術スタイル PDF。'],
               ['ガイドブック', 'アプリ内文書', '操作・型・パラメータ解説。']
             ]
           },
           {
-            title: '主要API',
+            title: '設定とデータ',
             kind: 'table',
-            headers: ['エンドポイント', 'Method', '用途'],
+            headers: ['項目', 'タイプ', '説明'],
             rows: [
-              ['/api/simulation/start', 'POST', '初期化/リセット。'],
-              ['/api/simulation/tick', 'POST', '1ラウンド進行。'],
-              ['/api/simulation/state', 'GET', '現在状態取得。'],
-              ['/api/simulation/signals', 'POST', '手動シグナル適用。'],
-              ['/api/simulation/report', 'POST', 'PDF レポート生成。']
+              ['ゲーム設定', 'パネル', '言語、AI、速度、シナリオなどを管理。'],
+              ['Restart ボタン', 'アクション', '履歴を保持しつつ新しいランを開始。'],
+              ['ラン保存', 'IndexedDB', 'ローカルに対局履歴と各ラウンドの快照を保存。'],
+              ['データ消去', 'アクション', 'ローカル保存データと進行キャッシュを削除。']
             ]
           }
         ]
@@ -998,6 +1012,215 @@ function syncBodyLock() {
     (modalEl && !modalEl.hidden) ||
     (guideModalEl && !guideModalEl.hidden);
   document.body.style.overflow = shouldLock ? 'hidden' : '';
+}
+
+function setGameLabCollapsed(collapsed) {
+  gameLabCollapsed = Boolean(collapsed);
+  if (gameLabPanelEl) {
+    gameLabPanelEl.classList.toggle('is-collapsed', gameLabCollapsed);
+  }
+  if (gameLabBodyEl) {
+    gameLabBodyEl.hidden = gameLabCollapsed;
+  }
+  if (gameLabToggleBtnEl) {
+    const expanded = !gameLabCollapsed;
+    gameLabToggleBtnEl.textContent = expanded ? '▾' : '▸';
+    gameLabToggleBtnEl.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    gameLabToggleBtnEl.title = i18n.t(expanded ? 'controls.collapse' : 'controls.expand');
+  }
+}
+
+function renderRunStorageStats() {
+  if (!storageStatsEl) {
+    return;
+  }
+  if (!runStorageStats.available) {
+    storageStatsEl.textContent =
+      i18n.locale === 'zh-CN'
+        ? '当前浏览器不支持'
+        : i18n.locale === 'ja'
+          ? 'この環境では利用不可'
+          : 'Unavailable in this browser';
+    return;
+  }
+  if (i18n.locale === 'zh-CN') {
+    storageStatsEl.textContent = `对局 ${runStorageStats.runs} · 快照 ${runStorageStats.snapshots}`;
+    return;
+  }
+  if (i18n.locale === 'ja') {
+    storageStatsEl.textContent = `ラン ${runStorageStats.runs} · スナップ ${runStorageStats.snapshots}`;
+    return;
+  }
+  storageStatsEl.textContent = `Runs ${runStorageStats.runs} · Snapshots ${runStorageStats.snapshots}`;
+}
+
+function txDone(tx) {
+  return new Promise((resolve, reject) => {
+    tx.oncomplete = () => resolve();
+    tx.onabort = () => reject(tx.error);
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+function requestDone(request) {
+  return new Promise((resolve, reject) => {
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function openRunStorageDb() {
+  if (typeof indexedDB === 'undefined') {
+    runStorageStats.available = false;
+    return Promise.resolve(null);
+  }
+  if (runStorageDbPromise) {
+    return runStorageDbPromise;
+  }
+  runStorageDbPromise = new Promise((resolve) => {
+    const request = indexedDB.open(RUN_STORAGE_DB_NAME, RUN_STORAGE_DB_VERSION);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(RUN_STORAGE_RUNS)) {
+        db.createObjectStore(RUN_STORAGE_RUNS, { keyPath: 'id' });
+      }
+      if (!db.objectStoreNames.contains(RUN_STORAGE_SNAPSHOTS)) {
+        const snapshotStore = db.createObjectStore(RUN_STORAGE_SNAPSHOTS, { keyPath: 'key' });
+        snapshotStore.createIndex('runId', 'runId', { unique: false });
+        snapshotStore.createIndex('round', 'round', { unique: false });
+      }
+    };
+    request.onsuccess = () => {
+      const db = request.result;
+      db.onversionchange = () => db.close();
+      resolve(db);
+    };
+    request.onerror = () => {
+      runStorageStats.available = false;
+      resolve(null);
+    };
+    request.onblocked = () => resolve(null);
+  });
+  return runStorageDbPromise;
+}
+
+function buildRunRecord(state = null, reason = '') {
+  const rankedReligions = state?.religions ? [...state.religions].sort((a, b) => b.followers - a.followers) : [];
+  const topReligion = rankedReligions[0] || null;
+  return {
+    id: gameRun.id,
+    startedAt: gameRun.startedAt || '',
+    endedAt: gameRun.endedAt || '',
+    updatedAt: new Date().toISOString(),
+    locale: i18n.locale,
+    scenario: state?.scenario || scenarioSelect?.value || 'balanced',
+    round: Number(state?.round || 0),
+    settled: Boolean(gameRun.settled),
+    settleReason: reason || '',
+    dailyChallenge: Boolean(gameRun.dailyChallenge),
+    ironman: Boolean(gameRun.ironman),
+    scoreMultiplier: Number(gameRun.scoreMultiplier || 1),
+    stars: Number(gameRun.stars || 0),
+    finalScore: Number(gameRun.finalScore || 0),
+    comboScore: Number(comboScore || 0),
+    intelPoints: Number(intelPoints || 0),
+    betStats: { ...(gameRun.betStats || { total: 0, won: 0, streak: 0 }) },
+    topReligionId: topReligion?.id || null,
+    topReligionFollowers: Number(topReligion?.followers || 0)
+  };
+}
+
+async function saveRunRecordToIndexedDb(state = null, reason = '') {
+  if (!gameRun?.id) {
+    return;
+  }
+  const db = await openRunStorageDb();
+  if (!db) {
+    return;
+  }
+  try {
+    const tx = db.transaction([RUN_STORAGE_RUNS], 'readwrite');
+    tx.objectStore(RUN_STORAGE_RUNS).put(buildRunRecord(state, reason));
+    await txDone(tx);
+  } catch (_err) {
+    // Ignore indexedDB write errors.
+  }
+}
+
+async function saveSnapshotToIndexedDb(state) {
+  if (!gameRun?.id || !state || !Number.isFinite(state.round)) {
+    return;
+  }
+  const db = await openRunStorageDb();
+  if (!db) {
+    return;
+  }
+  try {
+    const tx = db.transaction([RUN_STORAGE_SNAPSHOTS], 'readwrite');
+    tx.objectStore(RUN_STORAGE_SNAPSHOTS).put({
+      key: `${gameRun.id}:${state.round}`,
+      runId: gameRun.id,
+      round: Number(state.round),
+      capturedAt: new Date().toISOString(),
+      snapshot: state
+    });
+    await txDone(tx);
+  } catch (_err) {
+    // Ignore indexedDB write errors.
+  }
+}
+
+async function refreshRunStorageStats() {
+  const db = await openRunStorageDb();
+  if (!db) {
+    runStorageStats = {
+      runs: 0,
+      snapshots: 0,
+      available: typeof indexedDB !== 'undefined'
+    };
+    renderRunStorageStats();
+    return;
+  }
+  try {
+    const tx = db.transaction([RUN_STORAGE_RUNS, RUN_STORAGE_SNAPSHOTS], 'readonly');
+    const runCountReq = tx.objectStore(RUN_STORAGE_RUNS).count();
+    const snapshotCountReq = tx.objectStore(RUN_STORAGE_SNAPSHOTS).count();
+    const [runCount, snapshotCount] = await Promise.all([
+      requestDone(runCountReq),
+      requestDone(snapshotCountReq)
+    ]);
+    runStorageStats = {
+      runs: Number(runCount || 0),
+      snapshots: Number(snapshotCount || 0),
+      available: true
+    };
+  } catch (_err) {
+    runStorageStats.available = false;
+  }
+  renderRunStorageStats();
+}
+
+async function clearRunStorageData() {
+  if (typeof localStorage !== 'undefined') {
+    localStorage.removeItem(META_STORAGE_KEY);
+    localStorage.removeItem(GHOST_STORAGE_KEY);
+  }
+  const db = await openRunStorageDb();
+  if (db) {
+    try {
+      const tx = db.transaction([RUN_STORAGE_RUNS, RUN_STORAGE_SNAPSHOTS], 'readwrite');
+      tx.objectStore(RUN_STORAGE_RUNS).clear();
+      tx.objectStore(RUN_STORAGE_SNAPSHOTS).clear();
+      await txDone(tx);
+    } catch (_err) {
+      // Ignore indexedDB clear errors.
+    }
+  }
+  metaProgress = loadMetaProgress();
+  ghostRunData = loadGhostRunData();
+  renderMetaBoard();
+  await refreshRunStorageStats();
+  setStatusHint(i18n.t('status.dataCleared'));
 }
 
 function getGuideBookByLocale() {
@@ -1342,6 +1565,8 @@ function applyStaticI18n() {
 
   startBtn.textContent = i18n.t('controls.start');
   stopBtn.textContent = i18n.t('controls.stop');
+  if (restartBtn) restartBtn.textContent = i18n.t('controls.restart');
+  if (settingsTitleEl) settingsTitleEl.textContent = i18n.t('controls.settings');
   languageLabelEl.textContent = i18n.t('controls.language');
   scenarioLabelEl.textContent = i18n.t('controls.scenario');
   providerLabelEl.textContent = i18n.t('controls.provider');
@@ -1364,6 +1589,8 @@ function applyStaticI18n() {
   if (screenshotBtnEl) screenshotBtnEl.title = i18n.t('controls.screenshot');
   if (guideBtnEl) guideBtnEl.title = i18n.t('controls.gameGuide');
   if (guideCloseBtnEl) guideCloseBtnEl.setAttribute('aria-label', i18n.t('modal.close'));
+  if (storageStatsLabelEl) storageStatsLabelEl.textContent = i18n.t('controls.runStorage');
+  if (clearDataBtnEl) clearDataBtnEl.textContent = i18n.t('controls.clearData');
   if (gameLabTitleEl) {
     gameLabTitleEl.textContent = i18n.t('section.gameLab');
   }
@@ -1412,6 +1639,8 @@ function applyStaticI18n() {
   if (guideModalEl && !guideModalEl.hidden) {
     renderGuideBook();
   }
+  setGameLabCollapsed(gameLabCollapsed);
+  renderRunStorageStats();
 }
 
 // ─── History Trend Chart ──────────────────────────────────────────
@@ -1912,6 +2141,8 @@ function settleRunProgress(state, reason = 'manual') {
         ? `ラン終了（${reason}）：スコア ${finalScore}、研究点 +${researchGain}`
         : `Run settled (${reason}): score ${finalScore}, research +${researchGain}`
   );
+  saveRunRecordToIndexedDb(state, reason).catch(() => {});
+  refreshRunStorageStats().catch(() => {});
 }
 
 function renderObjectiveBoard(state) {
@@ -4188,6 +4419,12 @@ function renderAll(state) {
   chainRewardState.chainLength = chainPreview.chainLength;
   chainRewardState.multiplier = chainPreview.multiplier;
 
+  if (gameRun.id && state.round > lastPersistedSnapshotRound) {
+    lastPersistedSnapshotRound = state.round;
+    saveSnapshotToIndexedDb(state).catch(() => {});
+    saveRunRecordToIndexedDb(state, 'progress').catch(() => {});
+  }
+
   if (state.round > lastProcessedRound) {
     updateCorridorCombos(state);
     queueDecisionFromState(state);
@@ -4678,6 +4915,7 @@ async function postJson(url, body = {}) {
 }
 
 async function startSimulation() {
+  stopLoop();
   if (liveState?.round > 0) {
     settleRunProgress(liveState, 'restart');
     archiveGhostRunFromState(liveState);
@@ -4689,6 +4927,8 @@ async function startSimulation() {
   gameRun.ironman = Boolean(ironmanToggleEl?.checked);
   gameRun.scoreMultiplier = gameRun.dailyChallenge ? dailyChallengeProfile.scoreMultiplier : 1;
   initializeRunSystems();
+  lastPersistedSnapshotRound = -1;
+  saveRunRecordToIndexedDb(null, 'start').catch(() => {});
 
   if (gameRun.dailyChallenge) {
     scenarioSelect.value = dailyChallengeProfile.scenario;
@@ -4727,6 +4967,8 @@ async function startSimulation() {
   }
   stopBtn.disabled = Boolean(gameRun.ironman);
   renderAll(snapshot);
+  saveRunRecordToIndexedDb(snapshot, 'running').catch(() => {});
+  refreshRunStorageStats().catch(() => {});
   // Always reset map framing on new game start for a stable first view.
   resetCameraView();
 }
@@ -4764,18 +5006,40 @@ function startLoop() {
 
 startBtn.addEventListener('click', async () => {
   startBtn.disabled = true;
+  if (restartBtn) restartBtn.disabled = true;
   stopBtn.disabled = false;
   statusEl.textContent = i18n.t('status.initializing');
 
   try {
     await startSimulation();
     startLoop();
+    if (restartBtn) restartBtn.disabled = false;
   } catch (err) {
     statusEl.textContent = i18n.t('status.startFailed', { message: err.message });
     startBtn.disabled = false;
     stopBtn.disabled = true;
+    if (restartBtn) restartBtn.disabled = false;
   }
 });
+
+if (restartBtn) {
+  restartBtn.addEventListener('click', async () => {
+    restartBtn.disabled = true;
+    startBtn.disabled = true;
+    stopBtn.disabled = false;
+    statusEl.textContent = i18n.t('status.initializing');
+    try {
+      await startSimulation();
+      startLoop();
+    } catch (err) {
+      statusEl.textContent = i18n.t('status.startFailed', { message: err.message });
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+    } finally {
+      restartBtn.disabled = false;
+    }
+  });
+}
 
 stopBtn.addEventListener('click', () => {
   if (gameRun.ironman) {
@@ -4784,6 +5048,7 @@ stopBtn.addEventListener('click', () => {
   stopLoop();
   stopBtn.disabled = true;
   startBtn.disabled = false;
+  if (restartBtn) restartBtn.disabled = false;
   if (liveState) {
     statusEl.textContent = i18n.t('status.pausedRound', { round: liveState.round });
     settleRunProgress(liveState, 'paused');
@@ -4801,6 +5066,32 @@ scenarioSelect.addEventListener('change', (event) => {
     localStorage.setItem('app_scenario', event.target.value);
   }
 });
+
+if (gameLabToggleBtnEl) {
+  gameLabToggleBtnEl.addEventListener('click', () => {
+    setGameLabCollapsed(!gameLabCollapsed);
+  });
+}
+
+if (clearDataBtnEl) {
+  clearDataBtnEl.addEventListener('click', async () => {
+    const confirmText =
+      i18n.locale === 'zh-CN'
+        ? '确认清除所有本地对局数据与快照吗？'
+        : i18n.locale === 'ja'
+          ? '保存済みの対局データとスナップショットをすべて消去しますか？'
+          : 'Clear all saved run data and snapshots?';
+    if (!window.confirm(confirmText)) {
+      return;
+    }
+    clearDataBtnEl.disabled = true;
+    try {
+      await clearRunStorageData();
+    } finally {
+      clearDataBtnEl.disabled = false;
+    }
+  });
+}
 
 if (dailyChallengeToggleEl) {
   dailyChallengeToggleEl.addEventListener('change', () => {
@@ -4995,3 +5286,5 @@ renderChainRewardBoard(null);
 renderBetBoard(null);
 renderDeckBoard();
 renderMetaBoard();
+setGameLabCollapsed(false);
+refreshRunStorageStats().catch(() => {});

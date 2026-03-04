@@ -12,6 +12,7 @@ const DICTIONARY = {
     controls: {
       start: 'Start',
       stop: 'Pause',
+      restart: 'Restart',
       polling: 'Tick Interval (ms)',
       useAI: 'Use AI API for doctrine/action generation',
       language: 'Language',
@@ -26,7 +27,12 @@ const DICTIONARY = {
       drawerToggle: 'Insights & Logs',
       signalReset: 'Reset Signals',
       dailyChallenge: 'Daily Challenge',
-      ironman: 'Ironman'
+      ironman: 'Ironman',
+      settings: 'Game Settings',
+      runStorage: 'Run Storage',
+      clearData: 'Clear Saved Data',
+      collapse: 'Collapse',
+      expand: 'Expand'
     },
     drawer: {
       insights: 'Insights',
@@ -74,6 +80,7 @@ const DICTIONARY = {
         'Status: Running (Round {round}) | Followers {total} / {target} ({invariant}) | Engine: {engine} | AI: {ai} | Provider: {provider}',
       pausedRound: 'Status: Paused (at round {round})',
       paused: 'Status: Paused',
+      dataCleared: 'Status: Saved run data has been cleared',
       error: 'Status: Error - {message}',
       startFailed: 'Status: Startup failed - {message}',
       invariantFixed: 'constant',
@@ -195,6 +202,7 @@ const DICTIONARY = {
     controls: {
       start: '开始模拟',
       stop: '暂停',
+      restart: '重新开始',
       polling: '轮询间隔(ms)',
       useAI: '使用 AI API 生成教义/传教日志',
       language: '语言',
@@ -209,7 +217,12 @@ const DICTIONARY = {
       drawerToggle: '洞察与日志',
       signalReset: '重置信号',
       dailyChallenge: '每日挑战',
-      ironman: '铁人模式'
+      ironman: '铁人模式',
+      settings: '游戏设置',
+      runStorage: '对局存档',
+      clearData: '清除已存数据',
+      collapse: '收起',
+      expand: '展开'
     },
     drawer: {
       insights: '洞察',
@@ -257,6 +270,7 @@ const DICTIONARY = {
         '状态：运行中（第 {round} 轮） | 总信徒 {total} / {target}（{invariant}） | 转化引擎：{engine} | AI：{ai} | 提供商：{provider}',
       pausedRound: '状态：已暂停（停在第 {round} 轮）',
       paused: '状态：已暂停',
+      dataCleared: '状态：已清除本地对局数据',
       error: '状态：错误 - {message}',
       startFailed: '状态：启动失败 - {message}',
       invariantFixed: '恒定',
@@ -378,6 +392,7 @@ const DICTIONARY = {
     controls: {
       start: 'Start',
       stop: '一時停止',
+      restart: 'リスタート',
       polling: 'ティック間隔(ms)',
       useAI: '教義/行動ログ生成に AI API を使用',
       language: '言語',
@@ -392,7 +407,12 @@ const DICTIONARY = {
       drawerToggle: 'インサイトとログ',
       signalReset: 'シグナルリセット',
       dailyChallenge: 'デイリーチャレンジ',
-      ironman: 'アイアンマン'
+      ironman: 'アイアンマン',
+      settings: 'ゲーム設定',
+      runStorage: 'ラン保存',
+      clearData: '保存データを消去',
+      collapse: '折りたたむ',
+      expand: '展開'
     },
     drawer: {
       insights: 'インサイト',
@@ -440,6 +460,7 @@ const DICTIONARY = {
         '状態：実行中（ラウンド {round}） | 信徒総数 {total} / {target}（{invariant}） | エンジン：{engine} | AI：{ai} | プロバイダ：{provider}',
       pausedRound: '状態：一時停止（ラウンド {round}）',
       paused: '状態：一時停止',
+      dataCleared: '状態：保存済みランデータを消去しました',
       error: '状態：エラー - {message}',
       startFailed: '状態：起動失敗 - {message}',
       invariantFixed: '一定',

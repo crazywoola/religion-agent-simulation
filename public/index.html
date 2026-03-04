@@ -8,8 +8,8 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "https://unpkg.com/three@0.164.1/build/three.module.js",
-          "three/addons/": "https://unpkg.com/three@0.164.1/examples/jsm/"
+          "three": "/vendor/three/build/three.module.js",
+          "three/addons/": "/vendor/three/examples/jsm/"
         }
       }
     </script>
@@ -28,15 +28,8 @@
           <div class="btn-row">
             <button id="startBtn">Start Simulation</button>
             <button id="stopBtn" disabled>Pause</button>
+            <button id="restartBtn">Restart</button>
           </div>
-          <label>
-            <span id="languageLabel">Language</span>
-            <select id="languageSelect">
-              <option value="en">English</option>
-              <option value="zh-CN">简体中文</option>
-              <option value="ja">日本語</option>
-            </select>
-          </label>
           <label>
             <span id="scenarioLabel">Scenario</span>
             <select id="scenarioSelect">
@@ -46,44 +39,77 @@
               <option value="high_polarization">High Polarization</option>
             </select>
           </label>
-          <label>
-            <span id="providerLabel">AI Provider</span>
-            <span id="providerDisplay" class="provider-display">—</span>
-          </label>
-          <label>
-            <span id="tickLabel">Tick Interval (ms)</span>
-            <input id="tickInput" type="number" value="5000" min="800" max="10000" step="200" />
-          </label>
-          <label class="switch">
-            <input id="openaiToggle" type="checkbox" checked />
-            <span id="openaiLabel">Use AI API for doctrine/action generation</span>
-          </label>
         </div>
+
+        <details id="gameSettingsPanel" class="settings-panel">
+          <summary>
+            <span id="settingsTitle">Game Settings</span>
+          </summary>
+          <div class="settings-body">
+            <label>
+              <span id="languageLabel">Language</span>
+              <select id="languageSelect">
+                <option value="en">English</option>
+                <option value="zh-CN">简体中文</option>
+                <option value="ja">日本語</option>
+              </select>
+            </label>
+            <label>
+              <span id="providerLabel">AI Provider</span>
+              <span id="providerDisplay" class="provider-display">—</span>
+            </label>
+            <label>
+              <span id="tickLabel">Tick Interval (ms)</span>
+              <input id="tickInput" type="number" value="5000" min="800" max="10000" step="200" />
+            </label>
+            <label class="switch">
+              <input id="openaiToggle" type="checkbox" checked />
+              <span id="openaiLabel">Use AI API for doctrine/action generation</span>
+            </label>
+            <div class="storage-tools">
+              <div class="storage-tools-head">
+                <span id="storageStatsLabel">Run Storage</span>
+                <span id="storageStats" class="storage-stats">Runs 0 · Snapshots 0</span>
+              </div>
+              <button id="clearDataBtn" class="settings-danger-btn" type="button">Clear Saved Data</button>
+            </div>
+          </div>
+        </details>
 
         <div class="status" id="status">Status: Not started</div>
 
         <!-- Game Lab -->
         <section id="gameLabPanel" class="game-lab-panel">
           <div class="game-lab-head">
-            <h2 id="gameLabTitle">Game Lab</h2>
-            <div id="starBadge" class="star-badge">★ 0 / 3</div>
+            <div class="game-lab-console-meta">
+              <span class="console-dot dot-red" aria-hidden="true"></span>
+              <span class="console-dot dot-yellow" aria-hidden="true"></span>
+              <span class="console-dot dot-green" aria-hidden="true"></span>
+              <h2 id="gameLabTitle">Game Lab</h2>
+            </div>
+            <div class="game-lab-head-actions">
+              <div id="starBadge" class="star-badge">★ 0 / 3</div>
+              <button id="gameLabToggleBtn" class="game-lab-toggle-btn" type="button" aria-expanded="true">▾</button>
+            </div>
           </div>
-          <div class="game-lab-switches">
-            <label class="switch game-switch">
-              <input id="dailyChallengeToggle" type="checkbox" />
-              <span id="dailyChallengeLabel">Daily Challenge</span>
-            </label>
-            <label class="switch game-switch">
-              <input id="ironmanToggle" type="checkbox" />
-              <span id="ironmanLabel">Ironman</span>
-            </label>
+          <div id="gameLabBody" class="game-lab-body">
+            <div class="game-lab-switches">
+              <label class="switch game-switch">
+                <input id="dailyChallengeToggle" type="checkbox" />
+                <span id="dailyChallengeLabel">Daily Challenge</span>
+              </label>
+              <label class="switch game-switch">
+                <input id="ironmanToggle" type="checkbox" />
+                <span id="ironmanLabel">Ironman</span>
+              </label>
+            </div>
+            <div id="objectiveBoard" class="game-board objective-board"></div>
+            <div id="secretAgendaBoard" class="game-board secret-agenda-board"></div>
+            <div id="chainRewardBoard" class="game-board chain-board"></div>
+            <div id="betBoard" class="game-board bet-board"></div>
+            <div id="deckBoard" class="game-board deck-board"></div>
+            <div id="metaBoard" class="game-board meta-board"></div>
           </div>
-          <div id="objectiveBoard" class="game-board objective-board"></div>
-          <div id="secretAgendaBoard" class="game-board secret-agenda-board"></div>
-          <div id="chainRewardBoard" class="game-board chain-board"></div>
-          <div id="betBoard" class="game-board bet-board"></div>
-          <div id="deckBoard" class="game-board deck-board"></div>
-          <div id="metaBoard" class="game-board meta-board"></div>
         </section>
 
         <!-- Signal Control Panel -->
