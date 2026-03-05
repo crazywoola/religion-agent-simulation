@@ -940,6 +940,7 @@ function generateCharacterCandidates(count = 5) {
     const role = roles[i % roles.length];
     candidates.push({
       religion,
+      religionId: religion,
       religionLabel: i18n.religionName(religion, religion),
       religionEmoji: RELIGION_EMOJI[religion] || '🕊️',
       role: { ...role },
@@ -2583,32 +2584,37 @@ function renderMetaBoard() {
     })
     .join('');
 
+  const achievementTitle = i18n.locale === 'zh-CN' ? '成就' : i18n.locale === 'ja' ? '実績' : 'Achievements';
   metaBoardEl.innerHTML = `
     <div class="game-board-title">${title}</div>
-    <div class="meta-kpis">
-      <div class="meta-chip">${labels.research}: ${i18n.number(metaProgress.researchPoints || 0)}</div>
-      <div class="meta-chip">${labels.runs}: ${i18n.number(metaProgress.totalRuns || 0)}</div>
-      <div class="meta-chip">${labels.stars}: ${i18n.number(metaProgress.totalStars || 0)}</div>
-      <div class="meta-chip">${labels.highScore}: ${i18n.number(metaProgress.highScore || 0)}</div>
+    <div class="meta-board-inner">
+      <div class="meta-board-left">
+        <div class="meta-kpis">
+          <div class="meta-chip">${labels.research}: ${i18n.number(metaProgress.researchPoints || 0)}</div>
+          <div class="meta-chip">${labels.runs}: ${i18n.number(metaProgress.totalRuns || 0)}</div>
+          <div class="meta-chip">${labels.stars}: ${i18n.number(metaProgress.totalStars || 0)}</div>
+          <div class="meta-chip">${labels.highScore}: ${i18n.number(metaProgress.highScore || 0)}</div>
+        </div>
+        <div class="game-board-title">${labels.perks}</div>
+        <div class="achievement-list">${
+          perkNames.length ? perkNames.map((name) => `<span class="achievement-pill">${name}</span>`).join('') : '<span class="game-board-empty">-</span>'
+        }</div>
+        <div class="game-board-title">${achievementTitle}</div>
+        <div class="achievement-list">${achievementPills || '<span class="game-board-empty">-</span>'}</div>
+      </div>
+      <div class="meta-board-right">
+        <div class="game-board-title">${labels.dailyTop} (${dailyChallengeProfile.key})</div>
+        <div class="meta-leaderboard">${
+          board.length
+            ? board.map((item, idx) => {
+                const roleChip = item.roleIcon ? `<span class="meta-lb-role">${item.roleIcon}</span>` : '';
+                const religionChip = item.religionLabel ? `<span class="meta-lb-religion">${escapeHtml(item.religionLabel)}</span>` : '';
+                return `<div class="meta-lb-row"><span class="meta-lb-rank">${idx + 1}.</span>${roleChip}${religionChip}<span class="meta-lb-score">${i18n.number(item.score)}</span><span class="meta-lb-stars">★${item.stars}</span></div>`;
+              }).join('')
+            : '<span class="game-board-empty">-</span>'
+        }</div>
+      </div>
     </div>
-    <div class="game-board-title">${labels.perks}</div>
-    <div class="achievement-list">${
-      perkNames.length ? perkNames.map((name) => `<span class="achievement-pill">${name}</span>`).join('') : '<span class="game-board-empty">-</span>'
-    }</div>
-    <div class="game-board-title">${
-      i18n.locale === 'zh-CN' ? '成就' : i18n.locale === 'ja' ? '実績' : 'Achievements'
-    }</div>
-    <div class="achievement-list">${achievementPills || '<span class="game-board-empty">-</span>'}</div>
-    <div class="game-board-title">${labels.dailyTop} (${dailyChallengeProfile.key})</div>
-    <div class="meta-leaderboard">${
-      board.length
-        ? board.map((item, idx) => {
-            const roleChip = item.roleIcon ? `<span class="meta-lb-role">${item.roleIcon}</span>` : '';
-            const religionChip = item.religionLabel ? `<span class="meta-lb-religion">${escapeHtml(item.religionLabel)}</span>` : '';
-            return `<div class="meta-lb-row"><span class="meta-lb-rank">${idx + 1}.</span>${roleChip}${religionChip}<span class="meta-lb-score">${i18n.number(item.score)}</span><span class="meta-lb-stars">★${item.stars}</span></div>`;
-          }).join('')
-        : '<span class="game-board-empty">-</span>'
-    }</div>
   `;
 }
 

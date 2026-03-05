@@ -415,11 +415,36 @@ select:focus {
 }
 
 .game-lab-mission-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: 155px minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.game-lab-mission-grid .character-board {
+  grid-column: 1;
+  grid-row: 1 / 4;
+}
+
+.game-lab-mission-grid .game-lab-switches {
+  grid-column: 2 / 4;
+  grid-row: 1;
+}
+
+.game-lab-mission-grid .objective-board {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.game-lab-mission-grid .secret-agenda-board {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+.game-lab-mission-grid .chain-board {
+  grid-column: 2 / 4;
+  grid-row: 3;
 }
 
 .game-lab-strategy-grid {
-  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.45fr);
+  grid-template-columns: minmax(0, 0.55fr) minmax(0, 1.9fr);
 }
 
 .game-lab-meta-grid {
@@ -802,6 +827,21 @@ select:focus {
 
 .deck-card-tip {
   color: #314d7b;
+}
+
+.meta-board-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(140px, 1fr);
+  gap: 8px;
+  min-height: 0;
+}
+
+.meta-board-left,
+.meta-board-right {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 0;
 }
 
 .meta-kpis {
@@ -3007,7 +3047,7 @@ select:focus {
   }
 
   .game-lab-mission-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 140px minmax(0, 1fr) minmax(0, 1fr);
   }
 
   .game-lab-strategy-grid {
@@ -3060,7 +3100,7 @@ select:focus {
   }
 
   .game-lab-mission-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 130px minmax(0, 1fr) minmax(0, 1fr);
   }
 
   .game-lab-strategy-grid {
@@ -3159,6 +3199,15 @@ select:focus {
   .game-lab-strategy-grid,
   .game-lab-meta-grid {
     grid-template-columns: 1fr;
+  }
+
+  .game-lab-mission-grid .character-board,
+  .game-lab-mission-grid .game-lab-switches,
+  .game-lab-mission-grid .objective-board,
+  .game-lab-mission-grid .secret-agenda-board,
+  .game-lab-mission-grid .chain-board {
+    grid-column: 1;
+    grid-row: auto;
   }
 
   .game-lab-tabs {
